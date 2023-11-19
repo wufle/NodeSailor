@@ -7,9 +7,13 @@ I know next to nothing about network configuration or Python - this tool begun a
 It has largely been written copy/pasting ChatGPT prompts!    
 
 Known bugs/problems:
+
 Pan and zoom funcitonality messes with the alignment of cursor and nodes
 
+
+
 Future plans:
+
 Colour scheme options
 
 Ping only selected networks/vlans
