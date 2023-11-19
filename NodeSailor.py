@@ -280,6 +280,7 @@ class NetworkMapGUI:
         self.selected_object_type = None
         self.connection_start_node = None
         self.legend_window = None
+        self.unsaved_changes = False
 
         # Buttons Frame
         buttons_frame = tk.Frame(root)
@@ -622,24 +623,18 @@ class NetworkMapGUI:
 
     def create_node(self, event):
         self.open_node_window(event=event)
+        self.unsaved_changes = True
              
     def move_node(self, event):
         if not event.state & 0x001:
             if self.selected_node:
                 self.selected_node.update_position(event.x, event.y)
+                self.unsaved_changes = True
             else:
                 for node in self.nodes:
                     if self.canvas.find_withtag(tk.CURRENT) == node.shape or self.canvas.find_withtag(tk.CURRENT) == node.text:
                         self.selected_node = node
                         break
-
-    def add_node(self):
-        name = simpledialog.askstring('Node Name', 'Enter node name:', parent=self.root)
-        ip = simpledialog.askstring('Node IP Address', 'Enter node IP address:', parent=self.root)
-        if name and ip:
-            x, y = 50, 50
-            node = NetworkNode(self.canvas, name, ip, x, y)
-            self.nodes.append(node)
 
     def remove_node(self, node):
         if self.mode == "Configuration":
@@ -658,6 +653,7 @@ class NetworkMapGUI:
             # Clear the info panel if no node is selected
             self.node_name_label.config(text="Name: -")
             self.node_ip_label.config(text="IP: -")
+            self.unsaved_changes = True
         else:
             messagebox.showinfo('Remove Node', 'Switch to Configuration mode to delete nodes.')
         
@@ -701,6 +697,7 @@ class NetworkMapGUI:
             if text:
                 x, y = event.x, event.y if event else (50, 50)
                 StickyNote(self.canvas, text, x, y)
+                self.unsaved_changes = True
         else:
                 print("Not in configuration mode")
                 
@@ -719,6 +716,7 @@ class NetworkMapGUI:
                             connection = ConnectionLine(self.canvas, self.connection_start_node, node, label=label)
                             self.connection_start_node = None
                             self.raise_all_nodes()
+                            self.unsaved_changes = True
                             return  # Return after creating the connection
 
     def on_alt_press(self, event):
@@ -906,7 +904,13 @@ class NetworkMapGUI:
             self.canvas.after(400, lambda: self.flash_node(node, times - 1))
         else:
             self.canvas.itemconfig(node.shape, fill=flash_color)                 
-      
+
+    def on_close(self):
+        if self.unsaved_changes:
+            if messagebox.askyesno("Unsaved Changes", "You have unsaved changes. Would you like to save before exiting?"):
+                self.save_network_state()  # This should prompt the user to save the file
+        self.root.destroy()
+
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("NodeSailor")
