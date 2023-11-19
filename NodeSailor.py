@@ -279,7 +279,8 @@ class NetworkMapGUI:
         self.mode = "Configuration"
         self.selected_object_type = None
         self.connection_start_node = None
-        
+        self.legend_window = None
+
         # Buttons Frame
         buttons_frame = tk.Frame(root)
         buttons_frame.pack(side=tk.TOP, fill=tk.X)
@@ -297,15 +298,9 @@ class NetworkMapGUI:
         # Update button styles
         button_style = {'font': self.custom_font, 'bg': ColorConfig.BUTTON_BG, 'fg': ColorConfig.BUTTON_FG, 'relief': tk.GROOVE}
 
-        save_button = tk.Button(buttons_frame, text='Save', command=self.save_network_state, **button_style)
-        save_button.pack(side=tk.LEFT, padx=5, pady=5)
-
-        load_button = tk.Button(buttons_frame, text='Load', command=self.load_network_state, **button_style)
-        load_button.pack(side=tk.LEFT, padx=5, pady=5)
-
         self.mode_button = tk.Button(buttons_frame, text='Configuration', command=self.toggle_mode, **button_style)
-        self.mode_button.pack(side=tk.LEFT, padx=(5, 100), pady=5)
-
+        self.mode_button.pack(side=tk.LEFT, padx=(5, 100), pady=5)        
+        
         whoamI_button = tk.Button(buttons_frame, text='Who am I?', command=self.highlight_matching_nodes, **button_style)
         whoamI_button.pack(side=tk.LEFT, padx=5, pady=5)
         
@@ -371,8 +366,10 @@ class NetworkMapGUI:
         self.toggle_mode() # sets to Operator mode on startup
         self.hide_legend_on_start = tk.BooleanVar(value=False)
         self.load_legend_state()
-        self.display_legend()
-        self.load_last_file() 
+        if self.hide_legend_on_start.get():
+            self.load_last_file()  # Load the last file without displaying the legend
+        else:
+            self.display_legend()  # Display the legend window
 
         root.protocol("WM_DELETE_WINDOW", self.on_close)
 
@@ -468,14 +465,13 @@ class NetworkMapGUI:
 
 
     def display_legend(self):
-        if not self.hide_legend_on_start.get():
-        
+        if self.legend_window is None:
             # Create a Toplevel window
-            legend_window = tk.Toplevel(self.root)
-            legend_window.title("")
-            legend_window.transient(self.root)  # Make the new window stay on top of the main window
-            legend_window.grab_set()  # Modal: input to this window only until closed
-            legend_window.iconbitmap('favicon.ico')
+            self.legend_window = tk.Toplevel(self.root)
+            self.legend_window.title("")  # Use self.legend_window
+            self.legend_window.transient(self.root)  # Make the new window stay on top of the main window
+            self.legend_window.grab_set()  # Modal: input to this window only until closed
+            self.legend_window.iconbitmap('favicon.ico')
 
             # Load the legend image
             legend_image_path = "legend.png"  
@@ -483,20 +479,36 @@ class NetworkMapGUI:
             photo_img = ImageTk.PhotoImage(img)
 
             # Create a Label with the image
-            img_label = tk.Label(legend_window, image=photo_img)
+            img_label = tk.Label(self.legend_window, image=photo_img)
             img_label.image = photo_img  # Keep a reference to the PhotoImage object
             img_label.pack()
+           
+            # button styles
+            button_style = {'font': self.custom_font, 'bg': ColorConfig.BUTTON_BG, 'fg': ColorConfig.BUTTON_FG, 'relief': tk.GROOVE}
+
+            # Create and pack buttons vertically
+            create_new = tk.Button(self.legend_window, text='Create New Network', 
+                                   command=lambda: self.new_network_state(), **button_style)
+            create_new.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+
+            save_button = tk.Button(self.legend_window, text='Save', 
+                                    command=lambda: self.save_network_state(), **button_style)
+            save_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+
+            load_button = tk.Button(self.legend_window, text='Load', 
+                                    command=lambda: self.load_network_state(), **button_style)
+            load_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             # Checkbox to hide the legend window on next startup
-            hide_legend_checkbox = tk.Checkbutton(legend_window, text="Hide this window on next startup", var=self.hide_legend_on_start)
-            hide_legend_checkbox.pack(pady=10)
+            self.hide_legend_checkbox = tk.Checkbutton(self.legend_window, text="Hide this window on next startup and load most recent on next startup", var=self.hide_legend_on_start)
+            self.hide_legend_checkbox.pack(pady=10)
 
             # This callback closes the legend window
             def close_legend(event):
-                legend_window.destroy()
+                self.legend_window.destroy()
 
             # Center the window on the screen
-            self.center_window_on_screen(legend_window)
+            self.center_window_on_screen(self.legend_window)
             
     def save_legend_state(self):
         with open("legend_state.txt", "w") as f:
@@ -777,6 +789,15 @@ class NetworkMapGUI:
         if file_path:
             with open(file_path, 'w') as f:
                 json.dump(state, f, indent=4)    
+        self.legend_window.destroy()  # Close the legend window
+
+    def new_network_state(self):
+        # Confirm with the user before clearing the network state
+        response = messagebox.askyesno("New Network State", "Are you sure you want to create a new network state? This will clear all current loaded data.")
+        if response:
+            self.clear_current_loaded()  # Clear existing nodes and connections
+            self.clear_node_status()  # Reset the status of all nodes
+            self.legend_window.destroy()  # Close the legend window
 
     def load_network_state_from_path(self, file_path):
         with open(file_path, 'r') as f:
@@ -811,7 +832,10 @@ class NetworkMapGUI:
             for node in self.nodes:
                 node.raise_node()
         self.save_last_file_path(file_path)  # Save the last file path
-
+        if self.legend_window is not None:
+            self.legend_window.destroy()
+            self.legend_window = None  # Reset the attribute after destroying the window
+        
     def load_network_state(self):
         file_path = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
         if file_path:
@@ -848,6 +872,7 @@ class NetworkMapGUI:
                 for node in self.nodes:
                     node.raise_node()
             self.save_last_file_path(file_path)  # Save the last file path
+            self.legend_window.destroy()  # Close the legend window
 
     def save_last_file_path(self, file_path):
         with open('last_file_path.txt', 'w') as f:
@@ -859,10 +884,12 @@ class NetworkMapGUI:
                 last_file_path = f.read().strip()
                 if os.path.exists(last_file_path):
                     self.load_network_state_from_path(last_file_path)
+                    if self.legend_window is not None:
+                        self.legend_window.destroy()
+                        self.legend_window = None  # Reset the attribute after destroying the window
         except FileNotFoundError:
             pass
         
-
     def highlight_matching_nodes(self):
         my_ips = get_ip_addresses()
         host_node_set = False  

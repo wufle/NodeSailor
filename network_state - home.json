@@ -6,8 +6,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 599,
-            "y": 201,
+            "x": 565,
+            "y": 213,
             "remote_desktop_address": "Hal",
             "file_path": "\\\\192.168.0.3",
             "web_config_url": ""
