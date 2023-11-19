@@ -369,7 +369,13 @@ class NetworkMapGUI:
             self.vlan_labels[vlan].grid(row=i, column=1, sticky='w', padx=5, pady=2)
         
         self.toggle_mode() # sets to Operator mode on startup
+        self.hide_legend_on_start = tk.BooleanVar(value=False)
+        self.load_legend_state()
+        self.display_legend()
         self.load_last_file() 
+
+        root.protocol("WM_DELETE_WINDOW", self.on_close)
+
     def show_help(self, event=None):
         help_window = tk.Toplevel(self.root)
         help_window.title("Help - Keyboard Shortcuts and Functions")
@@ -462,33 +468,51 @@ class NetworkMapGUI:
 
 
     def display_legend(self):
-        # Create a Toplevel window
-        legend_window = tk.Toplevel(self.root)
-        legend_window.title("")
-        legend_window.transient(self.root)  # Make the new window stay on top of the main window
-        legend_window.grab_set()  # Modal: input to this window only until closed
-        legend_window.iconbitmap('favicon.ico')
+        if not self.hide_legend_on_start.get():
+        
+            # Create a Toplevel window
+            legend_window = tk.Toplevel(self.root)
+            legend_window.title("")
+            legend_window.transient(self.root)  # Make the new window stay on top of the main window
+            legend_window.grab_set()  # Modal: input to this window only until closed
+            legend_window.iconbitmap('favicon.ico')
 
-        # Load the legend image
-        legend_image_path = "legend.png"  
-        img = Image.open(legend_image_path)
-        photo_img = ImageTk.PhotoImage(img)
+            # Load the legend image
+            legend_image_path = "legend.png"  
+            img = Image.open(legend_image_path)
+            photo_img = ImageTk.PhotoImage(img)
 
-        # Create a Label with the image
-        img_label = tk.Label(legend_window, image=photo_img)
-        img_label.image = photo_img  # Keep a reference to the PhotoImage object
-        img_label.pack()
+            # Create a Label with the image
+            img_label = tk.Label(legend_window, image=photo_img)
+            img_label.image = photo_img  # Keep a reference to the PhotoImage object
+            img_label.pack()
 
-        # This callback closes the legend window
-        def close_legend(event):
-            legend_window.destroy()
+            # Checkbox to hide the legend window on next startup
+            hide_legend_checkbox = tk.Checkbutton(legend_window, text="Hide this window on next startup", var=self.hide_legend_on_start)
+            hide_legend_checkbox.pack(pady=10)
 
-        # Binds any key press to close the legend
-        legend_window.bind("<KeyPress>", close_legend)
-        legend_window.bind("<Button-1>", close_legend)
+            # This callback closes the legend window
+            def close_legend(event):
+                legend_window.destroy()
 
-        # Center the window on the screen
-        self.center_window_on_screen(legend_window)
+            # Center the window on the screen
+            self.center_window_on_screen(legend_window)
+            
+    def save_legend_state(self):
+        with open("legend_state.txt", "w") as f:
+            f.write(str(self.hide_legend_on_start.get()))
+
+    def load_legend_state(self):
+        try:
+            with open("legend_state.txt", "r") as f:
+                state = f.read().strip().lower() == 'true'
+                self.hide_legend_on_start.set(state)
+        except FileNotFoundError:
+            pass
+
+    def on_close(self):
+        self.save_legend_state()  # Save the state of the legend window
+        self.root.destroy()
 
     def center_window_on_screen(self, window):
         window.update_idletasks()  # Update "requested size" from geometry manager
