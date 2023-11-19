@@ -274,6 +274,7 @@ class ConnectionLine:
 class NetworkMapGUI:
     def __init__(self, root):
         self.root = root
+        root.iconbitmap('favicon.ico')
         self.custom_font = font.Font(family="Helvetica", size=12)
         self.mode = "Configuration"
         self.selected_object_type = None
@@ -463,9 +464,10 @@ class NetworkMapGUI:
     def display_legend(self):
         # Create a Toplevel window
         legend_window = tk.Toplevel(self.root)
-        legend_window.title("Splash Screen")
+        legend_window.title("")
         legend_window.transient(self.root)  # Make the new window stay on top of the main window
         legend_window.grab_set()  # Modal: input to this window only until closed
+        legend_window.iconbitmap('favicon.ico')
 
         # Load the legend image
         legend_image_path = "legend.png"  
