@@ -8,13 +8,13 @@ It has largely been written copy/pasting ChatGPT prompts!
 
 
 **Known bugs/problems:**
-    Pan and zoom funcitonality messes with the alignment of cursor and nodes
+    - Pan and zoom funcitonality messes with the alignment of cursor and nodes
 
 **Future plans:**
-    Colour scheme options
-    Ping only selected networks/vlans
-    New network create to open prompt to set network names
-    User created background image for networks
-    Codebase cleanup
-    Make the help page pretty
+    - Colour scheme options
+    - Ping only selected networks/vlans
+    - New network create to open prompt to set network names
+    - User created background image for networks
+    - Codebase cleanup
+    - Make the help page pretty
 
