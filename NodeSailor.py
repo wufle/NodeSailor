@@ -46,7 +46,7 @@ class StickyNote:
         self.y = y
         self.bg = bg
         self.font = font
-        self.bg_shape = canvas.create_rectangle(x, y, x + 100, y + 50, fill=ColorConfig.FRAME_BG, outline='')  # Arbitrary size for the background
+        self.bg_shape = canvas.create_rectangle(x, y, x + 100, y + 50, fill=ColorConfig.FRAME_BG, outline='')
         self.note = canvas.create_text(x, y, text=text, font=self.font, tags="sticky_note", anchor="nw")
         self.canvas.tag_bind(self.note, '<Button-1>', self.on_click)
         self.canvas.tag_bind(self.note, '<Shift-B1-Motion>', self.on_drag_notes)
@@ -182,8 +182,8 @@ class NetworkNode:
 
     def adjust_node_size(self):
         bbox = self.canvas.bbox(self.text)  # Get the bounding box of the text
-        width = bbox[2] - bbox[0]  # Width of the text
-        height = bbox[3] - bbox[1]  # Height of the text
+        width = bbox[2] - bbox[0]
+        height = bbox[3] - bbox[1]
         pad = 10  # Padding around the text
         # Resize the rectangle based on the text size plus padding
         self.canvas.coords(self.shape, self.x - width/2 - pad, self.y - height/2 - pad, 
@@ -195,7 +195,7 @@ class NetworkNode:
             context_menu.add_command(label="Open Remote Desktop", command=self.open_remote_desktop)
             context_menu.add_command(label="Open File Explorer", command=self.open_file_explorer)
             context_menu.add_command(label="Open Web Browser", command=self.open_web_browser)
-            context_menu.add_separator()  # Adds a separator line
+            context_menu.add_separator()
             context_menu.add_command(label="Delete Node", command=self.delete_node)
             context_menu.tk_popup(event.x_root, event.y_root)
             
@@ -222,7 +222,7 @@ class NetworkNode:
         if not self.web_config_url:
             messagebox.showinfo("Info", "No web config URL set for this node.")
             return
-        webbrowser.open(self.web_config_url, new=2)  # Open URL in a new tab, if possible
+        webbrowser.open(self.web_config_url, new=2)  # Open URL in a new tab, if exists
         pass
     
     def delete_node(self):
@@ -275,7 +275,7 @@ class NetworkMapGUI:
     def __init__(self, root):
         self.root = root
         self.custom_font = font.Font(family="Helvetica", size=12)
-        self.mode = "Configuration"  # Default mode
+        self.mode = "Configuration"
         self.selected_object_type = None
         self.connection_start_node = None
         
@@ -372,7 +372,7 @@ class NetworkMapGUI:
     def show_help(self, event=None):
         help_window = tk.Toplevel(self.root)
         help_window.title("Help - Keyboard Shortcuts and Functions")
-        help_window.geometry("600x400")  # Adjust size as needed
+        help_window.geometry("600x400")
 
         text_area = tk.Text(help_window, wrap="word", font="Helvetica 10", state="disabled")
         text_area.pack(expand=True, fill="both", padx=10, pady=10)
@@ -414,11 +414,11 @@ class NetworkMapGUI:
             self.canvas.bind('<B1-Motion>', self.move_node)
             self.canvas.bind('<Shift-Double-1>', self.create_sticky_note)
             self.canvas.bind('<Button-2>', self.create_connection)
-            # ... (any other Configuration mode setups)
+            
         else:
             self.mode = "Operator"
             self.mode_button.config(text='Operator Mode', bg=ColorConfig.BUTTON_BG)
-            # Disable functionalities for Configuration mode
+            # Disable functionalities for Operator mode
             self.canvas.unbind('<Double-1>')
             self.canvas.unbind('<B1-Motion>')
             self.canvas.unbind('<Shift-Double-1>')
@@ -463,12 +463,12 @@ class NetworkMapGUI:
     def display_legend(self):
         # Create a Toplevel window
         legend_window = tk.Toplevel(self.root)
-        legend_window.title("Legend")
+        legend_window.title("Splash Screen")
         legend_window.transient(self.root)  # Make the new window stay on top of the main window
         legend_window.grab_set()  # Modal: input to this window only until closed
 
         # Load the legend image
-        legend_image_path = "legend.png"  # Replace with the path to your legend image
+        legend_image_path = "legend.png"  
         img = Image.open(legend_image_path)
         photo_img = ImageTk.PhotoImage(img)
 
@@ -481,9 +481,8 @@ class NetworkMapGUI:
         def close_legend(event):
             legend_window.destroy()
 
-        # Bind any key press to close the legend
+        # Binds any key press to close the legend
         legend_window.bind("<KeyPress>", close_legend)
-        # If you also want to close the window on mouse click, you can bind to <Button-1>
         legend_window.bind("<Button-1>", close_legend)
 
         # Center the window on the screen
@@ -630,7 +629,6 @@ class NetworkMapGUI:
             self.canvas.tag_raise(node.text)
 
     def clear_current_loaded(self): # for clearing the current nodes on the canvas before loading a new one
-        # Clear nodes and their connections
         for node in self.nodes:
             for connection in node.connections:
                 self.canvas.delete(connection.line)
