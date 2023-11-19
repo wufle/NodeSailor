@@ -95,6 +95,18 @@
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": ""
+        },
+        {
+            "name": "lappi",
+            "VLAN_100": "192.168.0.122",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 783,
+            "y": 689,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
         }
     ],
     "connections": [
@@ -127,6 +139,11 @@
             "from": 5,
             "to": 6,
             "label": "N04"
+        },
+        {
+            "from": 8,
+            "to": 5,
+            "label": "N06"
         }
     ]
 }

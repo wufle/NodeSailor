@@ -1,1 +1,1 @@
-C:/python network tester/NodeSailor/network_state - home.json
+C:/NodeSailor/NodeSailor/network_state - home.json
