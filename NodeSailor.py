@@ -382,6 +382,7 @@ class NetworkMapGUI:
 
         \nOperator Mode:
         - Left click on Node: Ping! - Node will change colour depending on response
+        - Left click drag Node: Move node
         - Right Click on Node: Open context menu for node-specific operations
         - 'Save': Save the current network state
         - 'Load': Load a saved network state
