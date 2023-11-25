@@ -1,3 +1,6 @@
 Include/
 Lib/
 Scripts/
+pyenv.cfg
+run.cmd
+last_file_path.txt

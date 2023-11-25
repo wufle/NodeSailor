@@ -288,7 +288,7 @@ class NetworkMapGUI:
         buttons_frame.config(bg=ColorConfig.FRAME_BG)
         
         # Load NodeSailor image
-        img = Image.open("NodeSailorvsmall.png")
+        img = Image.open("NodeSailorsmall.png")
         photo_img = ImageTk.PhotoImage(img)
 
         # Create a button with the image
@@ -469,10 +469,11 @@ class NetworkMapGUI:
         if self.legend_window is None:
             # Create a Toplevel window
             self.legend_window = tk.Toplevel(self.root)
-            self.legend_window.title("")  # Use self.legend_window
+            self.legend_window.title("")  
             self.legend_window.transient(self.root)  # Make the new window stay on top of the main window
             self.legend_window.grab_set()  # Modal: input to this window only until closed
             self.legend_window.iconbitmap('favicon.ico')
+            self.legend_window.protocol("WM_DELETE_WINDOW", self.close_legend)
 
             # Load the legend image
             legend_image_path = "legend.png"  
@@ -489,27 +490,33 @@ class NetworkMapGUI:
 
             # Create and pack buttons vertically
             create_new = tk.Button(self.legend_window, text='Create New Network', 
-                                   command=lambda: self.new_network_state(), **button_style)
+                       command=lambda: [self.new_network_state(), self.close_legend()], **button_style)
             create_new.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             save_button = tk.Button(self.legend_window, text='Save', 
-                                    command=lambda: self.save_network_state(), **button_style)
+                                    command=lambda: [self.save_network_state(), self.close_legend()], **button_style)
             save_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             load_button = tk.Button(self.legend_window, text='Load', 
-                                    command=lambda: self.load_network_state(), **button_style)
+                                    command=lambda: [self.load_network_state(), self.close_legend()], **button_style)
             load_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             # Checkbox to hide the legend window on next startup
-            self.hide_legend_checkbox = tk.Checkbutton(self.legend_window, text="Hide this window on next startup and load most recent on next startup", var=self.hide_legend_on_start)
+            self.hide_legend_checkbox = tk.Checkbutton(
+                self.legend_window, 
+                text="Hide this window on next startup and load most recent on next startup", 
+                var=self.hide_legend_on_start,
+                command=lambda: self.save_legend_state()
+            )
             self.hide_legend_checkbox.pack(pady=10)
-
-            # This callback closes the legend window
-            def close_legend(event):
-                self.legend_window.destroy()
-
+            
             # Center the window on the screen
             self.center_window_on_screen(self.legend_window)
+
+    # This callback closes the legend window
+    def close_legend(self):
+        self.legend_window.destroy()
+        self.legend_window = None   
             
     def save_legend_state(self):
         with open("legend_state.txt", "w") as f:
@@ -522,11 +529,7 @@ class NetworkMapGUI:
                 self.hide_legend_on_start.set(state)
         except FileNotFoundError:
             pass
-
-    def on_close(self):
-        self.save_legend_state()  # Save the state of the legend window
-        self.root.destroy()
-
+        
     def center_window_on_screen(self, window):
         window.update_idletasks()  # Update "requested size" from geometry manager
         width = window.winfo_width()
