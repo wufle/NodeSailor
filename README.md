@@ -9,7 +9,7 @@ It has largely been written copy/pasting ChatGPT prompts!
 
 **Installation Instrucitons:**
 
-A prepackaged executable can be found in the releases section - https://github.com/wufle/NodeSailor/releases.  Simply download and run the NodeSailor.exe
+A prepackaged executable can be found in the releases section - https://github.com/wufle/NodeSailor/releases.  Simply download the latest release and run NodeSailor.exe
 
 If you would instead like to run the project from the source, run through the steps below to setup a virtual python environment:
 
