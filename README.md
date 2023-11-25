@@ -7,15 +7,17 @@ I know next to nothing about network configuration or Python - this tool begun a
 It has largely been written copy/pasting ChatGPT prompts!    
 
 
-**Installation**
+**Installation Instrucitons:**
 
-A prepackaged executable can be found in the releases section - https://github.com/wufle/NodeSailor/releases
+A prepackaged executable can be found in the releases section - https://github.com/wufle/NodeSailor/releases.  Simply download and run the NodeSailor.exe
 
-If you would like to run the project froun the source, clone the repository and run the commands as below:
+If you would instead like to run the project from the source, run through the steps below to setup a virtual python environment:
 
 1. Create the Virtual Environment
 
-`python -m venv '.\NodeSailor'`
+Opent a terminal and run the command:
+
+`python -m venv '.\NodeSailor'` <-- clone the project repository to this filepath
 
 2. Activate the Virtual Environment
 
