@@ -94,7 +94,7 @@ class NetworkNode:
         self.x = x
         self.y = y
         unique_node_tag = f"node_{id(self)}"
-        self.font = font.Font(family="Helvetica", size=12)  # Define font
+        self.font = font.Font(family="Helvetica", size=12) 
         self.shape = canvas.create_rectangle(
             x - 15, y - 15, x + 15, y + 15,
             fill=ColorConfig.NODE_DEFAULT, outline=ColorConfig.NODE_OUTLINE_DEFAULT, width=2,  # Adjust width for a bolder outline
