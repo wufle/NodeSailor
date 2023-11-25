@@ -7,6 +7,15 @@ I know next to nothing about network configuration or Python - this tool begun a
 It has largely been written copy/pasting ChatGPT prompts!    
 
 
+**Installation**
+
+A prepackaged executable can be found in the releases section - https://github.com/wufle/NodeSailor/releases
+
+If you would like to run the project froun the source, clone the repository and run the command
+
+`pip install -r requirements.txt`
+
+
 **Known bugs/problems:**
 - Pan and zoom funcitonality messes with the alignment of cursor and nodes
 
