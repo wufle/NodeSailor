@@ -7,7 +7,7 @@ I know next to nothing about network configuration or Python - this tool begun a
 It has largely been written copy/pasting ChatGPT prompts!    
 
 
-**Installation Instrucitons:**
+**Installation Instructions:**
 
 A prepackaged executable can be found in the releases section - https://github.com/wufle/NodeSailor/releases.  Simply download the latest release and run NodeSailor.exe
 
