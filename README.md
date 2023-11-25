@@ -11,10 +11,22 @@ It has largely been written copy/pasting ChatGPT prompts!
 
 A prepackaged executable can be found in the releases section - https://github.com/wufle/NodeSailor/releases
 
-If you would like to run the project froun the source, clone the repository and run the command
+If you would like to run the project froun the source, clone the repository and run the commands as below:
+
+1. Create the Virtual Environment
+
+`python -m venv '.\NodeSailor'`
+
+2. Activate the Virtual Environment
+
+`cd '.\NodeSailor\'`
+
+`.\Scripts\activate`
+
+3. Install Packages While the Virtual Environment is Active
+With the virtual environment active, you can install packages using pip. To install all required packages, run:
 
 `pip install -r requirements.txt`
-
 
 **Known bugs/problems:**
 - Pan and zoom funcitonality messes with the alignment of cursor and nodes
