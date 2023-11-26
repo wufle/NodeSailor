@@ -1,10 +1,10 @@
 # NodeSailor
 
-NodeSailor is a basic network topology mapping, configuration and testing tool.  It has largely been written by copy/pasting ChatGPT prompts, as I know next to nothing about network configuration or Python.  
+NodeSailor is a basic network topology mapping, configuration and testing tool.  It the time of initialy relese, it has largely been written by copy/pasting ChatGPT prompts. I knew next to nothing about Python (or network configuration for that matter) when I started this, so it's been a fun and potentially scary test of the power of the current AI tools out there.  
 
 *They took our jerbs!*
 
-This project was created in order to better understand a certain, unique network installation and at the same time, learn how to write some Python.  It has evolved in to something that will be useful for future maintenance and testing (for me at least anyway!).
+This project was initially created in order to better understand a certain, unique network installation and at the same time, learn how to write some Python.  It has evolved in to something that will actually be useful for future maintenance and testing (for me at least anyway!).
 
  ![image](https://github.com/wufle/NodeSailor/assets/121041163/c6629eee-93f7-4306-a2ce-06756320e175)
 
@@ -68,6 +68,7 @@ Opent a terminal and run the command:
 - Pan and zoom funcitonality messes with the alignment of cursor and nodes
 
 **Future plans:**
+* Tutorial for first time use.
 * More configuration options when creating a new network, i.e., number and name of seperate networks/VLANs.
 * Colour scheme options.
 * ability to ping only selected networks/vlans.
