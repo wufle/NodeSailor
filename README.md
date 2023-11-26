@@ -5,7 +5,9 @@ NodeSailor is a basic network topology mapping, configuration and testing tool. 
 *They took our jerbs!*
 
 This project was created in order to better understand a certain, unique network installation and at the same time, learn how to write some Python.  It has evolved in to something that will be useful for future maintenance and testing (for me at least anyway!)
- 
+
+ ![image](https://github.com/wufle/NodeSailor/assets/121041163/c6629eee-93f7-4306-a2ce-06756320e175)
+
 
 **Operation Instructions**
 
