@@ -1,15 +1,17 @@
 # NodeSailor
 
-NodeSailor is a basic network topology mapping, configuration and testing tool.  
+NodeSailor is a basic network topology mapping, configuration and testing tool.  It has largely been written by copy/pasting ChatGPT prompts, as I know next to nothing about network configuration or Python.  
 
-I know next to nothing about network configuration or Python - this tool begun as a project created in order to better understand a unique network installation, and at the same time, learn how to write some Python.
+*They took our jerbs!*
 
-It has largely been written copy/pasting ChatGPT prompts!    
+This project was created in order to better understand a certain, unique network installation and at the same time, learn how to write some Python.  It has evolved in to something that will be useful for future maintenance and testing (for me at least anyway!)
+ 
 
 **Operation Instructions**
 
-Networks are manually configured by the user when in "Configuration Mode". I've included an example config
+Networks are manually configured by the user when in "Configuration Mode". I've included a basic example config, 'example network.json'
 
+In Operator mode, the user can perform basic network testing functions via a simple GUI. It is possible to quickly ascertain network status and access other common admin functions, like Remote desktop, File Explorer, Web browser.
 
 Keyboard Shortcuts and Functions:
         
@@ -27,6 +29,7 @@ Keyboard Shortcuts and Functions:
 - Double Left Click: Create a node
 - Left click drag Node: Move node
 - Shift + Double Left Click: Create a sticky note
+- Shift left click drag to move sticky notes
 - Middle Click: Create a connection between nodes
 - Shift + Middle Click: Remove a connection
 - Right Click on Node: Open context menu for additional options (Edit, Delete, Remote desktop, File Explorer, Web browser)
