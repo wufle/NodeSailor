@@ -6,7 +6,33 @@ I know next to nothing about network configuration or Python - this tool begun a
 
 It has largely been written copy/pasting ChatGPT prompts!    
 
+**Operation Instructions**
 
+Networks are manually configured by the user when in "Configuration Mode". I've included an example config
+
+
+Keyboard Shortcuts and Functions:
+        
+*Operator Mode:*
+- 'F1' for help
+- Left click on Node: Ping the node! Node will change colour depending on response, Green is good, Yellow means good on some Vlans (if configured), Red for no response.
+- Right Click on Node: Open context menu for other node-specific operations
+- 'Who am I?': Identify and highlight the node where this program is running
+- 'Ping All': Ping all nodes and update their status
+- 'Clear Status': Reset the status of all nodes
+- Radio buttons for displaying/hiding selected Vlans
+
+        
+*Configuration Mode:*
+- Double Left Click: Create a node
+- Left click drag Node: Move node
+- Shift + Double Left Click: Create a sticky note
+- Middle Click: Create a connection between nodes
+- Shift + Middle Click: Remove a connection
+- Right Click on Node: Open context menu for additional options (Edit, Delete, Remote desktop, File Explorer, Web browser)
+- 'Save': Save the current network state
+- 'Load': Load a saved network state
+  
 **Installation Instructions:**
 
 A prepackaged executable can be found in the releases section - https://github.com/wufle/NodeSailor/releases.  Simply download the latest release and run NodeSailor.exe
