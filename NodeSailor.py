@@ -19,6 +19,8 @@ def get_ip_addresses():
         pass
     return ip_addresses
 
+#testing nightmode colours
+
 class ColorConfig:
     NODE_DEFAULT = 'light steel blue'
     NODE_GREYED_OUT = 'gainsboro'
