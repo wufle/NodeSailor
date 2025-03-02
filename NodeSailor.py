@@ -22,39 +22,75 @@ def get_ip_addresses():
 #testing nightmode colours
 
 class ColorConfig:
-    NODE_DEFAULT = 'light steel blue'
-    NODE_GREYED_OUT = 'gainsboro'
-    NODE_HIGHLIGHT = 'gold'
-    NODE_HOST = 'turquoise'
-    NODE_OUTLINE_DEFAULT = 'black'
-    NODE_PING_SUCCESS = 'green'
-    NODE_PING_PARTIAL_SUCCESS = 'yellow'
-    NODE_PING_FAILURE = 'red'
-    FRAME_BG = 'white'
-    STICKY_NOTE_BG = 'white'
-    STICKY_NOTE_TEXT = 'black'
-    BUTTON_BG = 'white'
-    BUTTON_FG = 'black'
-    BUTTON_CONFIGURATION_MODE = 'light coral'
-    INFO_PANEL_BG = 'white'
-    INFO_PANEL_TEXT = 'black'
-    Connections = 'dim gray'
+    class Light:
+        FRAME_BG = '#ffffff'
+        BUTTON_FG = '#000000'
+        NODE_DEFAULT = 'light steel blue'
+        NODE_GREYED_OUT = 'gainsboro'
+        NODE_HIGHLIGHT = 'gold'
+        NODE_HOST = 'turquoise'
+        NODE_OUTLINE_DEFAULT = 'black'
+        NODE_PING_SUCCESS = 'green'
+        NODE_PING_PARTIAL_SUCCESS = 'yellow'
+        NODE_PING_FAILURE = 'red'
+        FRAME_BG = 'white'
+        STICKY_NOTE_BG = 'white'
+        STICKY_NOTE_TEXT = 'black'
+        BUTTON_BG = 'white'
+        BUTTON_FG = 'black'
+        BUTTON_CONFIGURATION_MODE = 'light coral'
+        INFO_PANEL_BG = 'white'
+        INFO_PANEL_TEXT = 'black'
+        Connections = 'dim gray'
+
+    class Dark:
+        FRAME_BG = '#2e2e2e'
+        BUTTON_FG = '#ffffff'
+        NODE_DEFAULT = '#4B5EAA'
+        NODE_GREYED_OUT = '#4B5563'
+        NODE_HIGHLIGHT = '#D97706'
+        NODE_HOST = '#0F766E'
+        NODE_OUTLINE_DEFAULT = '#374151'
+        NODE_PING_SUCCESS = '#047857'
+        NODE_PING_PARTIAL_SUCCESS = '#B45309'
+        NODE_PING_FAILURE = '#991B1B'
+        FRAME_BG = '#1F2937'
+        STICKY_NOTE_BG = '#374151'
+        STICKY_NOTE_TEXT = '#E5E7EB'
+        BUTTON_BG = '#4B5EAA'
+        BUTTON_FG = 'black'
+        BUTTON_CONFIGURATION_MODE = '#F87171'
+        INFO_PANEL_BG = '#111827'
+        INFO_PANEL_TEXT = '#D1D5DB'
+        Connections = '#9CA3AF'
+
+    # Default to Light mode
+    current = Dark
 
 class StickyNote:
-    def __init__(self, canvas, text, x, y, font=('Helvetica', '12'), bg=ColorConfig.STICKY_NOTE_BG):
+    def __init__(self, canvas, text, x, y, font=('Helvetica', '12'), bg=ColorConfig.current.STICKY_NOTE_BG):
         self.canvas = canvas
         self.text = text
         self.x = x
         self.y = y
         self.bg = bg
         self.font = font
-        self.bg_shape = canvas.create_rectangle(x, y, x + 100, y + 50, fill=ColorConfig.FRAME_BG, outline='')
-        self.note = canvas.create_text(x, y, text=text, font=self.font, tags="sticky_note", anchor="nw")
+        self.bg_shape = canvas.create_rectangle(x, y, x + 100, y + 50, fill=ColorConfig.current.FRAME_BG, 
+                                              outline='', tags=f"bg_{id(self)}")
+        self.note = canvas.create_text(x, y, text=text, font=self.font, fill=ColorConfig.current.STICKY_NOTE_TEXT, 
+                                     tags="sticky_note", anchor="nw")
         self.canvas.tag_bind(self.note, '<Button-1>', self.on_click)
         self.canvas.tag_bind(self.note, '<Shift-B1-Motion>', self.on_drag_notes)
         self.canvas.tag_bind(self.note, '<ButtonRelease-1>', self.on_release)
         self.adjust_note_size()
         self.type = 'sticky'
+
+    def adjust_note_size(self):
+        bbox = self.canvas.bbox(self.note)
+        if bbox:
+            padding = 2
+            self.canvas.coords(self.bg_shape, bbox[0]-padding, bbox[1]-padding, bbox[2]+padding, bbox[3]+padding)
+            self.canvas.itemconfig(self.bg_shape, fill=ColorConfig.current.STICKY_NOTE_BG)
         
     def on_click(self, event):
         self.canvas.selected_object_type = self.type
@@ -99,7 +135,7 @@ class NetworkNode:
         self.font = font.Font(family="Helvetica", size=12) 
         self.shape = canvas.create_rectangle(
             x - 15, y - 15, x + 15, y + 15,
-            fill=ColorConfig.NODE_DEFAULT, outline=ColorConfig.NODE_OUTLINE_DEFAULT, width=2,  # Adjust width for a bolder outline
+            fill=ColorConfig.current.NODE_DEFAULT, outline=ColorConfig.current.NODE_OUTLINE_DEFAULT, width=2,  # Adjust width for a bolder outline
             tags=unique_node_tag
         )
         self.text = canvas.create_text(
@@ -162,14 +198,15 @@ class NetworkNode:
             return 'TTL=' in response.stdout or 'ttl=' in response.stdout
 
         def update_ui(results):
-            if all(results):
-                color = ColorConfig.NODE_PING_SUCCESS  # All IPs responded
-            elif any(results):
-                color = ColorConfig.NODE_PING_PARTIAL_SUCCESS  # Some IPs responded
-            else:
-                color = ColorConfig.NODE_PING_FAILURE   # No IPs responded
-            self.canvas.itemconfig(self.shape, fill=color)
-            self.canvas.after(0, lambda: gui.update_vlan_colors(self, results))
+            if self.canvas.winfo_exists():  # Check if canvas still exists
+                if all(results):
+                    color = ColorConfig.current.NODE_PING_SUCCESS
+                elif any(results):
+                    color = ColorConfig.current.NODE_PING_PARTIAL_SUCCESS
+                else:
+                    color = ColorConfig.current.NODE_PING_FAILURE
+                self.canvas.itemconfig(self.shape, fill=color)
+                self.canvas.after(0, lambda: gui.update_vlan_colors(self, results))
 
         def ping_all_vlans():
             vlan_ips = [self.VLAN_100, self.VLAN_200, self.VLAN_300, self.VLAN_400]
@@ -235,7 +272,7 @@ class ConnectionLine:
         self.canvas = canvas
         self.node1 = node1
         self.node2 = node2
-        self.line = canvas.create_line(node1.x, node1.y, node2.x, node2.y,width=2, fill=ColorConfig.Connections)
+        self.line = canvas.create_line(node1.x, node1.y, node2.x, node2.y,width=2, fill=ColorConfig.current.Connections)
         self.label = label
         self.label_id = None
         if label:
@@ -266,7 +303,7 @@ class ConnectionLine:
         bbox = self.canvas.bbox(self.label_id)
         if bbox:
             padding = 2
-            self.label_bg = self.canvas.create_rectangle(bbox[0]-padding, bbox[1]-padding, bbox[2]+padding, bbox[3]+padding, fill=ColorConfig.STICKY_NOTE_BG, outline='')
+            self.label_bg = self.canvas.create_rectangle(bbox[0]-padding, bbox[1]-padding, bbox[2]+padding, bbox[3]+padding, fill=ColorConfig.current.STICKY_NOTE_BG, outline='')
             self.canvas.tag_lower(self.label_bg, self.label_id)  # Ensure the background is behind the text
 
     def set_label(self, label):
@@ -277,7 +314,27 @@ class NetworkMapGUI:
     def __init__(self, root):
         self.root = root
         root.iconbitmap('favicon.ico')
+        self.root.overrideredirect(True)
+        self.root.configure(bg=ColorConfig.current.FRAME_BG)
         self.custom_font = font.Font(family="Helvetica", size=12)
+        
+        # Custom Title Bar
+        self.title_bar = tk.Frame(self.root, bg=ColorConfig.current.FRAME_BG, relief='raised', bd=2)
+        self.title_bar.pack(side=tk.TOP, fill=tk.X)
+        self.title_label = tk.Label(self.title_bar, text="NodeSailor", bg=ColorConfig.current.FRAME_BG, 
+                                   fg=ColorConfig.current.BUTTON_FG, font=self.custom_font)
+        self.title_label.pack(side=tk.LEFT, padx=10)
+        self.close_button = tk.Button(self.title_bar, text='X', command=self.root.destroy, 
+                                     bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG, 
+                                     font=self.custom_font)
+        self.close_button.pack(side=tk.RIGHT)
+        
+        # Bind dragging events
+        self.title_bar.bind('<Button-1>', self.start_move)
+        self.title_bar.bind('<B1-Motion>', self.do_move)
+        self.title_label.bind('<Button-1>', self.start_move)
+        self.title_label.bind('<B1-Motion>', self.do_move)
+        
         self.mode = "Configuration"
         self.selected_object_type = None
         self.connection_start_node = None
@@ -285,33 +342,41 @@ class NetworkMapGUI:
         self.unsaved_changes = False
 
         # Buttons Frame
-        buttons_frame = tk.Frame(root)
-        buttons_frame.pack(side=tk.TOP, fill=tk.X)
-        buttons_frame.config(bg=ColorConfig.FRAME_BG)
+        self.buttons_frame = tk.Frame(root)
+        self.buttons_frame.pack(side=tk.TOP, fill=tk.X)
+        self.buttons_frame.config(bg=ColorConfig.current.FRAME_BG)
         
         # Load NodeSailor image
         img = Image.open("NodeSailorsmall.png")
         photo_img = ImageTk.PhotoImage(img)
 
         # Create a button with the image
-        img_button = tk.Button(buttons_frame, image=photo_img, command=self.display_legend, borderwidth=0, highlightthickness=0, relief=tk.FLAT)
+        img_button = tk.Button(self.buttons_frame, image=photo_img, command=self.display_legend, borderwidth=0, highlightthickness=0, relief=tk.FLAT)
         img_button.image = photo_img  # Keep a reference to the PhotoImage object
         img_button.pack(side=tk.LEFT)
         
         # Update button styles
-        button_style = {'font': self.custom_font, 'bg': ColorConfig.BUTTON_BG, 'fg': ColorConfig.BUTTON_FG, 'relief': tk.GROOVE}
+        button_style = {'font': self.custom_font, 'bg': ColorConfig.current.BUTTON_BG, 'fg': ColorConfig.current.BUTTON_FG, 'relief': tk.GROOVE}
 
-        self.mode_button = tk.Button(buttons_frame, text='Configuration', command=self.toggle_mode, **button_style)
+        self.mode_button = tk.Button(self.buttons_frame, text='Configuration', command=self.toggle_mode, **button_style)
         self.mode_button.pack(side=tk.LEFT, padx=(5, 100), pady=5)        
         
-        whoamI_button = tk.Button(buttons_frame, text='Who am I?', command=self.highlight_matching_nodes, **button_style)
+        whoamI_button = tk.Button(self.buttons_frame, text='Who am I?', command=self.highlight_matching_nodes, **button_style)
         whoamI_button.pack(side=tk.LEFT, padx=5, pady=5)
         
-        clear_status_button = tk.Button(buttons_frame, text='Clear Status', command=self.clear_node_status, **button_style)
+        clear_status_button = tk.Button(self.buttons_frame, text='Clear Status', command=self.clear_node_status, **button_style)
         clear_status_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-        ping_all_button = tk.Button(buttons_frame, text='Ping All', command=self.ping_all, **button_style)
+        ping_all_button = tk.Button(self.buttons_frame, text='Ping All', command=self.ping_all, **button_style)
         ping_all_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.theme_button = tk.Button(self.buttons_frame, text="Toggle Dark Mode", 
+                                     command=self.toggle_theme, 
+                                     font=self.custom_font, 
+                                     bg=ColorConfig.current.BUTTON_BG, 
+                                     fg=ColorConfig.current.BUTTON_FG, 
+                                     relief=tk.GROOVE)
+        self.theme_button.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Checkboxes for VLANs
         self.vlan_visibility = {'VLAN_100': tk.BooleanVar(value=True),
@@ -320,11 +385,17 @@ class NetworkMapGUI:
                                 'VLAN_400': tk.BooleanVar(value=True)}
 
         for vlan, var in self.vlan_visibility.items():
-            cb = tk.Checkbutton(buttons_frame, text=vlan, var=var, bg=ColorConfig.FRAME_BG, command=self.update_vlan_visibility)
+            cb = tk.Checkbutton(self.buttons_frame, text=vlan, variable=var, 
+                                bg=ColorConfig.current.FRAME_BG, 
+                                fg=ColorConfig.current.BUTTON_FG,  # Text color matches buttons
+                                selectcolor=ColorConfig.current.FRAME_BG,  # Checkbox square background
+                                activebackground=ColorConfig.current.BUTTON_BG,  # Hover background
+                                activeforeground=ColorConfig.current.BUTTON_FG,  # Hover text
+                                command=self.update_vlan_visibility)
             cb.pack(side=tk.LEFT, padx=5)
 
         # Canvas below the buttons
-        self.canvas = tk.Canvas(root, width=1600, height=900, bg=ColorConfig.FRAME_BG, highlightthickness=0)
+        self.canvas = tk.Canvas(root, width=1600, height=900, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH, expand=True)
         self.nodes = []
         self.selected_node = None
@@ -346,11 +417,11 @@ class NetworkMapGUI:
         self.canvas.bind('<Shift-Button-2>', self.remove_connection)
 
          # Info Panel
-        self.info_panel = tk.Frame(root, bd=2, relief=tk.SUNKEN, bg=ColorConfig.INFO_PANEL_BG)
+        self.info_panel = tk.Frame(root, bd=2, relief=tk.SUNKEN, bg=ColorConfig.current.INFO_PANEL_BG)
         self.info_panel.place(relx=1.0, rely=1.0, anchor='se')
 
-        info_label_style = {'font': ('Helvetica', 10), 'bg': ColorConfig.INFO_PANEL_BG, 'fg': 'black', 'anchor': 'w'}
-        info_value_style = {'font': ('Helvetica', 10), 'bg': ColorConfig.INFO_PANEL_BG}
+        info_label_style = {'font': ('Helvetica', 10), 'bg': ColorConfig.current.INFO_PANEL_BG, 'fg': 'black', 'anchor': 'w'}
+        info_value_style = {'font': ('Helvetica', 10), 'bg': ColorConfig.current.INFO_PANEL_BG}
 
         tk.Label(self.info_panel, text="Name:", **info_label_style).grid(row=0, column=0, sticky='w', padx=5, pady=2)
         self.node_name_label = tk.Label(self.info_panel, text="-", **info_value_style)
@@ -415,7 +486,7 @@ class NetworkMapGUI:
     def toggle_mode(self):
         if self.mode == "Operator":
             self.mode = "Configuration"
-            self.mode_button.config(text='Configuration Mode', bg=ColorConfig.BUTTON_CONFIGURATION_MODE)
+            self.mode_button.config(text='Configuration Mode', bg=ColorConfig.current.BUTTON_CONFIGURATION_MODE)
             # Enable functionalities for Configuration mode
             self.canvas.bind('<Double-1>', self.create_node)
             self.canvas.bind('<B1-Motion>', self.move_node)
@@ -424,7 +495,7 @@ class NetworkMapGUI:
             
         else:
             self.mode = "Operator"
-            self.mode_button.config(text='Operator Mode', bg=ColorConfig.BUTTON_BG)
+            self.mode_button.config(text='Operator Mode', bg=ColorConfig.current.BUTTON_BG)
             # Disable functionalities for Operator mode
             self.canvas.unbind('<Double-1>')
             self.canvas.unbind('<B1-Motion>')
@@ -452,58 +523,45 @@ class NetworkMapGUI:
         for node in self.nodes:
             # Determine if the node should be visible or greyed out
             should_be_visible = any(self.vlan_visibility[vlan].get() for vlan in ['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400'] if getattr(node, vlan))
-            node_color = ColorConfig.NODE_DEFAULT if should_be_visible else ColorConfig.NODE_GREYED_OUT
+            node_color = ColorConfig.current.NODE_DEFAULT if should_be_visible else ColorConfig.current.NODE_GREYED_OUT
             self.canvas.itemconfigure(node.shape, fill=node_color)
 
     def update_vlan_colors(self, node, ping_results):
-        
         for i, vlan in enumerate(['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400']):
-            # Only update if the node has an IP for this VLAN
             if getattr(node, vlan):
-                color = "green" if ping_results[i] else "red"
+                color = ColorConfig.current.NODE_PING_SUCCESS if ping_results[i] else ColorConfig.current.NODE_PING_FAILURE
                 self.vlan_labels[vlan].config(bg=color)
             else:
-                # Reset the color if there is no IP for this VLAN
-                self.vlan_labels[vlan].config(bg=ColorConfig.INFO_PANEL_BG)
+                self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_PANEL_BG)
 
 
     def display_legend(self):
         if self.legend_window is None:
-            # Create a Toplevel window
             self.legend_window = tk.Toplevel(self.root)
-            self.legend_window.title("")  
-            self.legend_window.transient(self.root)  # Make the new window stay on top of the main window
-            self.legend_window.grab_set()  # Modal: input to this window only until closed
+            self.legend_window.title("")
+            self.legend_window.transient(self.root)
+            self.legend_window.grab_set()
             self.legend_window.iconbitmap('favicon.ico')
             self.legend_window.protocol("WM_DELETE_WINDOW", self.close_legend)
 
-            # Load the legend image
-            legend_image_path = "legend.png"  
-            img = Image.open(legend_image_path)
+            img = Image.open("legend.png")
             photo_img = ImageTk.PhotoImage(img)
-
-            # Create a Label with the image
             img_label = tk.Label(self.legend_window, image=photo_img)
-            img_label.image = photo_img  # Keep a reference to the PhotoImage object
+            img_label.image = photo_img
             img_label.pack()
-           
-            # button styles
-            button_style = {'font': self.custom_font, 'bg': ColorConfig.BUTTON_BG, 'fg': ColorConfig.BUTTON_FG, 'relief': tk.GROOVE}
 
-            # Create and pack buttons vertically
+            button_style = {'font': self.custom_font, 'bg': ColorConfig.current.BUTTON_BG, 
+                          'fg': ColorConfig.current.BUTTON_FG, 'relief': tk.GROOVE}
             create_new = tk.Button(self.legend_window, text='Create New Network', 
-                       command=lambda: [self.new_network_state(), self.close_legend()], **button_style)
+                                 command=lambda: [self.new_network_state(), self.close_legend()], **button_style)
             create_new.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-
             save_button = tk.Button(self.legend_window, text='Save', 
-                                    command=lambda: [self.save_network_state(), self.close_legend()], **button_style)
+                                  command=lambda: [self.save_network_state(), self.close_legend()], **button_style)
             save_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-
             load_button = tk.Button(self.legend_window, text='Load', 
-                                    command=lambda: [self.load_network_state(), self.close_legend()], **button_style)
+                                  command=lambda: [self.load_network_state(), self.close_legend()], **button_style)
             load_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
-            # Checkbox to hide the legend window on next startup
             self.hide_legend_checkbox = tk.Checkbutton(
                 self.legend_window, 
                 text="Hide this window on next startup and load most recent on next startup", 
@@ -511,8 +569,6 @@ class NetworkMapGUI:
                 command=lambda: self.save_legend_state()
             )
             self.hide_legend_checkbox.pack(pady=10)
-            
-            # Center the window on the screen
             self.center_window_on_screen(self.legend_window)
 
     # This callback closes the legend window
@@ -543,14 +599,14 @@ class NetworkMapGUI:
     def on_node_select(self, node):
         # Reset the previous selected node's appearance
         if self.previous_selected_node:
-            self.canvas.itemconfig(self.previous_selected_node.shape, outline=ColorConfig.NODE_OUTLINE_DEFAULT, width=2)
+            self.canvas.itemconfig(self.previous_selected_node.shape, outline=ColorConfig.current.NODE_OUTLINE_DEFAULT, width=2)
 
         # Update the appearance of the current selected node
-        self.canvas.itemconfig(node.shape, outline=ColorConfig.NODE_HIGHLIGHT, width=4)  # orange outline with a width of 4
+        self.canvas.itemconfig(node.shape, outline=ColorConfig.current.NODE_HIGHLIGHT, width=4)  # orange outline with a width of 4
 
         # Reset VLAN label colors immediately when a new node is selected
         for vlan in ['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400']:
-            self.vlan_labels[vlan].config(bg=ColorConfig.INFO_PANEL_BG)
+            self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_PANEL_BG)
 
         # Update the information panel
         self.node_name_label.config(text=node.name)
@@ -690,7 +746,7 @@ class NetworkMapGUI:
     def clear_node_status(self):
         # Set the node color of all nodes to NODE_DEFAULT.
         for node in self.nodes:
-            self.canvas.itemconfig(node.shape, fill=ColorConfig.NODE_DEFAULT)
+            self.canvas.itemconfig(node.shape, fill=ColorConfig.current.NODE_DEFAULT)
             
     def ping_all(self):
         for node in self.nodes:
@@ -902,13 +958,135 @@ class NetworkMapGUI:
                 self.host_node = node  # Set the host node
                 host_node_set = True
 
-    def flash_node(self, node, times, original_color=ColorConfig.NODE_DEFAULT, flash_color=ColorConfig.NODE_HOST):
+    def flash_node(self, node, times, original_color=ColorConfig.current.NODE_DEFAULT, flash_color=ColorConfig.current.NODE_HOST):
         if times > 0:
             next_color = flash_color if self.canvas.itemcget(node.shape, "fill") == original_color else original_color
             self.canvas.itemconfig(node.shape, fill=next_color)
             self.canvas.after(400, lambda: self.flash_node(node, times - 1))
         else:
             self.canvas.itemconfig(node.shape, fill=flash_color)                 
+
+    def toggle_theme(self):
+        print("Toggling theme...")
+        # Switch the current theme
+        if ColorConfig.current == ColorConfig.Light:
+            ColorConfig.current = ColorConfig.Dark
+            self.theme_button.config(text="Toggle Light Mode")
+        else:
+            ColorConfig.current = ColorConfig.Light
+            self.theme_button.config(text="Toggle Dark Mode")
+        self.update_ui_colors()
+
+    def start_move(self, event):
+        """Capture the initial mouse position for dragging."""
+        self.x = event.x
+        self.y = event.y
+
+    def do_move(self, event):
+        """Move the window based on mouse movement."""
+        deltax = event.x - self.x
+        deltay = event.y - self.y
+        x = self.root.winfo_x() + deltax
+        y = self.root.winfo_y() + deltay
+        self.root.geometry(f"+{x}+{y}")
+
+    def update_ui_colors(self):
+        """Update UI colors when theme changes."""
+        self.title_bar.config(bg=ColorConfig.current.FRAME_BG)
+        self.title_label.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG)
+        self.close_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG)
+        self.buttons_frame.config(bg=ColorConfig.current.FRAME_BG)
+        self.canvas.config(bg=ColorConfig.current.FRAME_BG)
+        self.root.configure(bg=ColorConfig.current.FRAME_BG)
+        self.buttons_frame.config(bg=ColorConfig.current.FRAME_BG)
+        self.canvas.config(bg=ColorConfig.current.FRAME_BG)
+        button_style = {'bg': ColorConfig.current.BUTTON_BG, 'fg': ColorConfig.current.BUTTON_FG}
+        self.mode_button.config(**button_style)
+        self.theme_button.config(**button_style)
+        whoamI_button = self.buttons_frame.winfo_children()[2]
+        clear_status_button = self.buttons_frame.winfo_children()[3]
+        ping_all_button = self.buttons_frame.winfo_children()[4]
+        whoamI_button.config(**button_style)
+        clear_status_button.config(**button_style)
+        ping_all_button.config(**button_style)
+        if self.mode == "Configuration":
+            self.mode_button.config(bg=ColorConfig.current.BUTTON_CONFIGURATION_MODE)
+        else:
+            self.mode_button.config(bg=ColorConfig.current.BUTTON_BG)
+        for cb in self.buttons_frame.winfo_children()[6:10]:
+            cb.config(bg=ColorConfig.current.FRAME_BG)
+
+        # Update VLAN Checkboxes
+        for cb in self.buttons_frame.winfo_children()[6:10]:
+            cb.config(bg=ColorConfig.current.FRAME_BG, 
+                    fg=ColorConfig.current.BUTTON_FG, 
+                    selectcolor=ColorConfig.current.FRAME_BG, 
+                    activebackground=ColorConfig.current.BUTTON_BG, 
+                    activeforeground=ColorConfig.current.BUTTON_FG)
+            
+        # Update Info Panel and VLAN Labels
+        self.info_panel.config(bg=ColorConfig.current.INFO_PANEL_BG)
+        for child in self.info_panel.winfo_children():
+            if isinstance(child, tk.Label):
+                child.config(bg=ColorConfig.current.INFO_PANEL_BG, fg=ColorConfig.current.INFO_PANEL_TEXT)
+        # Explicitly update VLAN labels
+        for vlan in self.vlan_labels:
+            self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_PANEL_BG, fg=ColorConfig.current.INFO_PANEL_TEXT)
+
+        for node in self.nodes:
+            current_fill = self.canvas.itemcget(node.shape, "fill")
+            if current_fill not in [ColorConfig.current.NODE_PING_SUCCESS, 
+                                ColorConfig.current.NODE_PING_PARTIAL_SUCCESS, 
+                                ColorConfig.current.NODE_PING_FAILURE]:
+                self.canvas.itemconfig(node.shape, fill=ColorConfig.current.NODE_DEFAULT)
+            self.canvas.itemconfig(node.shape, outline=ColorConfig.current.NODE_OUTLINE_DEFAULT)
+            if node == self.selected_node:
+                self.canvas.itemconfig(node.shape, outline=ColorConfig.current.NODE_HIGHLIGHT)
+        for node in self.nodes:
+            for conn in node.connections:
+                self.canvas.itemconfig(conn.line, fill=ColorConfig.current.Connections)
+                if conn.label_id:
+                    self.canvas.itemconfig(conn.label_id, fill=ColorConfig.current.STICKY_NOTE_TEXT)
+                    self.canvas.coords(conn.label_bg, *self.canvas.bbox(conn.label_id))
+                    self.canvas.itemconfig(conn.label_bg, fill=ColorConfig.current.STICKY_NOTE_BG)
+        for item in self.canvas.find_withtag("sticky_note"):
+            self.canvas.itemconfig(item, fill=ColorConfig.current.STICKY_NOTE_TEXT)
+            bbox = self.canvas.bbox(item)
+            if bbox:
+                bg_tag = f"bg_{item}"
+                if self.canvas.find_withtag(bg_tag):
+                    self.canvas.coords(bg_tag, bbox[0]-2, bbox[1]-2, bbox[2]+2, bbox[3]+2)
+                    self.canvas.itemconfig(bg_tag, fill=ColorConfig.current.STICKY_NOTE_BG)
+
+            # Update Nodes
+            for node in self.nodes:
+                # Only update to default if not showing ping status
+                current_fill = self.canvas.itemcget(node.shape, "fill")
+                if current_fill not in [ColorConfig.current.NODE_PING_SUCCESS, 
+                                    ColorConfig.current.NODE_PING_PARTIAL_SUCCESS, 
+                                    ColorConfig.current.NODE_PING_FAILURE]:
+                    self.canvas.itemconfig(node.shape, fill=ColorConfig.current.NODE_DEFAULT)
+                self.canvas.itemconfig(node.shape, outline=ColorConfig.current.NODE_OUTLINE_DEFAULT)
+                if node == self.selected_node:
+                    self.canvas.itemconfig(node.shape, outline=ColorConfig.current.NODE_HIGHLIGHT)
+
+            # Update Connections
+            for node in self.nodes:
+                for conn in node.connections:
+                    self.canvas.itemconfig(conn.line, fill=ColorConfig.current.Connections)
+                    if conn.label_id:
+                        self.canvas.itemconfig(conn.label_id, fill=ColorConfig.current.STICKY_NOTE_TEXT)
+                        self.canvas.coords(conn.label_bg, *self.canvas.bbox(conn.label_id))
+                        self.canvas.itemconfig(conn.label_bg, fill=ColorConfig.current.STICKY_NOTE_BG)
+
+            # Update Sticky Notes
+            for item in self.canvas.find_withtag("sticky_note"):
+                self.canvas.itemconfig(item, fill=ColorConfig.current.STICKY_NOTE_TEXT)
+                bbox = self.canvas.bbox(item)
+                if bbox:
+                    self.canvas.coords(self.canvas.find_withtag(f"bg_{item}")[0], 
+                                    bbox[0]-2, bbox[1]-2, bbox[2]+2, bbox[3]+2)
+                    self.canvas.itemconfig(f"bg_{item}", fill=ColorConfig.current.STICKY_NOTE_BG)
 
     def on_close(self):
         if self.unsaved_changes:
