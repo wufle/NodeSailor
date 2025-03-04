@@ -44,6 +44,9 @@ class ColorConfig:
         INFO_PANEL_BG = '#f7f7f7'
         INFO_PANEL_TEXT = 'black'
         Connections = 'dim gray'
+        BORDER_COLOR = '#f7f7f7'
+        TITLE_BAR_BG = '#f7f7f7'
+        LEGEND_BG = '#d9d9d9'
 
     class Dark:
         FRAME_BG = '#2e2e2e'
@@ -67,6 +70,9 @@ class ColorConfig:
         INFO_PANEL_BG = '#111827'
         INFO_PANEL_TEXT = '#D1D5DB'
         Connections = '#9CA3AF'
+        BORDER_COLOR = '#374151'
+        TITLE_BAR_BG = '#1F2937'
+        LEGEND_BG = '#1F2937'
 
     # Default to Light mode
     current = Dark
@@ -330,8 +336,6 @@ class NetworkMapGUI:
         self.resize_grip.bind("<B1-Motion>", self.on_resize_grip_drag)
         self.resize_grip.bind("<ButtonRelease-1>", self.stop_resize)
 
-
-
         # Custom Title Bar
         self.title_bar = tk.Frame(self.root, bg=ColorConfig.current.FRAME_BG, relief='raised')
         self.title_bar.pack(side=tk.TOP, fill=tk.X)
@@ -435,9 +439,7 @@ class NetworkMapGUI:
         self.selected_node = None
         self.previous_selected_node = None
         
-        root.bind('<F1>', self.show_help)        
-        root.bind('<plus>', self.zoom_in)  # Zoom in with '+'
-        root.bind('<minus>', self.zoom_out)  # Zoom out with '-'
+        self.root.bind_all('<F1>', self.show_help)
         root.bind('<Left>', lambda event: self.pan_canvas('left'))  # Pan left
         root.bind('<Right>', lambda event: self.pan_canvas('right'))  # Pan right
         root.bind('<Up>', lambda event: self.pan_canvas('up'))  # Pan up
@@ -445,10 +447,12 @@ class NetworkMapGUI:
         self.canvas.bind('<Double-1>', self.create_node)
         self.canvas.bind('<B1-Motion>', self.move_node)
         self.canvas.bind('<Shift-Double-1>', self.create_sticky_note)
+        self.canvas.bind('<MouseWheel>', self.zoom_with_mouse)
         self.canvas.pack(fill=tk.BOTH, expand=True)
-
         self.canvas.bind('<Button-2>', self.create_connection)
         self.canvas.bind('<Shift-Button-2>', self.remove_connection)
+
+        self.root.focus_set()
 
          # Info Panel
         self.info_panel = tk.Frame(self.root, bg=ColorConfig.current.INFO_PANEL_BG)
@@ -483,6 +487,17 @@ class NetworkMapGUI:
 
         # Reposition the resize grip (important for keeping it in the corner)
         self.resize_grip.place(relx=1.0, rely=1.0, anchor="se")
+
+    def start_move_legend(self, event):
+        self.legend_window._x = event.x
+        self.legend_window._y = event.y
+
+    def do_move_legend(self, event):
+        deltax = event.x - self.legend_window._x
+        deltay = event.y - self.legend_window._y
+        x = self.legend_window.winfo_x() + deltax
+        y = self.legend_window.winfo_y() + deltay
+        self.legend_window.geometry(f"+{x}+{y}")
 
     def start_resize(self, event):
         self.start_x = event.x_root
@@ -529,11 +544,47 @@ class NetworkMapGUI:
             self.root.geometry(f"+{x}+{y}")
 
     def show_help(self, event=None):
+        print("F1 pressed")
         help_window = tk.Toplevel(self.root)
         help_window.title("Help - Keyboard Shortcuts and Functions")
         help_window.geometry("600x400")
+        help_window.overrideredirect(True)
+        help_window.transient(self.root)
 
-        text_area = tk.Text(help_window, wrap="word", font="Helvetica 10", state="disabled")
+        # Outer frame for border
+        outer_frame = tk.Frame(help_window, bg=ColorConfig.current.BORDER_COLOR, padx=2, pady=2)
+        outer_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Title bar
+        title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.LEGEND_BG)
+        title_bar.pack(side=tk.TOP, fill=tk.X)
+
+        title_label = tk.Label(title_bar, text="Help - Keyboard Shortcuts and Functions",
+                            bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG,
+                            font=self.custom_font)
+        title_label.pack(side=tk.LEFT, padx=10)
+
+        close_button = tk.Button(title_bar, text='X', 
+                                command=lambda: [help_window.destroy(), self.root.focus_set()],
+                                bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG,
+                                font=self.custom_font)
+        close_button.pack(side=tk.RIGHT)
+
+        # Make the title bar draggable (like legend)
+        title_bar.bind("<ButtonPress-1>", self.start_move_legend)  # Reusing legend's move method
+        title_bar.bind("<B1-Motion>", self.do_move_legend)
+        title_label.bind("<ButtonPress-1>", self.start_move_legend)
+        title_label.bind("<B1-Motion>", self.do_move_legend)
+        help_window.bind('<Escape>', lambda e: help_window.destroy())
+
+        # Content frame
+        content_frame = tk.Frame(outer_frame, bg=ColorConfig.current.LEGEND_BG)
+        content_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Text area
+        text_area = tk.Text(content_frame, wrap="word", font="Helvetica 10",
+                            bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG,
+                            state="disabled")
         text_area.pack(expand=True, fill="both", padx=10, pady=10)
 
         help_text = """
@@ -564,6 +615,11 @@ class NetworkMapGUI:
         text_area.tag_config("bold", font="Helvetica 10 bold")
         text_area.config(state="disabled")
 
+        # Center the window (reuse existing method)
+        help_window.lift()        # Bring to front
+        help_window.focus_set()   # Set focus
+        self.center_window_on_screen(help_window)
+
     def toggle_mode(self):
         if self.mode == "Operator":
             self.mode = "Configuration"
@@ -582,6 +638,25 @@ class NetworkMapGUI:
             self.canvas.unbind('<B1-Motion>')
             self.canvas.unbind('<Shift-Double-1>')
             self.canvas.unbind('<Button-2>')
+
+    def zoom_with_mouse(self, event):
+        # Determine zoom direction: positive delta for zoom in, negative for zoom out
+        if event.num == 4 or event.delta > 0:  # Scroll up or positive delta
+            scale_factor = 1.1  # Zoom in
+        elif event.num == 5 or event.delta < 0:  # Scroll down or negative delta
+            scale_factor = 0.9  # Zoom out
+        else:
+            return  # No valid scroll direction
+
+        # Get mouse position relative to canvas
+        x = self.canvas.canvasx(event.x)
+        y = self.canvas.canvasy(event.y)
+
+        # Scale the canvas around the mouse position
+        self.canvas.scale("all", x, y, scale_factor, scale_factor)
+
+        # Adjust scroll region to include all items after scaling
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def zoom_in(self, event=None):
         self.canvas.scale("all", self.canvas.winfo_width()/2, self.canvas.winfo_height()/2, 1.1, 1.1)
@@ -617,75 +692,115 @@ class NetworkMapGUI:
 
 
     def display_legend(self):
-        if self.legend_window is None:
+        # Check if the legend window exists and is valid
+        if self.legend_window is not None and self.legend_window.winfo_exists():
+            print("Legend window already exists, bringing to front")
+            self.legend_window.deiconify()  # Restore if minimized
+            self.legend_window.lift()       # Bring to front
+            self.legend_window.grab_set()   # Ensure it has the grab
+        else:
+            print("Creating new legend window")
             self.legend_window = tk.Toplevel(self.root)
             self.legend_window.overrideredirect(True)
             self.legend_window.transient(self.root)
-            self.legend_window.grab_set()
+            self.legend_window.transient(self.root)
             self.legend_window.iconbitmap('favicon.ico')
-            self.legend_window.configure(bg=ColorConfig.current.FRAME_BG)
+            
+            # Outer frame acts as the border
+            outer_frame = tk.Frame(self.legend_window, bg=ColorConfig.current.BORDER_COLOR, padx=2, pady=2)
+            outer_frame.pack(fill=tk.BOTH, expand=True)
+            
+            # Title bar
+            title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.LEGEND_BG)
+            title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            img = Image.open("legend.png")
+            title_label = tk.Label(title_bar, text="Nodesailor v0.9.6", bg=ColorConfig.current.LEGEND_BG,
+                                fg=ColorConfig.current.BUTTON_FG, font=self.custom_font)
+            title_label.pack(side=tk.LEFT, padx=10)
+
+            close_button = tk.Button(title_bar, text='X', command=self.close_legend,
+                                    bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG,
+                                    font=self.custom_font)
+            close_button.pack(side=tk.RIGHT)
+
+            # Make the title bar draggable
+            title_bar.bind("<ButtonPress-1>", self.start_move_legend)
+            title_bar.bind("<B1-Motion>", self.do_move_legend)
+            title_label.bind("<ButtonPress-1>", self.start_move_legend)
+            title_label.bind("<B1-Motion>", self.do_move_legend)
+            self.legend_window.bind("<Escape>", lambda e: self.close_legend())
+
+            # Content frame
+            content_frame = tk.Frame(outer_frame, bg=ColorConfig.current.LEGEND_BG)
+            content_frame.pack(fill=tk.BOTH, expand=True)
+
+            # Image
+            img = Image.open("legend.png").resize((404, 400), Image.Resampling.LANCZOS)
             photo_img = ImageTk.PhotoImage(img)
-            img_label = tk.Label(self.legend_window, image=photo_img, bg=ColorConfig.current.FRAME_BG)
-            img_label.image = photo_img
-            img_label.pack()
+            img_label = tk.Label(content_frame, image=photo_img, bg=ColorConfig.current.LEGEND_BG)
+            img_label.image = photo_img  # Keep a reference to avoid garbage collection
+            img_label.pack(pady=5)
 
+            # Button styles
             button_style = {
-            'font': self.custom_font,
-            'bg': ColorConfig.current.BUTTON_BG,
-            'fg': ColorConfig.current.BUTTON_FG,
-            'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG,
-            'activeforeground': ColorConfig.current.BUTTON_ACTIVE_FG,
-            'relief': tk.FLAT,
-            'padx': 5,
-            'pady': 2
+                'font': self.custom_font,
+                'bg': ColorConfig.current.BUTTON_BG,
+                'fg': ColorConfig.current.BUTTON_FG,
+                'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG,
+                'activeforeground': ColorConfig.current.BUTTON_ACTIVE_FG,
+                'relief': tk.FLAT,
+                'padx': 5,
+                'pady': 2
             }
 
-            create_new = tk.Button(self.legend_window, text='Create New Network', 
-                                 command=lambda: [self.new_network_state(), self.close_legend()], **button_style)
+            # Buttons
+            create_new = tk.Button(content_frame, text='Create New Network',
+                                command=lambda: [self.new_network_state(), self.close_legend()], **button_style)
             create_new.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-            save_button = tk.Button(self.legend_window, text='Save', 
-                                  command=lambda: [self.save_network_state(), self.close_legend()], **button_style)
+
+            save_button = tk.Button(content_frame, text='Save',
+                                    command=lambda: [self.save_network_state(), self.close_legend()], **button_style)
             save_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-            load_button = tk.Button(self.legend_window, text='Load', 
-                                  command=lambda: [self.load_network_state(), self.close_legend()], **button_style)
+
+            load_button = tk.Button(content_frame, text='Load',
+                                    command=lambda: [self.load_network_state(), self.close_legend()], **button_style)
             load_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
-            self.theme_button = tk.Button(self.legend_window, 
+            self.theme_button = tk.Button(content_frame,
                                         text="Dark Mode" if ColorConfig.current == ColorConfig.Light else "Light Mode",
                                         command=self.toggle_theme, **button_style)
             self.theme_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
-            help_button = tk.Button(self.legend_window, text='Help', command=self.show_help, **button_style)
+            help_button = tk.Button(content_frame, text='Help', command=self.show_help, **button_style)
             help_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
-            close_button = tk.Button(self.legend_window, text='Close', command=self.close_legend, **button_style)
-            close_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+            close_btn = tk.Button(content_frame, text='Close', command=self.close_legend, **button_style)
+            close_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
+            # Checkbox
             self.hide_legend_checkbox = tk.Checkbutton(
-                self.legend_window, 
-                text="Hide this window on next startup and load most recent on next startup", 
-                var=self.hide_legend_on_start,
-                command=lambda: self.save_legend_state(),
-                bg=ColorConfig.current.FRAME_BG,
+                content_frame,
+                text="Hide this window on next startup and load most recent on next startup",
+                variable=self.hide_legend_on_start,
+                command=self.save_legend_state,
+                bg=ColorConfig.current.LEGEND_BG,
                 fg=ColorConfig.current.BUTTON_FG,
-                selectcolor=ColorConfig.current.FRAME_BG,
+                selectcolor=ColorConfig.current.LEGEND_BG,
                 activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
                 activeforeground=ColorConfig.current.BUTTON_ACTIVE_FG
             )
-            self.hide_legend_checkbox.pack(pady=10)
-            self.legend_window.lift()  # Bring above main window
-            self.legend_window.focus_set()  # Set focus to legend window
+            self.hide_legend_checkbox.pack(pady=5)
+
+            self.legend_window.lift()
+            self.legend_window.focus_set()
             self.center_window_on_screen(self.legend_window)
-            #self.legend_window.attributes('-topmost', True)  # Ensure it stays on top initially
-            #self.legend_window.after(100, lambda: self.legend_window.attributes('-topmost', False))  # Release topmost after brief delay
 
     # This callback closes the legend window
     def close_legend(self):
         self.legend_window.destroy()
         self.legend_window = None   
-            
+        self.root.focus_set()
+
     def save_legend_state(self):
         with open("legend_state.txt", "w") as f:
             f.write(str(self.hide_legend_on_start.get()))
@@ -1155,6 +1270,33 @@ class NetworkMapGUI:
         for child in self.info_panel.winfo_children():
             child.config(bg=ColorConfig.current.INFO_PANEL_BG, fg=ColorConfig.current.INFO_PANEL_TEXT)
         
+        # Update legend window if it exists
+        if self.legend_window and self.legend_window.winfo_exists():
+            outer_frame = self.legend_window.winfo_children()[0]
+            title_bar = outer_frame.winfo_children()[0]
+            content_frame = outer_frame.winfo_children()[1]
+            
+            outer_frame.config(bg=ColorConfig.current.BORDER_COLOR)
+            title_bar.config(bg=ColorConfig.current.LEGEND_BG)
+            title_bar.winfo_children()[0].config(bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG)  # title_label
+            title_bar.winfo_children()[1].config(bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG)  # close_button
+            content_frame.config(bg=ColorConfig.current.LEGEND_BG)
+            
+            for widget in content_frame.winfo_children():
+                if isinstance(widget, tk.Label):  # Image label
+                    widget.config(bg=ColorConfig.current.LEGEND_BG)
+                elif isinstance(widget, tk.Button):  # Buttons
+                    widget.config(bg=ColorConfig.current.BUTTON_BG, fg=ColorConfig.current.BUTTON_FG,
+                                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_FG)
+                elif isinstance(widget, tk.Checkbutton):  # Checkbox
+                    widget.config(bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG,
+                                selectcolor=ColorConfig.current.LEGEND_BG,
+                                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_FG)
+            # Update theme button text
+            self.theme_button.config(text="Dark Mode" if ColorConfig.current == ColorConfig.Light else "Light Mode")
+
         # VLAN checkboxes
         for cb in self.buttons_frame.winfo_children()[6:10]:
             cb.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG,
