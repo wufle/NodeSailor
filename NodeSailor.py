@@ -239,15 +239,44 @@ class NetworkNode:
                            self.x + width/2 + pad, self.y + height/2 + pad)
 
     def show_context_menu(self, event):
-            context_menu = tk.Menu(self.canvas, tearoff=0)
-            context_menu.add_command(label="Edit Node Information", command=self.edit_node_info)
-            context_menu.add_command(label="Open Remote Desktop", command=self.open_remote_desktop)
-            context_menu.add_command(label="Open File Explorer", command=self.open_file_explorer)
-            context_menu.add_command(label="Open Web Browser", command=self.open_web_browser)
-            context_menu.add_separator()
-            context_menu.add_command(label="Delete Node", command=self.delete_node)
-            context_menu.tk_popup(event.x_root, event.y_root)
-            
+        context_menu = tk.Toplevel(self.canvas)
+        context_menu.wm_overrideredirect(True)  # Removes OS borders and title bar
+        context_menu.wm_geometry(f"+{event.x_root}+{event.y_root}")
+
+        # Frame for menu items (no border from OS)
+        menu_frame = tk.Frame(context_menu, bg=ColorConfig.current.BUTTON_BG)
+        menu_frame.pack()
+
+        options = [
+            ("Edit Node Information", self.edit_node_info),
+            ("Open Remote Desktop", self.open_remote_desktop),
+            ("Open File Explorer", self.open_file_explorer),
+            ("Open Web Browser", self.open_web_browser),
+            ("Delete Node", self.delete_node)
+        ]
+
+        def destroy_menu():
+            context_menu.unbind("<FocusOut>")
+            context_menu.unbind("<Escape>")
+            for btn in menu_frame.winfo_children():
+                btn.unbind("<Enter>")
+                btn.unbind("<Leave>")
+            context_menu.destroy()
+
+        for text, command in options:
+            btn = tk.Button(menu_frame, text=text, command=lambda c=command: [c(), destroy_menu()],
+                            bg=ColorConfig.current.BUTTON_BG, fg=ColorConfig.current.BUTTON_FG,
+                            activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                            activeforeground=ColorConfig.current.BUTTON_ACTIVE_FG,
+                            relief='flat', borderwidth=0, padx=10, pady=4, anchor='w',
+                            font=('Helvetica', 10))
+            btn.pack(fill='x')
+            btn.bind("<Enter>", lambda e, b=btn: b.config(bg=ColorConfig.current.BUTTON_ACTIVE_BG))
+            btn.bind("<Leave>", lambda e, b=btn: b.config(bg=ColorConfig.current.BUTTON_BG))
+
+        self.canvas.bind("<Button-1>", lambda e: destroy_menu(), add="+")
+        context_menu.bind("<Escape>", lambda e: destroy_menu()) 
+
     def edit_node_info(self):
         gui.open_node_window(node=self)
 
@@ -265,7 +294,15 @@ class NetworkNode:
         if not self.file_path:
             messagebox.showinfo("Info", "No file path set for this node.")
             return
-        os.startfile(self.file_path)
+
+        def try_open():
+            try:
+                os.startfile(self.file_path)
+            except OSError as e:
+                # Use after() to show the error in the main thread
+                self.canvas.after(0, lambda: messagebox.showerror("Error", f"Failed to open '{self.file_path}': {str(e)}"))
+
+        Thread(target=try_open, daemon=True).start()
 
     def open_web_browser(self):
         if not self.web_config_url:
@@ -444,6 +481,7 @@ class NetworkMapGUI:
         root.bind('<Right>', lambda event: self.pan_canvas('right'))  # Pan right
         root.bind('<Up>', lambda event: self.pan_canvas('up'))  # Pan up
         root.bind('<Down>', lambda event: self.pan_canvas('down'))  # Pan down
+        root.bind_all('<Control-Shift-C>', lambda event: self.toggle_theme())
         self.canvas.bind('<Double-1>', self.create_node)
         self.canvas.bind('<B1-Motion>', self.move_node)
         self.canvas.bind('<Shift-Double-1>', self.create_sticky_note)
