@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import simpledialog, messagebox, font, filedialog
+from tkinter import simpledialog, messagebox, font, filedialog, colorchooser
 import subprocess
 from threading import Thread
 import json
@@ -54,14 +54,14 @@ class ColorConfig:
         NODE_DEFAULT = '#4B5EAA'
         NODE_GREYED_OUT = '#4B5563'
         NODE_HIGHLIGHT = '#D97706'
-        NODE_HOST = '#0F766E'
+        NODE_HOST = '#72741f'
         NODE_OUTLINE_DEFAULT = '#374151'
         NODE_PING_SUCCESS = '#047857'
         NODE_PING_PARTIAL_SUCCESS = '#B45309'
         NODE_PING_FAILURE = '#991B1B'
         FRAME_BG = '#1F2937'
-        STICKY_NOTE_BG = '#374151'
-        STICKY_NOTE_TEXT = '#8f8f8f'
+        STICKY_NOTE_BG = '#303745'
+        STICKY_NOTE_TEXT = '#000000'
         BUTTON_BG = '#4B5EAA'
         BUTTON_FG = 'black'
         BUTTON_ACTIVE_BG = '#111827'
@@ -69,7 +69,7 @@ class ColorConfig:
         BUTTON_CONFIGURATION_MODE = '#F87171'
         INFO_PANEL_BG = '#111827'
         INFO_PANEL_TEXT = '#8f8f8f'
-        Connections = '#9CA3AF'
+        Connections = '#6a7586'
         BORDER_COLOR = '#374151'
         TITLE_BAR_BG = '#1F2937'
         LEGEND_BG = '#1F2937'
@@ -587,11 +587,66 @@ class NetworkMapGUI:
             y = self.root.winfo_y() + deltay
             self.root.geometry(f"+{x}+{y}")
 
+    def show_color_editor(self):
+        """Open a window to edit ColorConfig attributes."""
+        editor_window = tk.Toplevel(self.root)
+        editor_window.title("Color Scheme Editor")
+        editor_window.geometry("400x600")
+        editor_window.transient(self.root)  # Tie it to the main window
+        editor_window.grab_set()  # Make it modal
+
+        # Theme selection
+        theme_var = tk.StringVar(value="Dark")  # Default to Dark
+        tk.Label(editor_window, text="Select Theme:").pack(pady=5)
+        tk.Button(editor_window, text="Load Colors", command=self.load_colors).pack(pady=5)
+        tk.Button(editor_window, text="Save Colors", command=self.save_colors).pack(pady=5)
+        tk.Radiobutton(editor_window, text="Light", variable=theme_var, value="Light").pack()
+        tk.Radiobutton(editor_window, text="Dark", variable=theme_var, value="Dark").pack()
+
+        # Frame for color entries
+        color_frame = tk.Frame(editor_window)
+        color_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        # List of ColorConfig attributes (excluding 'current')
+        color_attrs = [attr for attr in dir(ColorConfig.Light) if not attr.startswith('__') and attr != 'current']
+        color_entries = {}
+
+        def update_color(attr):
+            """Open color chooser and update the button's background."""
+            theme = theme_var.get()
+            current_color = getattr(getattr(ColorConfig, theme), attr)
+            new_color = colorchooser.askcolor(title=f"Choose {attr} for {theme}", initialcolor=current_color)
+            if new_color[1]:  # If a color was selected (not canceled)
+                setattr(getattr(ColorConfig, theme), attr, new_color[1])  # Update ColorConfig
+                color_entries[attr]['button'].config(bg=new_color[1])  # Update button color
+                self.update_ui_colors()  # Apply changes live
+
+        # Populate the frame with color options
+        for i, attr in enumerate(color_attrs):
+            tk.Label(color_frame, text=f"{attr}:").grid(row=i, column=0, sticky="w", pady=2)
+            current_color = getattr(getattr(ColorConfig, theme_var.get()), attr)
+            btn = tk.Button(color_frame, text="Pick Color", bg=current_color,
+                            command=lambda a=attr: update_color(a))
+            btn.grid(row=i, column=1, sticky="ew", pady=2)
+            color_entries[attr] = {'button': btn}
+
+        # Update colors when theme changes
+        def on_theme_change(*args):
+            theme = theme_var.get()
+            for attr in color_attrs:
+                current_color = getattr(getattr(ColorConfig, theme), attr)
+                color_entries[attr]['button'].config(bg=current_color)
+
+        theme_var.trace("w", on_theme_change)
+
+        # Close button
+        tk.Button(editor_window, text="Close", command=editor_window.destroy).pack(pady=10)
+
     def show_help(self, event=None):
         print("F1 pressed")
         help_window = tk.Toplevel(self.root)
         help_window.title("Help - Keyboard Shortcuts and Functions")
-        help_window.geometry("600x400")
+        help_window.geometry("1000x800")
         help_window.overrideredirect(True)
         help_window.transient(self.root)
 
@@ -632,30 +687,49 @@ class NetworkMapGUI:
         text_area.pack(expand=True, fill="both", padx=10, pady=10)
 
         help_text = """
-        Keyboard Shortcuts and Functions:
+        NodeSailor v0.9.6 - Help
 
-        \nOperator Mode:
-        - Left click on Node: Ping! - Node will change colour depending on response
-        - Left click drag Node: Move node
-        - Right Click on Node: Open context menu for node-specific operations
-        - 'Save': Save the current network state
-        - 'Load': Load a saved network state
-        - 'Who am I?': Identify and highlight the node where this program is running
-        - 'Ping All': Ping all nodes and update their status
-        - 'Clear Status': Reset the status of all nodes
+        Overview:
+        NodeSailor is a network visualization tool.
 
-        \nConfiguration Mode:
-        - Double Left Click: Create a node
-        - Shift + Double Left Click: Create a sticky note
-        - Middle Click: Create a connection between nodes
-        - Shift + Middle Click: Remove a connection
-        - Right Click on Node: Open context menu for additional options (Edit, Delete, etc.)
+        User Modes:
+        - Operator: Monitor and interact with the network.
+        - Configuration: Build and edit the network layout.
+
+        Operator Mode:
+        - Left Click on Node: Ping the node (Green = all VLANs up, Yellow = partial, Red = none).
+        - Right Click on Node: Open context menu (Edit Node, Remote Desktop, File Explorer, Web Browser, Delete).
+        - 'Who am I?': Highlight nodes matching the user machine’s IP addresses.
+        - 'Ping All': Ping all nodes and update their status.
+        - 'Clear Status': Reset all node colors to default.
+
+        Configuration Mode:
+        - Double Left Click: Create a new node.
+        - Shift + Double Left Click: Add a sticky note.
+        - Middle Click on Node: Start/end a connection line between nodes (prompts for a label).
+        - Shift + Middle Click on Line: Remove a connection.
+        - Left Click + Drag: Move nodes or sticky notes (Shift + Drag for sticky notes).
+        - Right Click on Node: Open context menu for editing or deletion.
+
+        Node Context Menu:
+        - Edit Node Information: Modify name, VLAN IPs, remote desktop, file path, or web URL.
+        - Open Remote Desktop: Launch RDP (Windows only) using the node’s address.
+        - Open File Explorer: Open the specified file path.
+        - Open Web Browser: Open the node’s web config URL.
+        - Delete Node: Remove the node and its connections (Configuration mode only).
+
+        VLAN Checkboxes:
+        - Toggle visibility of nodes based on VLANs (checked = visible, unchecked = greyed out).
         """
 
         text_area.config(state="normal")
         text_area.insert("1.0", help_text)
-        text_area.tag_add("bold", "5.0", "5.end")
-        text_area.tag_add("bold", "15.0", "15.end")
+        text_area.tag_add("bold", "1.0", "4.end")
+        text_area.tag_add("bold", "7.0", "7.end")
+        text_area.tag_add("bold", "11.0", "11.end")
+        text_area.tag_add("bold", "18.0", "18.end")
+        text_area.tag_add("bold", "26.0", "26.end")
+        text_area.tag_add("bold", "33.0", "33.end")
         text_area.tag_config("bold", font="Helvetica 10 bold")
         text_area.config(state="disabled")
 
@@ -814,6 +888,10 @@ class NetworkMapGUI:
                                         text="Dark Mode" if ColorConfig.current == ColorConfig.Light else "Light Mode",
                                         command=self.toggle_theme, **button_style)
             self.theme_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+
+            color_editor_button = tk.Button(content_frame, text='Edit Colors',
+                                            command=self.show_color_editor, **button_style)
+            color_editor_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             help_button = tk.Button(content_frame, text='Help', command=self.show_help, **button_style)
             help_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
@@ -1427,12 +1505,33 @@ class NetworkMapGUI:
             self.canvas.itemconfig(note, fill=ColorConfig.current.STICKY_NOTE_TEXT)
         for bg in self.canvas.find_withtag("sticky_bg"):
             self.canvas.itemconfig(bg, fill=ColorConfig.current.STICKY_NOTE_BG)
-
+    
     def on_close(self):
         if self.unsaved_changes:
             if messagebox.askyesno("Unsaved Changes", "You have unsaved changes. Would you like to save before exiting?"):
                 self.save_network_state()  # This should prompt the user to save the file
         self.root.destroy()
+    
+    def save_colors(self):
+        colors = {
+            'Light': {attr: getattr(ColorConfig.Light, attr) for attr in dir(ColorConfig.Light) if not attr.startswith('__') and attr != 'current'},
+            'Dark': {attr: getattr(ColorConfig.Dark, attr) for attr in dir(ColorConfig.Dark) if not attr.startswith('__') and attr != 'current'}
+        }
+        file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
+        if file_path:
+            with open(file_path, 'w') as f:
+                json.dump(colors, f, indent=4)
+
+    def load_colors(self):
+        file_path = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
+        if file_path:
+            with open(file_path, 'r') as f:
+                colors = json.load(f)
+                for attr, value in colors['Light'].items():
+                    setattr(ColorConfig.Light, attr, value)
+                for attr, value in colors['Dark'].items():
+                    setattr(ColorConfig.Dark, attr, value)
+            self.update_ui_colors()
 
 if __name__ == "__main__":
     root = tk.Tk()
