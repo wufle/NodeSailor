@@ -61,20 +61,20 @@ class ColorConfig:
         NODE_PING_FAILURE = '#991B1B'
         FRAME_BG = '#1F2937'
         STICKY_NOTE_BG = '#374151'
-        STICKY_NOTE_TEXT = '#E5E7EB'
+        STICKY_NOTE_TEXT = '#8f8f8f'
         BUTTON_BG = '#4B5EAA'
         BUTTON_FG = 'black'
         BUTTON_ACTIVE_BG = '#111827'
         BUTTON_ACTIVE_FG = 'black'
         BUTTON_CONFIGURATION_MODE = '#F87171'
         INFO_PANEL_BG = '#111827'
-        INFO_PANEL_TEXT = '#D1D5DB'
+        INFO_PANEL_TEXT = '#8f8f8f'
         Connections = '#9CA3AF'
         BORDER_COLOR = '#374151'
         TITLE_BAR_BG = '#1F2937'
         LEGEND_BG = '#1F2937'
 
-    # Default to Light mode
+    # Default to Dark mode
     current = Dark
 
 class StickyNote:
@@ -85,8 +85,7 @@ class StickyNote:
         self.y = y
         self.bg = bg
         self.font = font
-        self.bg_shape = canvas.create_rectangle(x, y, x + 100, y + 50, fill=ColorConfig.current.FRAME_BG, 
-                                              outline='', tags=f"bg_{id(self)}")
+        self.bg_shape = canvas.create_rectangle(x, y, x + 100, y + 50, fill=ColorConfig.current.FRAME_BG, outline='', tags=("sticky_bg", f"bg_{id(self)}"))
         self.note = canvas.create_text(x, y, text=text, font=self.font, fill=ColorConfig.current.STICKY_NOTE_TEXT, 
                                      tags="sticky_note", anchor="nw")
         self.canvas.tag_bind(self.note, '<Button-1>', self.on_click)
@@ -481,7 +480,7 @@ class NetworkMapGUI:
         root.bind('<Right>', lambda event: self.pan_canvas('right'))  # Pan right
         root.bind('<Up>', lambda event: self.pan_canvas('up'))  # Pan up
         root.bind('<Down>', lambda event: self.pan_canvas('down'))  # Pan down
-        root.bind_all('<Control-Shift-C>', lambda event: self.toggle_theme())
+        self.root.bind('<Control-Shift-C>', lambda event: [self.root.focus_set(), self.toggle_theme()])
         self.canvas.bind('<Double-1>', self.create_node)
         self.canvas.bind('<B1-Motion>', self.move_node)
         self.canvas.bind('<Shift-Double-1>', self.create_sticky_note)
@@ -496,8 +495,13 @@ class NetworkMapGUI:
         self.info_panel = tk.Frame(self.root, bg=ColorConfig.current.INFO_PANEL_BG)
         self.info_panel.place(relx=1.0, rely=0.05, anchor='ne')
 
-        info_label_style = {'font': ('Helvetica', 10), 'bg': ColorConfig.current.INFO_PANEL_BG, 'fg': 'black', 'anchor': 'w'}
-        info_value_style = {'font': ('Helvetica', 10), 'bg': ColorConfig.current.INFO_PANEL_BG}
+        info_label_style = {'font': ('Helvetica', 10), 
+                            'bg': ColorConfig.current.INFO_PANEL_BG, 
+                            'fg': ColorConfig.current.INFO_PANEL_TEXT,
+                            'anchor': 'w'}
+        info_value_style = {'font': ('Helvetica', 10), 
+                            'bg': ColorConfig.current.INFO_PANEL_BG, 
+                            'fg': ColorConfig.current.INFO_PANEL_TEXT}
 
         tk.Label(self.info_panel, text="Name:", **info_label_style).grid(row=0, column=0, sticky='w', padx=5, pady=2)
         self.node_name_label = tk.Label(self.info_panel, text="-", **info_value_style)
@@ -525,6 +529,8 @@ class NetworkMapGUI:
 
         # Reposition the resize grip (important for keeping it in the corner)
         self.resize_grip.place(relx=1.0, rely=1.0, anchor="se")
+
+        self.update_ui_colors()
 
     def start_move_legend(self, event):
         self.legend_window._x = event.x
@@ -603,7 +609,7 @@ class NetworkMapGUI:
         title_label.pack(side=tk.LEFT, padx=10)
 
         close_button = tk.Button(title_bar, text='X', 
-                                command=lambda: [help_window.destroy(), self.root.focus_set()],
+                                command=lambda: [help_window.destroy(), self.root.focus_force(), self.root.lift()],
                                 bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG,
                                 font=self.custom_font)
         close_button.pack(side=tk.RIGHT)
@@ -835,9 +841,12 @@ class NetworkMapGUI:
 
     # This callback closes the legend window
     def close_legend(self):
-        self.legend_window.destroy()
-        self.legend_window = None   
-        self.root.focus_set()
+        if self.legend_window and self.legend_window.winfo_exists():
+            self.legend_window.destroy()
+            self.legend_window = None
+        self.root.focus_force()  # Stronger focus restoration
+        self.root.lift()  # Bring window to the foreground
+        print("Legend closed, focus returned to root and bindings reapplied")
 
     def save_legend_state(self):
         with open("legend_state.txt", "w") as f:
@@ -1247,10 +1256,14 @@ class NetworkMapGUI:
         # Switch the current theme
         if ColorConfig.current == ColorConfig.Light:
             ColorConfig.current = ColorConfig.Dark
-            self.theme_button.config(text="Light Mode")
+            # Only update theme_button text if it exists and is alive
+            if hasattr(self, 'theme_button') and self.theme_button.winfo_exists():
+                self.theme_button.config(text="Light Mode")
         else:
             ColorConfig.current = ColorConfig.Light
-            self.theme_button.config(text="Dark Mode")
+            # Only update theme_button text if it exists and is alive
+            if hasattr(self, 'theme_button') and self.theme_button.winfo_exists():
+                self.theme_button.config(text="Dark Mode")
         self.update_ui_colors()
 
     def start_move(self, event):
@@ -1281,11 +1294,17 @@ class NetworkMapGUI:
         # Resize grip
         self.resize_grip.config(bg=ColorConfig.current.FRAME_BG)
 
-        # Buttons frame and its buttons
+       # Buttons frame and its buttons
         self.buttons_frame.config(bg=ColorConfig.current.FRAME_BG)
-        button_style = {'bg': ColorConfig.current.BUTTON_BG, 'fg': ColorConfig.current.BUTTON_FG, 'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG, 'activeforeground': ColorConfig.current.BUTTON_ACTIVE_FG}
-        self.mode_button.config(bg=ColorConfig.current.BUTTON_CONFIGURATION_MODE if self.mode == "Configuration" else ColorConfig.current.BUTTON_BG, fg=ColorConfig.current.BUTTON_FG)
-        self.theme_button.config(**button_style)
+        button_style = {'bg': ColorConfig.current.BUTTON_BG, 'fg': ColorConfig.current.BUTTON_FG, 
+                        'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG, 
+                        'activeforeground': ColorConfig.current.BUTTON_ACTIVE_FG}
+        self.mode_button.config(bg=ColorConfig.current.BUTTON_CONFIGURATION_MODE if self.mode == "Configuration" else ColorConfig.current.BUTTON_BG, 
+                            fg=ColorConfig.current.BUTTON_FG)
+        
+        # Safely configure theme_button only if it exists
+        if hasattr(self, 'theme_button') and self.theme_button.winfo_exists():
+                    self.theme_button.config(**button_style)
         start_menu_button = self.buttons_frame.winfo_children()[0]
         whoamI_button = self.buttons_frame.winfo_children()[2]
         clear_status_button = self.buttons_frame.winfo_children()[3]
@@ -1300,9 +1319,12 @@ class NetworkMapGUI:
             self.theme_button.config(text="Dark Mode" if ColorConfig.current == ColorConfig.Light else "Light Mode", **button_style)
         
         for cb in self.buttons_frame.winfo_children()[5:9]:  # Adjusted indices since theme_button is removed
-            cb.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG,
-                    selectcolor=ColorConfig.current.FRAME_BG, activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                    activeforeground=ColorConfig.current.BUTTON_ACTIVE_FG)
+            cb.config(
+                    bg=ColorConfig.current.FRAME_BG, 
+                    fg=ColorConfig.current.BUTTON_FG,
+                    selectcolor=ColorConfig.current.FRAME_BG, 
+                    activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                    activeforeground=ColorConfig.current.BUTTON_FG)
         self.canvas.config(bg=ColorConfig.current.FRAME_BG)
         self.info_panel.config(bg=ColorConfig.current.INFO_PANEL_BG)
         for child in self.info_panel.winfo_children():
@@ -1389,7 +1411,6 @@ class NetworkMapGUI:
                     self.canvas.itemconfig(conn.label_id, fill=ColorConfig.current.STICKY_NOTE_TEXT)
                     if hasattr(conn, 'label_bg') and conn.label_bg:
                         self.canvas.itemconfig(conn.label_bg, fill=ColorConfig.current.STICKY_NOTE_BG)
-                        self.canvas.coords(conn.label_bg, *self.canvas.bbox(conn.label_id))
 
         # Sticky notes
         for item in self.canvas.find_withtag("sticky_note"):
@@ -1400,6 +1421,13 @@ class NetworkMapGUI:
                 if bbox:
                     self.canvas.coords(bg_id, bbox[0]-2, bbox[1]-2, bbox[2]+2, bbox[3]+2)
                     self.canvas.itemconfig(bg_id, fill=ColorConfig.current.STICKY_NOTE_BG)
+
+        # Update sticky note text and background
+        for note in self.canvas.find_withtag("sticky_note"):
+            self.canvas.itemconfig(note, fill=ColorConfig.current.STICKY_NOTE_TEXT)
+        for bg in self.canvas.find_withtag("sticky_bg"):
+            self.canvas.itemconfig(bg, fill=ColorConfig.current.STICKY_NOTE_BG)
+
     def on_close(self):
         if self.unsaved_changes:
             if messagebox.askyesno("Unsaved Changes", "You have unsaved changes. Would you like to save before exiting?"):
