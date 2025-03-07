@@ -359,7 +359,6 @@ class ConnectionLine:
 class NetworkMapGUI:
     def __init__(self, root):
         self.root = root
-        root.iconbitmap('favicon.ico')
         self.root.overrideredirect(True)  # Remove this line to allow window resizing
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
         self.custom_font = font.Font(family="Helvetica", size=12)
@@ -822,7 +821,6 @@ class NetworkMapGUI:
             self.legend_window.overrideredirect(True)
             self.legend_window.transient(self.root)
             self.legend_window.transient(self.root)
-            self.legend_window.iconbitmap('favicon.ico')
             
             # Outer frame acts as the border
             outer_frame = tk.Frame(self.legend_window, bg=ColorConfig.current.BORDER_COLOR, padx=2, pady=2)
