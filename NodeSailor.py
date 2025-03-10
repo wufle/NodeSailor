@@ -8,6 +8,7 @@ from PIL import Image, ImageTk
 import socket
 import os
 import webbrowser
+import ctypes
 
 def get_ip_addresses():
     ip_addresses = []
@@ -359,10 +360,21 @@ class ConnectionLine:
 class NetworkMapGUI:
     def __init__(self, root):
         self.root = root
-        self.root.overrideredirect(True)  # Remove this line to allow window resizing
+        root.iconbitmap('_internal/favicon.ico')
+        self.root.overrideredirect(True)
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
         self.custom_font = font.Font(family="Helvetica", size=12)
         
+        # Make the window appear in the taskbar (Windows only)
+        if platform.system() == "Windows":
+            hwnd = self.root.winfo_id()
+            # Get current extended style
+            style = ctypes.windll.user32.GetWindowLongW(hwnd, -20)  # GWL_EXSTYLE
+            # Remove WS_EX_TOOLWINDOW (if present) and add WS_EX_APPWINDOW
+            style &= ~0x00000080  # Remove WS_EX_TOOLWINDOW
+            style |= 0x00040000   # Add WS_EX_APPWINDOW
+            ctypes.windll.user32.SetWindowLongW(hwnd, -20, style)
+            
         # Resize Grip (bottom-right corner)
         self.resize_grip = tk.Frame(self.root, width=15, height=15, bg=ColorConfig.current.FRAME_BG, cursor='sizing')
         self.resize_grip.place(relx=1.0, rely=1.0, anchor='se', x=-2, y=-2)
@@ -642,7 +654,6 @@ class NetworkMapGUI:
         tk.Button(editor_window, text="Close", command=editor_window.destroy).pack(pady=10)
 
     def show_help(self, event=None):
-        print("F1 pressed")
         help_window = tk.Toplevel(self.root)
         help_window.title("Help - Keyboard Shortcuts and Functions")
         help_window.geometry("1000x800")
@@ -811,12 +822,10 @@ class NetworkMapGUI:
     def display_legend(self):
         # Check if the legend window exists and is valid
         if self.legend_window is not None and self.legend_window.winfo_exists():
-            print("Legend window already exists, bringing to front")
             self.legend_window.deiconify()  # Restore if minimized
             self.legend_window.lift()       # Bring to front
             self.legend_window.grab_set()   # Ensure it has the grab
         else:
-            print("Creating new legend window")
             self.legend_window = tk.Toplevel(self.root)
             self.legend_window.overrideredirect(True)
             self.legend_window.transient(self.root)
@@ -851,7 +860,7 @@ class NetworkMapGUI:
             content_frame.pack(fill=tk.BOTH, expand=True)
 
             # Image
-            img = Image.open("legend.png").resize((404, 400), Image.Resampling.LANCZOS)
+            img = Image.open("_internal/legend.png").resize((404, 400), Image.Resampling.LANCZOS)
             photo_img = ImageTk.PhotoImage(img)
             img_label = tk.Label(content_frame, image=photo_img, bg=ColorConfig.current.LEGEND_BG)
             img_label.image = photo_img  # Keep a reference to avoid garbage collection
@@ -922,7 +931,6 @@ class NetworkMapGUI:
             self.legend_window = None
         self.root.focus_force()  # Stronger focus restoration
         self.root.lift()  # Bring window to the foreground
-        print("Legend closed, focus returned to root and bindings reapplied")
 
     def save_legend_state(self):
         with open("legend_state.txt", "w") as f:
@@ -954,9 +962,7 @@ class NetworkMapGUI:
         y = max(0, y)
         # Set geometry
         window.geometry(f'{width}x{height}+{x}+{y}')
-        # Optional debug print (remove after testing)
-        print(f"Legend window size: {width}x{height}, Position: ({x}, {y}), Main window: {main_x}, {main_y}, {main_width}x{main_height}")
-    
+       
     def on_node_select(self, node):
         # Reset the previous selected node's appearance
         if self.previous_selected_node:
@@ -1108,7 +1114,7 @@ class NetworkMapGUI:
         # Set the node color of all nodes to NODE_DEFAULT.
         for node in self.nodes:
             self.canvas.itemconfig(node.shape, fill=ColorConfig.current.NODE_DEFAULT)
-            
+ 
     def ping_all(self):
         for node in self.nodes:
             node.ping()
@@ -1120,8 +1126,6 @@ class NetworkMapGUI:
                 x, y = event.x, event.y if event else (50, 50)
                 StickyNote(self.canvas, text, x, y)
                 self.unsaved_changes = True
-        else:
-                print("Not in configuration mode")
                 
     def create_connection(self, event):     # Draw a connection line
         if self.mode == "Configuration":
@@ -1166,13 +1170,7 @@ class NetworkMapGUI:
                             connection.node1.connections.remove(connection)
                             connection.node2.connections.remove(connection)
 
-                            print(f"Connection between {connection.node1.name} and {connection.node2.name} removed")
                             return  # Exit after removing connection
-                print("Clicked item is not a connection line")
-            else:
-                print("No item clicked for removal")
-        else:
-            print("Not in configuration mode")
 
     def save_network_state(self):
         state = {'nodes': [], 'connections': []}
@@ -1328,7 +1326,6 @@ class NetworkMapGUI:
             self.canvas.itemconfig(node.shape, fill=flash_color)                 
 
     def toggle_theme(self):
-        print("Toggling theme...")
         # Switch the current theme
         if ColorConfig.current == ColorConfig.Light:
             ColorConfig.current = ColorConfig.Dark
