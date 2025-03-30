@@ -491,6 +491,26 @@ class NetworkMapGUI:
             cb.pack(side=tk.LEFT, padx=5)
             self.vlan_checkboxes[vlan] = cb
 
+        # Zoom controls in bottom-left corner
+        zoom_frame = tk.Frame(self.root, bg=ColorConfig.current.FRAME_BG, height=30)
+        zoom_frame.place(relx=0.0, rely=1.0, anchor='sw', x=10, y=-5)
+
+        def make_zoom_button(text, command):
+            return tk.Label(zoom_frame, text=text, font=("Helvetica", 12),
+                            fg=ColorConfig.current.BUTTON_FG, bg=ColorConfig.current.FRAME_BG,
+                            cursor="hand2", padx=5)
+        
+        zoom_in_btn = make_zoom_button("+", self.zoom_in)
+        zoom_in_btn.pack(side=tk.LEFT)
+        zoom_in_btn.bind("<Button-1>", lambda e: self.zoom_in())
+
+        reset_zoom_btn = make_zoom_button("100%", self.reset_zoom)
+        reset_zoom_btn.pack(side=tk.LEFT, padx=(5, 0))
+        reset_zoom_btn.bind("<Button-1>", lambda e: self.reset_zoom())
+
+        zoom_out_btn = make_zoom_button("–", self.zoom_out)
+        zoom_out_btn.pack(side=tk.LEFT, padx=(5, 0))
+        zoom_out_btn.bind("<Button-1>", lambda e: self.zoom_out())
 
         # Canvas below the buttons
         self.canvas = tk.Canvas(root, width=1500, height=800, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
@@ -513,6 +533,7 @@ class NetworkMapGUI:
         self.canvas.bind('<Button-2>', self.create_connection)
         self.canvas.bind('<Shift-Button-2>', self.remove_connection)
 
+        self.zoom_level = 1.0
         self.root.focus_set()
 
          # Info Panel
@@ -739,7 +760,7 @@ class NetworkMapGUI:
         text_area.pack(expand=True, fill="both", padx=10, pady=10)
 
         help_text = """
-        NodeSailor v0.9.6 - Help
+        NodeSailor v0.9.7 - Help
 
         Overview:
         NodeSailor is a network visualization tool.
@@ -829,10 +850,21 @@ class NetworkMapGUI:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def zoom_in(self, event=None):
-        self.canvas.scale("all", self.canvas.winfo_width()/2, self.canvas.winfo_height()/2, 1.1, 1.1)
+        self.canvas.scale("all", 0, 0, 1.1, 1.1)
+        self.zoom_level *= 1.1
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def zoom_out(self, event=None):
-        self.canvas.scale("all", self.canvas.winfo_width()/2, self.canvas.winfo_height()/2, 0.9, 0.9)
+        self.canvas.scale("all", 0, 0, 0.9, 0.9)
+        self.zoom_level *= 0.9
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+
+    def reset_zoom(self):
+        self.canvas.scale("all", 0, 0, 1 / self.zoom_level, 1 / self.zoom_level)
+        self.zoom_level = 1.0
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
 
     def pan_canvas(self, direction):
         pan_speed = 1  # Adjust the panning speed
@@ -881,7 +913,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.LEGEND_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="Nodesailor v0.9.6", bg=ColorConfig.current.LEGEND_BG,
+            title_label = tk.Label(title_bar, text="Nodesailor v0.9.7", bg=ColorConfig.current.LEGEND_BG,
                                 fg=ColorConfig.current.BUTTON_FG, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
