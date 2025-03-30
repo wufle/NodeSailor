@@ -364,6 +364,12 @@ class NetworkMapGUI:
         self.root.overrideredirect(True)
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
         self.custom_font = font.Font(family="Helvetica", size=12)
+        self.vlan_label_names = {
+            'VLAN_100': 'VLAN_100',
+            'VLAN_200': 'VLAN_200',
+            'VLAN_300': 'VLAN_300',
+            'VLAN_400': 'VLAN_400'
+        }
         
         # Make the window appear in the taskbar (Windows only)
         if platform.system() == "Windows":
@@ -469,15 +475,22 @@ class NetworkMapGUI:
                                 'VLAN_300': tk.BooleanVar(value=True),
                                 'VLAN_400': tk.BooleanVar(value=True)}
 
+        self.vlan_checkboxes = {}
         for vlan, var in self.vlan_visibility.items():
-            cb = tk.Checkbutton(self.buttons_frame, text=vlan, variable=var, 
-                                bg=ColorConfig.current.FRAME_BG, 
-                                fg=ColorConfig.current.BUTTON_FG,  # Text color matches buttons
-                                selectcolor=ColorConfig.current.FRAME_BG,  # Checkbox square background
-                                activebackground=ColorConfig.current.BUTTON_BG,  # Hover background
-                                activeforeground=ColorConfig.current.BUTTON_FG,  # Hover text
-                                command=self.update_vlan_visibility)
+            cb = tk.Checkbutton(
+                self.buttons_frame,
+                text=self.vlan_label_names[vlan],
+                variable=var,
+                bg=ColorConfig.current.FRAME_BG,
+                fg=ColorConfig.current.BUTTON_FG,
+                selectcolor=ColorConfig.current.FRAME_BG,
+                activebackground=ColorConfig.current.BUTTON_BG,
+                activeforeground=ColorConfig.current.BUTTON_FG,
+                command=self.update_vlan_visibility
+            )
             cb.pack(side=tk.LEFT, padx=5)
+            self.vlan_checkboxes[vlan] = cb
+
 
         # Canvas below the buttons
         self.canvas = tk.Canvas(root, width=1500, height=800, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
@@ -521,12 +534,17 @@ class NetworkMapGUI:
         tk.Label(self.info_panel, text="", **info_label_style).grid(row=1, column=0, sticky='w', padx=5, pady=2)
         self.node_ip_label = tk.Label(self.info_panel, text="", **info_value_style)
         self.node_ip_label.grid(row=1, column=1, sticky='w', padx=5, pady=2)
-
+        
         self.vlan_labels = {}
+        self.vlan_title_labels = {}
         for i, vlan in enumerate(['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400'], start=2):
-            tk.Label(self.info_panel, text=f"{vlan}:", **info_label_style).grid(row=i, column=0, sticky='w', padx=5, pady=2)
+            title = tk.Label(self.info_panel, text=self.vlan_label_names[vlan] + ":", **info_label_style)
+            title.grid(row=i, column=0, sticky='w', padx=5, pady=2)
+            self.vlan_title_labels[vlan] = title
+
             self.vlan_labels[vlan] = tk.Label(self.info_panel, text="-", **info_value_style)
             self.vlan_labels[vlan].grid(row=i, column=1, sticky='w', padx=5, pady=2)
+
         
         self.toggle_mode() # sets to Operator mode on startup
         self.hide_legend_on_start = tk.BooleanVar(value=False)
@@ -652,6 +670,30 @@ class NetworkMapGUI:
 
         # Close button
         tk.Button(editor_window, text="Close", command=editor_window.destroy).pack(pady=10)
+
+    def edit_vlan_labels(self):
+        label_window = tk.Toplevel(self.root)
+        label_window.title("Edit VLAN Labels")
+        label_window.geometry("300x250")
+        entries = {}
+
+        for i, vlan in enumerate(self.vlan_label_names.keys()):
+            tk.Label(label_window, text=vlan + ":").grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(label_window)
+            entry.insert(0, self.vlan_label_names[vlan])
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            entries[vlan] = entry
+
+        def save_labels():
+            for vlan, entry in entries.items():
+                self.vlan_label_names[vlan] = entry.get()
+            for vlan, label in self.vlan_title_labels.items():
+                label.config(text=self.vlan_label_names[vlan] + ":")
+            for vlan, cb in self.vlan_checkboxes.items():
+                cb.config(text=self.vlan_label_names[vlan])
+            label_window.destroy()
+
+        tk.Button(label_window, text="Save", command=save_labels).grid(row=5, column=0, columnspan=2, pady=10)
 
     def show_help(self, event=None):
         help_window = tk.Toplevel(self.root)
@@ -899,6 +941,11 @@ class NetworkMapGUI:
             color_editor_button = tk.Button(content_frame, text='Edit Colors',
                                             command=self.show_color_editor, **button_style)
             color_editor_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+
+            edit_labels_btn = tk.Button(content_frame, text='Edit VLAN Labels',
+                             command=self.edit_vlan_labels, **button_style)
+            edit_labels_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+
 
             help_button = tk.Button(content_frame, text='Help', command=self.show_help, **button_style)
             help_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
@@ -1173,7 +1220,11 @@ class NetworkMapGUI:
                             return  # Exit after removing connection
 
     def save_network_state(self):
-        state = {'nodes': [], 'connections': []}
+        state = {
+            'nodes': [],
+            'connections': [],
+            'vlan_labels': self.vlan_label_names
+        }
         for node in self.nodes:
             node_data = {
                 'name': node.name,
@@ -1221,6 +1272,12 @@ class NetworkMapGUI:
         with open(file_path, 'r') as f:
             self.clear_current_loaded()  # Clear existing nodes, connections, and labels
             state = json.load(f)
+            if 'vlan_labels' in state:
+                self.vlan_label_names.update(state['vlan_labels'])
+                for vlan, label in self.vlan_title_labels.items():
+                    label.config(text=self.vlan_label_names[vlan] + ":")
+                for vlan, cb in self.vlan_checkboxes.items():
+                    cb.config(text=self.vlan_label_names[vlan])
             # Load nodes
             for node_data in state['nodes']:
                 node = NetworkNode(
@@ -1260,7 +1317,12 @@ class NetworkMapGUI:
             with open(file_path, 'r') as f:
                 self.clear_current_loaded()  # Clear existing nodes, connections and labels
                 state = json.load(f)
-            
+                if 'vlan_labels' in state:
+                    self.vlan_label_names.update(state['vlan_labels'])
+                    for vlan, label in self.vlan_title_labels.items():
+                        label.config(text=self.vlan_label_names[vlan] + ":")
+                    for vlan, cb in self.vlan_checkboxes.items():
+                        cb.config(text=self.vlan_label_names[vlan])
                 # Load nodes
                 for node_data in state['nodes']:
                     node = NetworkNode(
