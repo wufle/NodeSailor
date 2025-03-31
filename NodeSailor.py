@@ -79,19 +79,41 @@ class ColorConfig:
     current = Dark
 
 class StickyNote:
-    def __init__(self, canvas, text, x, y, font=('Helvetica', '12'), bg=ColorConfig.current.STICKY_NOTE_BG):
+    def __init__(self, canvas, text, x, y, gui=None,
+                 font=('Helvetica', '12'), bg=ColorConfig.current.STICKY_NOTE_BG):
         self.canvas = canvas
+        self.gui = gui  # May be None if older code doesn't pass the GUI
         self.text = text
         self.x = x
         self.y = y
         self.bg = bg
         self.font = font
-        self.bg_shape = canvas.create_rectangle(x, y, x + 100, y + 50, fill=ColorConfig.current.FRAME_BG, outline='', tags=("sticky_bg", f"bg_{id(self)}"))
-        self.note = canvas.create_text(x, y, text=text, font=self.font, fill=ColorConfig.current.STICKY_NOTE_TEXT, 
-                                     tags="sticky_note", anchor="nw")
+
+        # Background rectangle
+        self.bg_shape = canvas.create_rectangle(
+            x, y, x + 100, y + 50,
+            fill=ColorConfig.current.FRAME_BG, outline='',
+            tags=("sticky_bg", f"bg_{id(self)}")  # consistent with "sticky_bg"
+        )
+        # Text
+        self.note = canvas.create_text(
+            x, y,
+            text=text,
+            font=self.font,
+            fill=ColorConfig.current.STICKY_NOTE_TEXT,
+            tags=("sticky_note",),
+            anchor="nw"
+        )
+
+        # Left-click drag
         self.canvas.tag_bind(self.note, '<Button-1>', self.on_click)
         self.canvas.tag_bind(self.note, '<Shift-B1-Motion>', self.on_drag_notes)
         self.canvas.tag_bind(self.note, '<ButtonRelease-1>', self.on_release)
+
+        # Right-click context menu
+        self.canvas.tag_bind(self.note, '<Button-3>', self.show_context_menu)
+        self.canvas.tag_bind(self.bg_shape, '<Button-3>', self.show_context_menu)
+
         self.adjust_note_size()
         self.type = 'sticky'
 
@@ -99,34 +121,87 @@ class StickyNote:
         bbox = self.canvas.bbox(self.note)
         if bbox:
             padding = 2
-            self.canvas.coords(self.bg_shape, bbox[0]-padding, bbox[1]-padding, bbox[2]+padding, bbox[3]+padding)
-            self.canvas.itemconfig(self.bg_shape, fill=ColorConfig.current.STICKY_NOTE_BG)
-        
+            self.canvas.coords(self.bg_shape,
+                bbox[0] - padding, bbox[1] - padding,
+                bbox[2] + padding, bbox[3] + padding)
+            self.canvas.itemconfig(self.bg_shape,
+                fill=ColorConfig.current.STICKY_NOTE_BG)
+
     def on_click(self, event):
         self.canvas.selected_object_type = self.type
         self.canvas.selected_object = self
         self.last_drag_x = event.x
         self.last_drag_y = event.y
-        
+
     def on_drag_notes(self, event):
         if event.state & 0x001:
             if self.canvas.selected_object is self:
                 dx = event.x - self.last_drag_x
                 dy = event.y - self.last_drag_y
                 self.canvas.move(self.note, dx, dy)
+                self.canvas.move(self.bg_shape, dx, dy)
                 self.last_drag_x = event.x
                 self.last_drag_y = event.y
                 self.adjust_note_size()
-    
+
     def on_release(self, event):
-        self.canvas.selected_object = None
         self.canvas.selected_object_type = None
-    
-    def adjust_note_size(self):
-        bbox = self.canvas.bbox(self.note)  # Get the bounding box of the text
-        if bbox:
-            padding = 2
-            self.canvas.coords(self.bg_shape, bbox[0]-padding, bbox[1]-padding, bbox[2]+padding, bbox[3]+padding)
+        self.canvas.selected_object = None
+
+    # Right-click menu
+    def show_context_menu(self, event):
+        context_menu = tk.Toplevel(self.canvas)
+        context_menu.wm_overrideredirect(True)
+        context_menu.wm_geometry(f"+{event.x_root}+{event.y_root}")
+
+        menu_frame = tk.Frame(context_menu, bg=ColorConfig.current.BUTTON_BG)
+        menu_frame.pack()
+
+        def destroy_menu():
+            context_menu.unbind("<FocusOut>")
+            context_menu.unbind("<Escape>")
+            context_menu.destroy()
+
+        options = [
+            ("Edit Note Text", self.edit_sticky_text),
+            ("Delete Note", self.delete_sticky)
+        ]
+
+        for txt, cmd in options:
+            btn = tk.Button(
+                menu_frame, text=txt,
+                command=lambda c=cmd: [c(), destroy_menu()],
+                bg=ColorConfig.current.BUTTON_BG,
+                fg=ColorConfig.current.BUTTON_FG,
+                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                activeforeground=ColorConfig.current.BUTTON_ACTIVE_FG,
+                relief='flat', borderwidth=0, padx=10, pady=4, anchor='w',
+                font=('Helvetica', 10)
+            )
+            btn.pack(fill='x')
+
+        # Clicking elsewhere or pressing Escape closes the menu
+        self.canvas.bind("<Button-1>", lambda e: destroy_menu(), add="+")
+        context_menu.bind("<Escape>", lambda e: destroy_menu())
+
+    def edit_sticky_text(self):
+        new_text = simpledialog.askstring(
+            "Edit Note",
+            "Enter new note text:",
+            initialvalue=self.text
+        )
+        if new_text is not None:
+            self.text = new_text
+            self.canvas.itemconfig(self.note, text=self.text)
+            self.adjust_note_size()
+
+    def delete_sticky(self):
+        # If the GUI is available, call its remove_sticky. Otherwise, just delete ourselves.
+        if self.gui and hasattr(self.gui, 'remove_sticky'):
+            self.gui.remove_sticky(self)
+        else:
+            self.canvas.delete(self.note)
+            self.canvas.delete(self.bg_shape)
 
 class NetworkNode:
     def __init__(self, canvas, name, x, y, VLAN_100='', VLAN_200='', VLAN_300='', VLAN_400='', remote_desktop_address='', file_path='', web_config_url=''):
@@ -523,6 +598,7 @@ class NetworkMapGUI:
         self.canvas = tk.Canvas(root, width=1500, height=800, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=(5, 25))
         self.nodes = []
+        self.stickynotes = []
         self.selected_node = None
         self.previous_selected_node = None
         
@@ -540,7 +616,8 @@ class NetworkMapGUI:
         self.canvas.pack(fill=tk.BOTH, expand=True)
         self.canvas.bind('<Button-2>', self.create_connection)
         self.canvas.bind('<Shift-Button-2>', self.remove_connection)
-
+        self.root.bind('<Control-s>', self.keyboard_save)
+        self.root.bind('<Control-l>', self.keyboard_load)
         self.zoom_level = 1.0
         self.root.focus_set()
 
@@ -785,7 +862,7 @@ class NetworkMapGUI:
         text_area.pack(expand=True, fill="both", padx=10, pady=10)
 
         help_text = """
-        NodeSailor v0.9.7 - Help
+        NodeSailor v0.9.8 - Help
 
         Overview:
         NodeSailor is a network visualization tool.
@@ -950,7 +1027,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.LEGEND_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="Nodesailor v0.9.7", bg=ColorConfig.current.LEGEND_BG,
+            title_label = tk.Label(title_bar, text="Nodesailor v0.9.8", bg=ColorConfig.current.LEGEND_BG,
                                 fg=ColorConfig.current.BUTTON_FG, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
@@ -1251,7 +1328,7 @@ class NetworkMapGUI:
         stickynotes = self.canvas.find_withtag("sticky_note")
         for note in stickynotes:
             self.canvas.delete(note)
-        sticky_bgs = self.canvas.find_withtag("sticky_note_bg")  # Assuming a tag is set for sticky note backgrounds
+        sticky_bgs = self.canvas.find_withtag("sticky_bg")
         for bg in sticky_bgs:
             self.canvas.delete(bg)
             
@@ -1269,9 +1346,19 @@ class NetworkMapGUI:
             text = simpledialog.askstring('Sticky Note', 'Enter note text:', parent=self.root)
             if text:
                 x, y = event.x, event.y if event else (50, 50)
-                StickyNote(self.canvas, text, x, y)
+                note = StickyNote(self.canvas, text, x, y, self)
+                self.stickynotes.append(note)
                 self.unsaved_changes = True
-                
+
+    def remove_sticky(self, sticky):
+        # Erase sticky from the canvas
+        self.canvas.delete(sticky.note)
+        self.canvas.delete(sticky.bg_shape)
+
+        # Remove it from the list
+        if sticky in self.stickynotes:
+            self.stickynotes.remove(sticky)     
+
     def create_connection(self, event):     # Draw a connection line
         if self.mode == "Configuration":
             clicked_items = self.canvas.find_withtag("current")
@@ -1317,12 +1404,21 @@ class NetworkMapGUI:
 
                             return  # Exit after removing connection
 
+    def keyboard_save(self, event=None):
+        self.save_network_state()
+
+    def keyboard_load(self, event=None):
+        self.load_network_state()
+
     def save_network_state(self):
         state = {
             'nodes': [],
             'connections': [],
-            'vlan_labels': self.vlan_label_names
+            'vlan_labels': self.vlan_label_names,
+            'stickynotes': []
         }
+
+        # Gather node data
         for node in self.nodes:
             node_data = {
                 'name': node.name,
@@ -1338,25 +1434,42 @@ class NetworkMapGUI:
             }
             state['nodes'].append(node_data)
 
-        # Save connections
-        lines_seen = set()  # To avoid duplicates
+        # Gather connection data
+        lines_seen = set()
         for node in self.nodes:
             for conn in node.connections:
                 if conn not in lines_seen:
                     connection_data = {
                         'from': self.nodes.index(conn.node1),
                         'to': self.nodes.index(conn.node2),
-                        'label': conn.label  # Save the label of the connection
+                        'label': conn.label
                     }
                     state['connections'].append(connection_data)
                     lines_seen.add(conn)
 
-        # Prompt user for file location and save the JSON file
+        # Gather sticky-note data
+        for note in self.stickynotes:
+            bbox = self.canvas.bbox(note.note)
+            if bbox:
+                # Top-left corner of the sticky note text
+                x1, y1 = bbox[0], bbox[1]
+                text = self.canvas.itemcget(note.note, "text")
+                state['stickynotes'].append({
+                    'text': text,
+                    'x': x1,
+                    'y': y1
+                })
+
+        # Prompt user for a file location and save the JSON file
         file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
         if file_path:
             with open(file_path, 'w') as f:
-                json.dump(state, f, indent=4)    
-        self.legend_window.destroy()  # Close the legend window
+                json.dump(state, f, indent=4)
+
+        # Close the legend window if it exists
+        if self.legend_window and self.legend_window.winfo_exists():
+            self.legend_window.destroy()
+
 
     def new_network_state(self):
         # Confirm with the user before clearing the network state
@@ -1368,46 +1481,59 @@ class NetworkMapGUI:
 
     def load_network_state_from_path(self, file_path):
         with open(file_path, 'r') as f:
-            self.clear_current_loaded()  # Clear existing nodes, connections, and labels
+            self.clear_current_loaded()  # Clears existing nodes, connections, and stickynotes
             state = json.load(f)
+
+            # Load custom VLAN labels (if present)
             if 'vlan_labels' in state:
                 self.vlan_label_names.update(state['vlan_labels'])
                 for vlan, label in self.vlan_title_labels.items():
                     label.config(text=self.vlan_label_names[vlan] + ":")
                 for vlan, cb in self.vlan_checkboxes.items():
                     cb.config(text=self.vlan_label_names[vlan])
+
             # Load nodes
-            for node_data in state['nodes']:
+            for node_data in state.get('nodes', []):
                 node = NetworkNode(
-                    self.canvas, 
-                    node_data['name'], 
-                    node_data['x'], 
+                    self.canvas,
+                    node_data['name'],
+                    node_data['x'],
                     node_data['y'],
                     VLAN_100=node_data.get('VLAN_100', ''),
                     VLAN_200=node_data.get('VLAN_200', ''),
                     VLAN_300=node_data.get('VLAN_300', ''),
                     VLAN_400=node_data.get('VLAN_400', ''),
-                    # Load new variables
                     remote_desktop_address=node_data.get('remote_desktop_address', ''),
                     file_path=node_data.get('file_path', ''),
                     web_config_url=node_data.get('web_config_url', '')
                 )
                 self.nodes.append(node)
                 self.highlight_matching_nodes()
+
             # Load connections
-            for conn_data in state['connections']:
+            for conn_data in state.get('connections', []):
                 node1 = self.nodes[conn_data['from']]
                 node2 = self.nodes[conn_data['to']]
-                label = conn_data.get('label', '')  # Get the label if it exists
+                label = conn_data.get('label', '')
                 ConnectionLine(self.canvas, node1, node2, label=label)
-            
-            # Raise all nodes after creating connections to ensure they appear on top
+
+            # Load sticky notes
+            self.stickynotes.clear()
+            for sn in state.get('stickynotes', []):
+                note = StickyNote(self.canvas, sn['text'], sn['x'], sn['y'])
+                self.stickynotes.append(note)
+
+            # Make sure nodes appear over connection lines
             for node in self.nodes:
                 node.raise_node()
-        self.save_last_file_path(file_path)  # Save the last file path
-        if self.legend_window is not None:
+
+        # Save this file path for "load last file" feature
+        self.save_last_file_path(file_path)
+
+        # Optional: if you want the legend window to close after loading
+        if self.legend_window is not None and self.legend_window.winfo_exists():
             self.legend_window.destroy()
-            self.legend_window = None  # Reset the attribute after destroying the window
+            self.legend_window = None
         
     def load_network_state(self):
         file_path = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
