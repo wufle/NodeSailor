@@ -8,3 +8,4 @@ legend_state.txt
 .vscode/settings.json
 NodeSailor.spec
 example network2.json
+_internal/custom_commands.json

@@ -329,6 +329,10 @@ class NetworkNode:
             ("Delete Node", self.delete_node)
         ]
 
+        # Add custom commands
+        for name, cmd in gui.custom_commands.items():
+            options.append((name, lambda c=cmd: self.execute_custom_command(c)))
+
         def destroy_menu():
             context_menu.unbind("<FocusOut>")
             context_menu.unbind("<Escape>")
@@ -349,7 +353,7 @@ class NetworkNode:
             btn.bind("<Leave>", lambda e, b=btn: b.config(bg=ColorConfig.current.BUTTON_BG))
 
         self.canvas.bind("<Button-1>", lambda e: destroy_menu(), add="+")
-        context_menu.bind("<Escape>", lambda e: destroy_menu()) 
+        context_menu.bind("<Escape>", lambda e: destroy_menu())
 
     def edit_node_info(self):
         gui.open_node_window(node=self)
@@ -387,6 +391,26 @@ class NetworkNode:
     
     def delete_node(self):
         gui.remove_node(self)
+
+    def execute_custom_command(self, command_template):
+        # Get the first non-empty VLAN IP
+        for vlan in ['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400']:
+            ip = getattr(self, vlan)
+            if ip:
+                # Replace {ip} placeholder with actual IP
+                command = command_template.format(ip=ip)
+                try:
+                    if platform.system() == "Windows":
+                        # Use cmd /k to keep the window open
+                        subprocess.Popen(f"cmd /k {command}", shell=True)
+                    else:
+                        # For non-Windows systems, use xterm or similar
+                        subprocess.Popen(f"xterm -e '{command}'", shell=True)
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to execute command: {str(e)}")
+                break
+        else:
+            messagebox.showinfo("Info", "No IP address available for this node.")
 
 class ConnectionLine:
     def __init__(self, canvas, node1, node2, label=''):
@@ -445,6 +469,9 @@ class NetworkMapGUI:
             'VLAN_300': 'VLAN_300',
             'VLAN_400': 'VLAN_400'
         }
+        
+        # Load custom commands
+        self.custom_commands = self.load_custom_commands()
         
         # Make the window appear in the taskbar (Windows only)
         if platform.system() == "Windows":
@@ -874,7 +901,7 @@ class NetworkMapGUI:
         Operator Mode:
         - Left Click on Node: Ping the node (Green = all VLANs up, Yellow = partial, Red = none).
         - Right Click on Node: Open context menu (Edit Node, Remote Desktop, File Explorer, Web Browser, Delete).
-        - 'Who am I?': Highlight nodes matching the user machine’s IP addresses.
+        - 'Who am I?': Highlight nodes matching the user machine's IP addresses.
         - 'Ping All': Ping all nodes and update their status.
         - 'Clear Status': Reset all node colors to default.
 
@@ -888,13 +915,20 @@ class NetworkMapGUI:
 
         Node Context Menu:
         - Edit Node Information: Modify name, VLAN IPs, remote desktop, file path, or web URL.
-        - Open Remote Desktop: Launch RDP (Windows only) using the node’s address.
+        - Open Remote Desktop: Launch RDP (Windows only) using the node's address.
         - Open File Explorer: Open the specified file path.
-        - Open Web Browser: Open the node’s web config URL.
+        - Open Web Browser: Open the node's web config URL.
         - Delete Node: Remove the node and its connections (Configuration mode only).
+        - Custom Commands: User-defined commands that can be executed on the node's IP address.
 
         VLAN Checkboxes:
         - Toggle visibility of nodes based on VLANs (checked = visible, unchecked = greyed out).
+
+        Custom Commands:
+        - Access through 'Manage Custom Commands' in the Start Menu
+        - Use {ip} as a placeholder for the node's IP address in command templates
+        - Commands appear in the node's context menu
+        - Example: ping {ip} will ping the node's IP address
         """
 
         text_area.config(state="normal")
@@ -1092,6 +1126,10 @@ class NetworkMapGUI:
                              command=self.edit_vlan_labels, **button_style)
             edit_labels_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
+            # Add custom commands management button
+            custom_cmd_btn = tk.Button(content_frame, text='Manage Custom Commands',
+                                     command=self.manage_custom_commands, **button_style)
+            custom_cmd_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             help_button = tk.Button(content_frame, text='Help', command=self.show_help, **button_style)
             help_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
@@ -1774,16 +1812,6 @@ class NetworkMapGUI:
         # Sticky notes
         for item in self.canvas.find_withtag("sticky_note"):
             self.canvas.itemconfig(item, fill=ColorConfig.current.STICKY_NOTE_TEXT)
-            bg_id = self.canvas.find_withtag(f"bg_{id(item)}")
-            if bg_id:
-                bbox = self.canvas.bbox(item)
-                if bbox:
-                    self.canvas.coords(bg_id, bbox[0]-2, bbox[1]-2, bbox[2]+2, bbox[3]+2)
-                    self.canvas.itemconfig(bg_id, fill=ColorConfig.current.STICKY_NOTE_BG)
-
-        # Update sticky note text and background
-        for note in self.canvas.find_withtag("sticky_note"):
-            self.canvas.itemconfig(note, fill=ColorConfig.current.STICKY_NOTE_TEXT)
         for bg in self.canvas.find_withtag("sticky_bg"):
             self.canvas.itemconfig(bg, fill=ColorConfig.current.STICKY_NOTE_BG)
     
@@ -1847,6 +1875,89 @@ class NetworkMapGUI:
                 for attr, value in colors['Dark'].items():
                     setattr(ColorConfig.Dark, attr, value)
             self.update_ui_colors()
+
+    def load_custom_commands(self):
+        try:
+            with open('_internal/custom_commands.json', 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return {}
+
+    def save_custom_commands(self):
+        with open('_internal/custom_commands.json', 'w') as f:
+            json.dump(self.custom_commands, f, indent=4)
+
+    def manage_custom_commands(self):
+        window = tk.Toplevel(self.root)
+        window.title("Manage Custom Commands")
+        window.geometry("400x500")
+        window.transient(self.root)
+        window.grab_set()
+
+        # Create listbox for commands
+        listbox = tk.Listbox(window, width=50, height=15)
+        listbox.pack(pady=10, padx=10)
+
+        # Populate listbox
+        for name in self.custom_commands.keys():
+            listbox.insert(tk.END, name)
+
+        # Entry fields
+        frame = tk.Frame(window)
+        frame.pack(pady=10, padx=10, fill=tk.X)
+
+        tk.Label(frame, text="Command Name:").grid(row=0, column=0, sticky='w')
+        name_entry = tk.Entry(frame, width=40)
+        name_entry.grid(row=0, column=1, padx=5)
+
+        tk.Label(frame, text="Command Template:").grid(row=1, column=0, sticky='w')
+        cmd_entry = tk.Entry(frame, width=40)
+        cmd_entry.grid(row=1, column=1, padx=5)
+
+        # Buttons frame
+        btn_frame = tk.Frame(window)
+        btn_frame.pack(pady=10)
+
+        def add_command():
+            name = name_entry.get().strip()
+            cmd = cmd_entry.get().strip()
+            if name and cmd:
+                self.custom_commands[name] = cmd
+                listbox.insert(tk.END, name)
+                name_entry.delete(0, tk.END)
+                cmd_entry.delete(0, tk.END)
+                self.save_custom_commands()
+
+        def edit_command():
+            selection = listbox.curselection()
+            if selection:
+                name = listbox.get(selection[0])
+                cmd = self.custom_commands[name]
+                name_entry.delete(0, tk.END)
+                cmd_entry.delete(0, tk.END)
+                name_entry.insert(0, name)
+                cmd_entry.insert(0, cmd)
+
+        def delete_command():
+            selection = listbox.curselection()
+            if selection:
+                name = listbox.get(selection[0])
+                del self.custom_commands[name]
+                listbox.delete(selection[0])
+                self.save_custom_commands()
+
+        tk.Button(btn_frame, text="Add", command=add_command).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Edit", command=edit_command).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Delete", command=delete_command).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Close", command=window.destroy).pack(side=tk.LEFT, padx=5)
+
+        # Help text
+        help_text = """
+        Command Template Format:
+        Use {ip} as a placeholder for the node's IP address.
+        Example: ping {ip}
+        """
+        tk.Label(window, text=help_text, justify=tk.LEFT).pack(pady=10, padx=10)
 
 if __name__ == "__main__":
     root = tk.Tk()
