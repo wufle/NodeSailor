@@ -164,9 +164,8 @@ class NetworkNode:
     def update_position(self, x, y):
         self.x = x
         self.y = y
-        self.canvas.coords(self.shape, x - 15, y - 15, x + 15, y + 15)
         self.canvas.coords(self.text, x, y)
-        self.adjust_node_size()  # Adjust the node size initially
+        self.adjust_node_size()
         for line in self.connections:
             line.update_position()
 
@@ -527,6 +526,7 @@ class NetworkMapGUI:
         self.root.bind('<Control-Shift-C>', lambda event: [self.root.focus_set(), self.toggle_theme()])
         self.canvas.bind('<Double-1>', self.create_node)
         self.canvas.bind('<B1-Motion>', self.move_node)
+        self.canvas.bind('<ButtonRelease-1>', self.deselect_node)
         self.canvas.bind('<Shift-Double-1>', self.create_sticky_note)
         self.canvas.bind('<MouseWheel>', self.zoom_with_mouse)
         self.canvas.pack(fill=tk.BOTH, expand=True)
@@ -829,40 +829,52 @@ class NetworkMapGUI:
             self.canvas.unbind('<B1-Motion>')
             self.canvas.unbind('<Shift-Double-1>')
             self.canvas.unbind('<Button-2>')
-
+  
     def zoom_with_mouse(self, event):
-        # Determine zoom direction: positive delta for zoom in, negative for zoom out
-        if event.num == 4 or event.delta > 0:  # Scroll up or positive delta
-            scale_factor = 1.1  # Zoom in
-        elif event.num == 5 or event.delta < 0:  # Scroll down or negative delta
-            scale_factor = 0.9  # Zoom out
+        if event.num == 4 or event.delta > 0:
+            factor = 1.1
+        elif event.num == 5 or event.delta < 0:
+            factor = 0.9
         else:
-            return  # No valid scroll direction
+            return
 
         # Get mouse position relative to canvas
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
 
-        # Scale the canvas around the mouse position
-        self.canvas.scale("all", x, y, scale_factor, scale_factor)
+        # Scale all canvas items visually
+        self.canvas.scale("all", x, y, factor, factor)
 
-        # Adjust scroll region to include all items after scaling
+        # Update stored node coordinates
+        for node in self.nodes:
+            node.x = (node.x - x) * factor + x
+            node.y = (node.y - y) * factor + y
+            node.update_position(node.x, node.y)
+
+        self.zoom_level *= factor
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def zoom_in(self, event=None):
-        self.canvas.scale("all", 0, 0, 1.1, 1.1)
-        self.zoom_level *= 1.1
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        self.apply_zoom(1.1)
 
     def zoom_out(self, event=None):
-        self.canvas.scale("all", 0, 0, 0.9, 0.9)
-        self.zoom_level *= 0.9
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        self.apply_zoom(0.9)
 
+    def reset_zoom(self, event=None):
+        if self.zoom_level != 1.0:
+            self.apply_zoom(1 / self.zoom_level)
 
-    def reset_zoom(self):
-        self.canvas.scale("all", 0, 0, 1 / self.zoom_level, 1 / self.zoom_level)
-        self.zoom_level = 1.0
+    def apply_zoom(self, factor):
+        # Scale all canvas items visually
+        self.canvas.scale("all", 0, 0, factor, factor)
+
+        # Update stored node coordinates
+        for node in self.nodes:
+            node.x *= factor
+            node.y *= factor
+            node.update_position(node.x, node.y)
+
+        self.zoom_level *= factor
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
 
@@ -1134,14 +1146,25 @@ class NetworkMapGUI:
              
     def move_node(self, event):
         if not event.state & 0x001:
-            if self.selected_node:
-                self.selected_node.update_position(event.x, event.y)
-                self.unsaved_changes = True
-            else:
+            canvas_x = self.canvas.canvasx(event.x)
+            canvas_y = self.canvas.canvasy(event.y)
+
+            # If no object is currently selected, check if one was clicked
+            if self.selected_node is None:
                 for node in self.nodes:
-                    if self.canvas.find_withtag(tk.CURRENT) == node.shape or self.canvas.find_withtag(tk.CURRENT) == node.text:
+                    if self.canvas.find_withtag(tk.CURRENT) in (node.shape, node.text):
                         self.selected_node = node
                         break
+
+            # Only move if a node is actively selected
+            if self.selected_node:
+                self.selected_node.update_position(canvas_x, canvas_y)
+                self.unsaved_changes = True
+            else:
+                self.selected_node = None
+
+    def deselect_node(self, event=None):
+        self.selected_node = None
 
     def remove_node(self, node):
         if self.mode == "Configuration":
