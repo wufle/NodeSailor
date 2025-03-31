@@ -359,6 +359,7 @@ class ConnectionLine:
 class NetworkMapGUI:
     def __init__(self, root):
         self.root = root
+        self.load_window_geometry()  # Load saved window size and position
         root.iconbitmap('_internal/favicon.ico')
         self.root.overrideredirect(True)
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
@@ -395,6 +396,13 @@ class NetworkMapGUI:
         # Make the title bar draggable
         self.title_bar.bind("<ButtonPress-1>", self.start_move)
         self.title_bar.bind("<B1-Motion>", self.do_move)
+
+        # Top-left resize grip (beside title)
+        self.top_left_resize_grip = tk.Frame(self.title_bar, width=15, height=15, bg=ColorConfig.current.FRAME_BG, cursor='sizing')
+        self.top_left_resize_grip.pack(side=tk.LEFT, padx=(2, 5))
+        self.top_left_resize_grip.bind("<ButtonPress-1>", self.start_resize_top_left)
+        self.top_left_resize_grip.bind("<B1-Motion>", self.on_resize_grip_drag_top_left)
+        self.top_left_resize_grip.bind("<ButtonRelease-1>", self.stop_resize)
 
         self.title_label = tk.Label(self.title_bar, text="NodeSailor", bg=ColorConfig.current.FRAME_BG,
                                    fg=ColorConfig.current.BUTTON_FG, font=self.custom_font)
@@ -609,6 +617,23 @@ class NetworkMapGUI:
     def stop_resize(self, event):
         self.start_x = None
         self.start_y = None
+
+    def start_resize_top_left(self, event):
+        self.start_x = event.x_root
+        self.start_y = event.y_root
+        self.initial_width = self.root.winfo_width()
+        self.initial_height = self.root.winfo_height()
+        self.initial_x = self.root.winfo_x()
+        self.initial_y = self.root.winfo_y()
+
+    def on_resize_grip_drag_top_left(self, event):
+        delta_x = event.x_root - self.start_x
+        delta_y = event.y_root - self.start_y
+        new_width = max(self.initial_width - delta_x, 100)
+        new_height = max(self.initial_height - delta_y, 100)
+        new_x = self.initial_x + delta_x
+        new_y = self.initial_y + delta_y
+        self.root.geometry(f"{new_width}x{new_height}+{new_x}+{new_y}")
 
     def minimize_window(self):
         self.root.state('iconic')
@@ -1024,14 +1049,32 @@ class NetworkMapGUI:
         self.root.lift()  # Bring window to the foreground
 
     def save_legend_state(self):
-        with open("legend_state.txt", "w") as f:
-            f.write(str(self.hide_legend_on_start.get()))
+        state = {}
+        try:
+            with open("_internal/legend_state.txt", "r") as f:
+                for line in f:
+                    if ':' in line:
+                        key, value = line.strip().split(':', 1)
+                        state[key] = value
+        except FileNotFoundError:
+            pass
+
+        state['HIDE_LEGEND'] = str(self.hide_legend_on_start.get())
+        
+        try:
+            with open("_internal/legend_state.txt", "w") as f:
+                for key, value in state.items():
+                    f.write(f"{key}:{value}\n")
+        except Exception as e:
+            print(f"Error writing legend state: {e}")
 
     def load_legend_state(self):
         try:
-            with open("legend_state.txt", "r") as f:
-                state = f.read().strip().lower() == 'true'
-                self.hide_legend_on_start.set(state)
+            with open("_internal/legend_state.txt", "r") as f:
+                for line in f:
+                    if line.startswith("HIDE_LEGEND:"):
+                        value = line.strip().split(":", 1)[1].lower()
+                        self.hide_legend_on_start.set(value == 'true')
         except FileNotFoundError:
             pass
         
@@ -1622,8 +1665,42 @@ class NetworkMapGUI:
         if self.unsaved_changes:
             if messagebox.askyesno("Unsaved Changes", "You have unsaved changes. Would you like to save before exiting?"):
                 self.save_network_state()  # This should prompt the user to save the file
+        self.save_window_geometry()
         self.root.destroy()
+
+    def save_window_geometry(self):
+        geometry = self.root.geometry()
+        state = {}
+        try:
+            with open("_internal/legend_state.txt", "r") as f:
+                for line in f:
+                    if ':' in line:
+                        key, value = line.strip().split(':', 1)
+                        state[key] = value
+        except FileNotFoundError:
+            pass
+
+        state['WINDOW_GEOMETRY'] = geometry
     
+        try:
+            with open("_internal/legend_state.txt", "w") as f:
+                for key, value in state.items():
+                    f.write(f"{key}:{value}\n")
+        except Exception as e:
+            print(f"Error saving window geometry: {e}")
+
+
+    def load_window_geometry(self):
+        try:
+            with open("_internal/legend_state.txt", "r") as f:
+                for line in f:
+                    if line.startswith("WINDOW_GEOMETRY:"):
+                        geometry = line.strip().split(":", 1)[1]
+                        self.root.geometry(geometry)
+        except FileNotFoundError:
+            pass
+
+
     def save_colors(self):
         colors = {
             'Light': {attr: getattr(ColorConfig.Light, attr) for attr in dir(ColorConfig.Light) if not attr.startswith('__') and attr != 'current'},
