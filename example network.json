@@ -6,8 +6,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 586,
-            "y": 128,
+            "x": 589.46,
+            "y": 129.32999999999998,
             "remote_desktop_address": "Study",
             "file_path": "\\\\192.168.0.3",
             "web_config_url": ""
@@ -18,8 +18,8 @@
             "VLAN_200": "10.1.1.2",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 525,
-            "y": 242,
+            "x": 529.0699999999999,
+            "y": 242.18999999999997,
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": ""
@@ -30,8 +30,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 1220,
-            "y": 487,
+            "x": 1217.12,
+            "y": 484.74,
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": ""
@@ -42,8 +42,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 574,
-            "y": 503,
+            "x": 577.58,
+            "y": 500.58,
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": "http://192.168.0.113:8080/"
@@ -54,8 +54,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 1095,
-            "y": 119,
+            "x": 1093.37,
+            "y": 120.41999999999996,
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": "www.google.com"
@@ -66,8 +66,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 828,
-            "y": 297,
+            "x": 821.12,
+            "y": 355.05,
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": "http:\\\\192.168.0.1"
@@ -78,8 +78,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 513,
-            "y": 406,
+            "x": 517.1899999999999,
+            "y": 404.55,
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": ""
@@ -90,8 +90,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 485.0,
-            "y": 326.0,
+            "x": 489.46999999999997,
+            "y": 325.35,
             "remote_desktop_address": "NAS",
             "file_path": "\\\\192.168.0.42\\C$",
             "web_config_url": "\\\\192.168.0.42"
@@ -102,8 +102,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 825,
-            "y": 625,
+            "x": 826.0699999999999,
+            "y": 621.36,
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": ""
@@ -114,8 +114,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 654,
-            "y": 655,
+            "x": 656.78,
+            "y": 651.06,
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": ""
@@ -126,8 +126,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 739,
-            "y": 745,
+            "x": 740.9300000000001,
+            "y": 740.1600000000001,
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": ""
@@ -138,8 +138,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 866,
-            "y": 759,
+            "x": 866.66,
+            "y": 754.02,
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": ""
@@ -150,8 +150,8 @@
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": "",
-            "x": 990,
-            "y": 688,
+            "x": 989.42,
+            "y": 683.73,
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": ""
@@ -219,5 +219,6 @@
         "VLAN_200": "VLAN_200",
         "VLAN_300": "VLAN_300",
         "VLAN_400": "VLAN_400"
-    }
+    },
+    "stickynotes": []
 }
