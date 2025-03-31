@@ -1453,12 +1453,12 @@ class NetworkMapGUI:
             self.legend_window.destroy()  # Close the legend window
 
     def save_last_file_path(self, file_path):
-        with open('last_file_path.txt', 'w') as f:
+        with open('_internal/last_file_path.txt', 'w') as f:
             f.write(file_path)
 
     def load_last_file(self):
         try:
-            with open('last_file_path.txt', 'r') as f:
+            with open('_internal/last_file_path.txt', 'r') as f:
                 last_file_path = f.read().strip()
                 if os.path.exists(last_file_path):
                     self.load_network_state_from_path(last_file_path)
