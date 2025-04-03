@@ -1794,7 +1794,7 @@ class NetworkMapGUI:
 
         # Canvas
         self.canvas.config(bg=ColorConfig.current.FRAME_BG)
-
+        self.top_left_resize_grip.config(bg=ColorConfig.current.FRAME_BG)
         # Info panel and labels
         self.info_panel.config(bg=ColorConfig.current.INFO_PANEL_BG)
         for child in self.info_panel.winfo_children():
