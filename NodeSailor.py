@@ -393,22 +393,33 @@ class NetworkNode:
         gui.remove_node(self)
 
     def execute_custom_command(self, command_template):
-        # Get the first non-empty VLAN IP
-        for vlan in ['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400']:
-            ip = getattr(self, vlan)
-            if ip:
-                # Replace {ip} placeholder with actual IP
-                command = command_template.format(ip=ip)
-                try:
-                    if platform.system() == "Windows":
-                        subprocess.Popen(f'start cmd /k "{command}"', shell=True)
-                    else:
-                        subprocess.Popen(['x-terminal-emulator', '-e', command])
-                except Exception as e:
-                    messagebox.showerror("Error", f"Failed to execute command: {str(e)}")
+        context = {
+            'name': self.name,
+            'ip': '',  # First valid IP will be assigned below
+            'file': self.file_path or '',
+            'web': self.web_config_url or '',
+            'rdp': self.remote_desktop_address or '',
+            'vlan100': self.VLAN_100 or '',
+            'vlan200': self.VLAN_200 or '',
+            'vlan300': self.VLAN_300 or '',
+            'vlan400': self.VLAN_400 or ''
+        }
+
+        # Pick first available IP as the default {ip}
+        for vlan in ['vlan100', 'vlan200', 'vlan300', 'vlan400']:
+            if context[vlan]:
+                context['ip'] = context[vlan]
                 break
-        else:
-            messagebox.showinfo("Info", "No IP address available for this node.")
+
+        try:
+            command = command_template.format(**context)
+            if platform.system() == "Windows":
+                subprocess.Popen(f'start cmd /k "{command}"', shell=True)
+            else:
+                subprocess.Popen(['x-terminal-emulator', '-e', command])
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to execute command: {str(e)}")
+
 
 class ConnectionLine:
     def __init__(self, canvas, node1, node2, label=''):
@@ -631,6 +642,9 @@ class NetworkMapGUI:
         self.selected_node = None
         self.previous_selected_node = None
         
+        self._pan_start_x = None
+        self._pan_start_y = None
+
         self.root.bind_all('<F1>', self.show_help)
         root.bind('<Left>', lambda event: self.pan_canvas('left'))  # Pan left
         root.bind('<Right>', lambda event: self.pan_canvas('right'))  # Pan right
@@ -645,6 +659,8 @@ class NetworkMapGUI:
         self.canvas.pack(fill=tk.BOTH, expand=True)
         self.canvas.bind('<Button-2>', self.create_connection)
         self.canvas.bind('<Shift-Button-2>', self.remove_connection)
+        self.canvas.bind('<ButtonPress-3>', self.start_pan)
+        self.canvas.bind('<B3-Motion>', self.do_pan)
         self.root.bind('<Control-s>', self.keyboard_save)
         self.root.bind('<Control-l>', self.keyboard_load)
         self.zoom_level = 1.0
@@ -991,7 +1007,7 @@ class NetworkMapGUI:
 
         self.zoom_level *= factor
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
+        self.update_zoom_label()
     def zoom_in(self, event=None):
         self.apply_zoom(1.1)
         self.update_zoom_label()
@@ -1009,7 +1025,7 @@ class NetworkMapGUI:
         # Scale all canvas items visually
         self.canvas.scale("all", 0, 0, factor, factor)
         self.update_zoom_label()
-
+        
         # Update stored node coordinates
         for node in self.nodes:
             node.x *= factor
@@ -1034,6 +1050,12 @@ class NetworkMapGUI:
             self.canvas.yview_scroll(-1 * pan_speed, 'units')
         elif direction == 'down':
             self.canvas.yview_scroll(pan_speed, 'units')
+
+    def start_pan(self, event):
+        self.canvas.scan_mark(event.x, event.y)
+
+    def do_pan(self, event):
+        self.canvas.scan_dragto(event.x, event.y, gain=1)
 
     def update_vlan_visibility(self):
         for node in self.nodes:
@@ -1971,9 +1993,12 @@ class NetworkMapGUI:
 
         # Help text
         help_text = """
-        Command Template Format:
-        Use {ip} as a placeholder for the node's IP address.
-        Example: ping {ip}
+        Custom Commands:
+        - Access through 'Manage Custom Commands' in the Start Menu
+        - Use placeholders like {ip}, {name}, {file}, {web}, {rdp}, {vlan100}, etc.
+        - {ip} defaults to the first non-empty VLAN address
+        - Examples:
+            ping {ip} -t
         """
         tk.Label(window, text=help_text, justify=tk.LEFT).pack(pady=10, padx=10)
 
