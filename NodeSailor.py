@@ -401,11 +401,9 @@ class NetworkNode:
                 command = command_template.format(ip=ip)
                 try:
                     if platform.system() == "Windows":
-                        # Use cmd /k to keep the window open
-                        subprocess.Popen(f"cmd /k {command}", shell=True)
+                        subprocess.Popen(f'start cmd /k "{command}"', shell=True)
                     else:
-                        # For non-Windows systems, use xterm or similar
-                        subprocess.Popen(f"xterm -e '{command}'", shell=True)
+                        subprocess.Popen(['x-terminal-emulator', '-e', command])
                 except Exception as e:
                     messagebox.showerror("Error", f"Failed to execute command: {str(e)}")
                 break
@@ -603,6 +601,7 @@ class NetworkMapGUI:
         # Zoom controls in bottom-left corner
         zoom_frame = tk.Frame(self.root, bg=ColorConfig.current.FRAME_BG, height=30)
         zoom_frame.place(relx=0.0, rely=1.0, anchor='sw', x=10, y=-5)
+        self.zoom_frame = zoom_frame
 
         def make_zoom_button(text, command):
             return tk.Label(zoom_frame, text=text, font=("Helvetica", 12),
@@ -613,13 +612,16 @@ class NetworkMapGUI:
         zoom_in_btn.pack(side=tk.LEFT)
         zoom_in_btn.bind("<Button-1>", lambda e: self.zoom_in())
 
-        reset_zoom_btn = make_zoom_button("100%", self.reset_zoom)
-        reset_zoom_btn.pack(side=tk.LEFT, padx=(5, 0))
-        reset_zoom_btn.bind("<Button-1>", lambda e: self.reset_zoom())
-
+        self.zoom_level_label = make_zoom_button("100%", self.reset_zoom)
+        self.zoom_level_label.pack(side=tk.LEFT, padx=(5, 0))
+        self.zoom_level_label.bind("<Button-1>", lambda e: self.reset_zoom())
+        self.zoom_level_label.config(width=5)
         zoom_out_btn = make_zoom_button("–", self.zoom_out)
         zoom_out_btn.pack(side=tk.LEFT, padx=(5, 0))
         zoom_out_btn.bind("<Button-1>", lambda e: self.zoom_out())
+
+        self.zoom_in_btn = zoom_in_btn
+        self.zoom_out_btn = zoom_out_btn
 
         # Canvas below the buttons
         self.canvas = tk.Canvas(root, width=1500, height=800, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
@@ -928,7 +930,7 @@ class NetworkMapGUI:
         - Access through 'Manage Custom Commands' in the Start Menu
         - Use {ip} as a placeholder for the node's IP address in command templates
         - Commands appear in the node's context menu
-        - Example: ping {ip} will ping the node's IP address
+        - Example: ping {ip} -t will ping the node's IP address until the user stops it
         """
 
         text_area.config(state="normal")
@@ -992,17 +994,21 @@ class NetworkMapGUI:
 
     def zoom_in(self, event=None):
         self.apply_zoom(1.1)
+        self.update_zoom_label()
 
     def zoom_out(self, event=None):
         self.apply_zoom(0.9)
+        self.update_zoom_label()
 
     def reset_zoom(self, event=None):
         if self.zoom_level != 1.0:
             self.apply_zoom(1 / self.zoom_level)
+            self.update_zoom_label()
 
     def apply_zoom(self, factor):
         # Scale all canvas items visually
         self.canvas.scale("all", 0, 0, factor, factor)
+        self.update_zoom_label()
 
         # Update stored node coordinates
         for node in self.nodes:
@@ -1012,6 +1018,10 @@ class NetworkMapGUI:
 
         self.zoom_level *= factor
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def update_zoom_label(self):
+        percent = int(self.zoom_level * 100)
+        self.zoom_level_label.config(text=f"{percent}%")
 
 
     def pan_canvas(self, direction):
@@ -1814,7 +1824,15 @@ class NetworkMapGUI:
             self.canvas.itemconfig(item, fill=ColorConfig.current.STICKY_NOTE_TEXT)
         for bg in self.canvas.find_withtag("sticky_bg"):
             self.canvas.itemconfig(bg, fill=ColorConfig.current.STICKY_NOTE_BG)
-    
+
+        # Zoom buttons
+        if hasattr(self, 'zoom_level_label') and self.zoom_level_label.winfo_exists():
+            for widget in (self.zoom_in_btn, self.zoom_out_btn, self.zoom_level_label):
+                widget.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG)
+
+        if hasattr(self, 'zoom_frame') and self.zoom_frame.winfo_exists():
+            self.zoom_frame.config(bg=ColorConfig.current.FRAME_BG)
+
     def on_close(self):
         if self.unsaved_changes:
             if messagebox.askyesno("Unsaved Changes", "You have unsaved changes. Would you like to save before exiting?"):
