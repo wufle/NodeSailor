@@ -1860,57 +1860,7 @@ class NetworkMapGUI:
         tk.Button(btn_frame, text="Close", command=window.destroy).pack(side=tk.RIGHT, padx=10)
 
         refresh_editor()
-
-        # --- SAVE CHANGES BUTTON ---
-        def save_all():
-            name_map = {}
-            for node, row in node_entries:
-                vals = [e.get() for e in row]
-                node.update_info(
-                    vals[0],
-                    VLAN_100=vals[1],
-                    VLAN_200=vals[2],
-                    VLAN_300=vals[3],
-                    VLAN_400=vals[4],
-                    remote_desktop_address=vals[5],
-                    file_path=vals[6],
-                    web_config_url=vals[7]
-                )
-                try:
-                    x, y = float(vals[8]), float(vals[9])
-                    node.update_position(x, y)
-                except ValueError:
-                    pass
-                name_map[vals[0]] = node
-
-            # Clear all existing connections
-            for node in self.nodes:
-                for conn in node.connections[:]:
-                    self.canvas.delete(conn.line)
-                    if conn.label_id:
-                        self.canvas.delete(conn.label_id)
-                    if hasattr(conn, 'label_bg') and conn.label_bg:
-                        self.canvas.delete(conn.label_bg)
-                    conn.node1.connections.remove(conn)
-                    conn.node2.connections.remove(conn)
-
-            # Re-add updated connections
-            for row in conn_entries:
-                from_name = row[0].get()
-                to_name = row[1].get()
-                label = row[2].get()
-                n1 = name_map.get(from_name)
-                n2 = name_map.get(to_name)
-                if n1 and n2 and n1 != n2:
-                    ConnectionLine(self.canvas, n1, n2, label=label)
-
-            self.raise_all_nodes()
-            window.destroy()
-
-        tk.Button(window, text="Save Changes and Close", command=save_all).grid(
-            row=row_offset + 1, column=0, columnspan=3, pady=20
-        )
-
+       
     def update_ui_colors(self):
         """Update all UI colors when the theme changes."""
         # Root window
