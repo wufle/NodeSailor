@@ -243,6 +243,15 @@ class NetworkNode:
         self.adjust_node_size()
         for line in self.connections:
             line.update_position()
+        gui = getattr(self.canvas, "gui", None)
+        if gui and hasattr(gui, "list_editor_xy_fields"):
+            xy_fields = gui.list_editor_xy_fields.get(self)
+            if xy_fields:
+                x_entry, y_entry = xy_fields
+                x_entry.delete(0, tk.END)
+                x_entry.insert(0, str(self.x))
+                y_entry.delete(0, tk.END)
+                y_entry.insert(0, str(self.y))
 
     def update_info(self, name, VLAN_100='', VLAN_200='', VLAN_300='', VLAN_400='', remote_desktop_address='', file_path='', web_config_url=''):
         self.name = name
@@ -636,6 +645,7 @@ class NetworkMapGUI:
 
         # Canvas below the buttons
         self.canvas = tk.Canvas(root, width=1500, height=800, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
+        self.canvas.gui = self
         self.canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=(5, 25))
         self.nodes = []
         self.stickynotes = []
@@ -1157,8 +1167,11 @@ class NetworkMapGUI:
             edit_labels_btn = tk.Button(content_frame, text='Edit VLAN Labels',
                              command=self.edit_vlan_labels, **button_style)
             edit_labels_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-
-            # Add custom commands management button
+            
+            node_list_btn = tk.Button(content_frame, text='List View (Table Editor)',
+                            command=self.open_node_list_editor, **button_style)
+            node_list_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+            
             custom_cmd_btn = tk.Button(content_frame, text='Manage Custom Commands',
                                      command=self.manage_custom_commands, **button_style)
             custom_cmd_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
@@ -1707,6 +1720,196 @@ class NetworkMapGUI:
         x = self.root.winfo_x() + deltax
         y = self.root.winfo_y() + deltay
         self.root.geometry(f"+{x}+{y}")
+
+    def open_node_list_editor(self):
+        if self.legend_window:
+            self.legend_window.withdraw()
+        window = tk.Toplevel(self.root)
+        window.title("Live Node Editor")
+        window.geometry("1250x600")
+
+        container = tk.Frame(window)
+        container.pack(fill=tk.BOTH, expand=True)
+
+        canvas = tk.Canvas(container)
+        scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        headers = ["Name", "VLAN_100", "VLAN_200", "VLAN_300", "VLAN_400",
+                "RDP", "File Path", "Web URL", "X", "Y"]
+        for col, header in enumerate(headers):
+            tk.Label(scrollable_frame, text=header, font=("Helvetica", 10, "bold")).grid(row=0, column=col, padx=4, pady=4)
+
+        row_widgets = []
+        live_xy_fields = {}
+
+        def refresh_editor():
+            for widgets in row_widgets:
+                for w in widgets:
+                    w.destroy()
+            row_widgets.clear()
+
+            for i, node in enumerate(self.nodes, start=1):
+                this_node = node
+                widgets = []
+                
+                def create_field(col, initial_value, callback):
+                    entry = tk.Entry(scrollable_frame, width=15)
+                    entry.insert(0, initial_value)
+                    entry.grid(row=i, column=col, padx=2, pady=2)
+                    entry.bind("<KeyRelease>", lambda event, e=entry: callback(e.get()))
+                    widgets.append(entry)
+                    return entry
+
+                def make_updater(attr):
+                    return lambda val, n=this_node: (
+                        setattr(n, attr, val),
+                        n.update_info(n.name, n.VLAN_100, n.VLAN_200, n.VLAN_300, n.VLAN_400,
+                                    n.remote_desktop_address, n.file_path, n.web_config_url)
+                    )
+
+                create_field(0, this_node.name, make_updater("name"))
+                create_field(1, this_node.VLAN_100, make_updater("VLAN_100"))
+                create_field(2, this_node.VLAN_200, make_updater("VLAN_200"))
+                create_field(3, this_node.VLAN_300, make_updater("VLAN_300"))
+                create_field(4, this_node.VLAN_400, make_updater("VLAN_400"))
+                create_field(5, this_node.remote_desktop_address, make_updater("remote_desktop_address"))
+                create_field(6, this_node.file_path, make_updater("file_path"))
+                create_field(7, this_node.web_config_url, make_updater("web_config_url"))
+
+                def update_x(val, n=this_node):
+                    try:
+                        n.x = float(val)
+                        n.update_position(n.x, n.y)
+                    except ValueError:
+                        pass
+
+                def update_y(val, n=this_node):
+                    try:
+                        n.y = float(val)
+                        n.update_position(n.x, n.y)
+                    except ValueError:
+                        pass
+
+                x_entry = create_field(8, str(this_node.x), update_x)
+                y_entry = create_field(9, str(this_node.y), update_y)
+                live_xy_fields[this_node] = (x_entry, y_entry)
+
+                # Remove button
+                def remove_this_node(n=this_node):
+                    self.canvas.delete(n.shape)
+                    self.canvas.delete(n.text)
+                    for conn in n.connections[:]:
+                        self.canvas.delete(conn.line)
+                        if conn.label_id:
+                            self.canvas.delete(conn.label_id)
+                        if hasattr(conn, 'label_bg') and conn.label_bg:
+                            self.canvas.delete(conn.label_bg)
+                        conn.node1.connections.remove(conn)
+                        conn.node2.connections.remove(conn)
+                    self.nodes.remove(n)
+                    refresh_editor()
+
+                btn = tk.Button(scrollable_frame, text="Remove", command=remove_this_node)
+                btn.grid(row=i, column=10, padx=4)
+                widgets.append(btn)
+
+                live_xy_fields[this_node] = (x_entry, y_entry)
+                row_widgets.append(widgets)
+
+            self.list_editor_xy_fields = live_xy_fields
+
+        def add_node():
+            # Generate unique name
+            base_name = "NewNode"
+            existing_names = {node.name for node in self.nodes}
+            name = base_name
+            counter = 1
+            while name in existing_names:
+                name = f"{base_name}_{counter}"
+                counter += 1
+
+            # Auto Y-offset based on number of nodes
+            y = 100 + len(self.nodes) * 100
+
+            node = NetworkNode(self.canvas, name, 100, y)
+            self.nodes.append(node)
+            node.raise_node()
+            refresh_editor()
+            canvas.update_idletasks()
+            canvas.yview_moveto(1.0)
+
+        # Add/Close buttons at bottom
+        btn_frame = tk.Frame(window)
+        btn_frame.pack(fill=tk.X, pady=10)
+
+        tk.Button(btn_frame, text="Add Node", command=add_node).pack(side=tk.LEFT, padx=10)
+        tk.Button(btn_frame, text="Close", command=window.destroy).pack(side=tk.RIGHT, padx=10)
+
+        refresh_editor()
+
+        # --- SAVE CHANGES BUTTON ---
+        def save_all():
+            name_map = {}
+            for node, row in node_entries:
+                vals = [e.get() for e in row]
+                node.update_info(
+                    vals[0],
+                    VLAN_100=vals[1],
+                    VLAN_200=vals[2],
+                    VLAN_300=vals[3],
+                    VLAN_400=vals[4],
+                    remote_desktop_address=vals[5],
+                    file_path=vals[6],
+                    web_config_url=vals[7]
+                )
+                try:
+                    x, y = float(vals[8]), float(vals[9])
+                    node.update_position(x, y)
+                except ValueError:
+                    pass
+                name_map[vals[0]] = node
+
+            # Clear all existing connections
+            for node in self.nodes:
+                for conn in node.connections[:]:
+                    self.canvas.delete(conn.line)
+                    if conn.label_id:
+                        self.canvas.delete(conn.label_id)
+                    if hasattr(conn, 'label_bg') and conn.label_bg:
+                        self.canvas.delete(conn.label_bg)
+                    conn.node1.connections.remove(conn)
+                    conn.node2.connections.remove(conn)
+
+            # Re-add updated connections
+            for row in conn_entries:
+                from_name = row[0].get()
+                to_name = row[1].get()
+                label = row[2].get()
+                n1 = name_map.get(from_name)
+                n2 = name_map.get(to_name)
+                if n1 and n2 and n1 != n2:
+                    ConnectionLine(self.canvas, n1, n2, label=label)
+
+            self.raise_all_nodes()
+            window.destroy()
+
+        tk.Button(window, text="Save Changes and Close", command=save_all).grid(
+            row=row_offset + 1, column=0, columnspan=3, pady=20
+        )
 
     def update_ui_colors(self):
         """Update all UI colors when the theme changes."""
