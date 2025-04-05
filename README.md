@@ -70,11 +70,13 @@ Opent a terminal and run the command:
 **Future plans:**
 * Tutorial for first time use.
 * More configuration options when creating a new network, i.e., number and name of seperate networks/VLANs.
-* Colour scheme options.
-* ability to ping only selected networks/vlans.
 * User created background image for networks.
 * Make the `F1` help page pretty.
-* Node/cable list with search functionality.
+* Node/cable list viewer with search functionality and quick edit. 
 * More thorough network testing functionality, tracert implementation? display ping times?
-  
+* enhanced colour menu options.
+* tool tips for connections
+* custom graphics, user editable. 
+* grid snap functionality when moving nodes. 
+* 
 
