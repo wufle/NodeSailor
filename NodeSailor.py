@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import simpledialog, messagebox, font, filedialog, colorchooser
+from tkinter import simpledialog, messagebox, font, filedialog, colorchooser, ttk
 import subprocess
 from threading import Thread
 import json
@@ -24,8 +24,7 @@ def get_ip_addresses():
 
 class ColorConfig:
     class Light:
-        FRAME_BG = '#ffffff'
-        BUTTON_FG = '#000000'
+        BUTTON_TEXT = '#000000'
         NODE_DEFAULT = 'light steel blue'
         NODE_GREYED_OUT = 'gainsboro'
         NODE_HIGHLIGHT = 'gold'
@@ -35,23 +34,18 @@ class ColorConfig:
         NODE_PING_PARTIAL_SUCCESS = 'yellow'
         NODE_PING_FAILURE = 'red'
         FRAME_BG = 'white'
-        STICKY_NOTE_BG = 'white'
-        STICKY_NOTE_TEXT = 'black'
+        INFO_NOTE_BG = 'white'
+        INFO_TEXT = 'black'
         BUTTON_BG = 'white'
-        BUTTON_FG = 'black'
+        BUTTON_TEXT = 'black'
         BUTTON_ACTIVE_BG = '#e0e0e0'
-        BUTTON_ACTIVE_FG = '#000000'
+        BUTTON_ACTIVE_TEXT = '#000000'
         BUTTON_CONFIGURATION_MODE = 'light coral'
-        INFO_PANEL_BG = '#f7f7f7'
-        INFO_PANEL_TEXT = 'black'
         Connections = 'dim gray'
         BORDER_COLOR = '#f7f7f7'
-        TITLE_BAR_BG = '#f7f7f7'
-        LEGEND_BG = '#d9d9d9'
 
     class Dark:
-        FRAME_BG = '#2e2e2e'
-        BUTTON_FG = '#ffffff'
+        BUTTON_TEXT = '#ffffff'
         NODE_DEFAULT = '#4B5EAA'
         NODE_GREYED_OUT = '#4B5563'
         NODE_HIGHLIGHT = '#D97706'
@@ -60,27 +54,23 @@ class ColorConfig:
         NODE_PING_SUCCESS = '#047857'
         NODE_PING_PARTIAL_SUCCESS = '#B45309'
         NODE_PING_FAILURE = '#991B1B'
-        FRAME_BG = '#1F2937'
-        STICKY_NOTE_BG = '#303745'
-        STICKY_NOTE_TEXT = '#000000'
+        FRAME_BG = '#1F2937' #MAIN BACKBROUND
+        INFO_NOTE_BG = '#111827'
+        INFO_TEXT = '#8f8f8f'
         BUTTON_BG = '#4B5EAA'
-        BUTTON_FG = 'black'
-        BUTTON_ACTIVE_BG = '#111827'
-        BUTTON_ACTIVE_FG = 'black'
+        BUTTON_TEXT = 'black'
+        BUTTON_ACTIVE_BG = '#111827' #button when pressed
+        BUTTON_ACTIVE_TEXT = 'black'  #button text when pressed
         BUTTON_CONFIGURATION_MODE = '#F87171'
-        INFO_PANEL_BG = '#111827'
-        INFO_PANEL_TEXT = '#8f8f8f'
         Connections = '#6a7586'
-        BORDER_COLOR = '#374151'
-        TITLE_BAR_BG = '#1F2937'
-        LEGEND_BG = '#1F2937'
+        BORDER_COLOR = '#374151' #f1 and legend window border colour
 
     # Default to Dark mode
     current = Dark
 
 class StickyNote:
     def __init__(self, canvas, text, x, y, gui=None,
-                 font=('Helvetica', '12'), bg=ColorConfig.current.STICKY_NOTE_BG):
+                 font=('Helvetica', '12'), bg=ColorConfig.current.INFO_NOTE_BG):
         self.canvas = canvas
         self.gui = gui  # May be None if older code doesn't pass the GUI
         self.text = text
@@ -100,7 +90,7 @@ class StickyNote:
             x, y,
             text=text,
             font=self.font,
-            fill=ColorConfig.current.STICKY_NOTE_TEXT,
+            fill=ColorConfig.current.INFO_TEXT,
             tags=("sticky_note",),
             anchor="nw"
         )
@@ -125,7 +115,7 @@ class StickyNote:
                 bbox[0] - padding, bbox[1] - padding,
                 bbox[2] + padding, bbox[3] + padding)
             self.canvas.itemconfig(self.bg_shape,
-                fill=ColorConfig.current.STICKY_NOTE_BG)
+                fill=ColorConfig.current.INFO_NOTE_BG)
 
     def on_click(self, event):
         self.canvas.selected_object_type = self.type
@@ -172,9 +162,9 @@ class StickyNote:
                 menu_frame, text=txt,
                 command=lambda c=cmd: [c(), destroy_menu()],
                 bg=ColorConfig.current.BUTTON_BG,
-                fg=ColorConfig.current.BUTTON_FG,
+                fg=ColorConfig.current.BUTTON_TEXT,
                 activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                activeforeground=ColorConfig.current.BUTTON_ACTIVE_FG,
+                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
                 relief='flat', borderwidth=0, padx=10, pady=4, anchor='w',
                 font=('Helvetica', 10)
             )
@@ -224,7 +214,8 @@ class NetworkNode:
             tags=unique_node_tag
         )
         self.text = canvas.create_text(
-            x, y, text=name, font=self.font,  # Use Helvetica font
+            x, y, text=name, font=self.font,
+            fill=ColorConfig.current.BUTTON_TEXT,
             tags=unique_node_tag
         )
         self.adjust_node_size()  # Adjust the node size initially
@@ -352,9 +343,9 @@ class NetworkNode:
 
         for text, command in options:
             btn = tk.Button(menu_frame, text=text, command=lambda c=command: [c(), destroy_menu()],
-                            bg=ColorConfig.current.BUTTON_BG, fg=ColorConfig.current.BUTTON_FG,
+                            bg=ColorConfig.current.BUTTON_BG, fg=ColorConfig.current.BUTTON_TEXT,
                             activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                            activeforeground=ColorConfig.current.BUTTON_ACTIVE_FG,
+                            activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
                             relief='flat', borderwidth=0, padx=10, pady=4, anchor='w',
                             font=('Helvetica', 10))
             btn.pack(fill='x')
@@ -460,13 +451,13 @@ class ConnectionLine:
         mid_y = (self.node1.y + self.node2.y) / 2
 
         # Create a text object similar to StickyNote
-        self.label_id = self.canvas.create_text(mid_x, mid_y, text=self.label, font=('Helvetica', '12'), tags="connection_label", anchor="center")
+        self.label_id = self.canvas.create_text(mid_x, mid_y, text=self.label, font=('Helvetica', '12'), fill=ColorConfig.current.INFO_TEXT, tags="connection_label", anchor="center")
 
         # Recreate a background similar to StickyNote
         bbox = self.canvas.bbox(self.label_id)
         if bbox:
             padding = 2
-            self.label_bg = self.canvas.create_rectangle(bbox[0]-padding, bbox[1]-padding, bbox[2]+padding, bbox[3]+padding, fill=ColorConfig.current.STICKY_NOTE_BG, outline='')
+            self.label_bg = self.canvas.create_rectangle(bbox[0]-padding, bbox[1]-padding, bbox[2]+padding, bbox[3]+padding, fill=ColorConfig.current.INFO_NOTE_BG, outline='')
             self.canvas.tag_lower(self.label_bg, self.label_id)  # Ensure the background is behind the text
 
     def set_label(self, label):
@@ -525,26 +516,26 @@ class NetworkMapGUI:
         self.top_left_resize_grip.bind("<ButtonRelease-1>", self.stop_resize)
 
         self.title_label = tk.Label(self.title_bar, text="NodeSailor", bg=ColorConfig.current.FRAME_BG,
-                                   fg=ColorConfig.current.BUTTON_FG, font=self.custom_font)
+                                   fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
         self.title_label.pack(side=tk.LEFT, padx=10)
         # make the title label draggable
         self.title_label.bind("<ButtonPress-1>", self.start_move)
         self.title_label.bind("<B1-Motion>", self.do_move)
 
         self.close_button = tk.Button(self.title_bar, text='X', command=self.on_close,
-                                     bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG,
+                                     bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
                                      font=self.custom_font)
         self.close_button.pack(side=tk.RIGHT)
         
         # Maximize Button
         self.maximize_button = tk.Button(self.title_bar, text='[]', command=self.maximize_restore,
-                                       bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG,
+                                       bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
                                        font=self.custom_font)
         self.maximize_button.pack(side=tk.RIGHT)
 
         # Minimize Button
         self.minimize_button = tk.Button(self.title_bar, text='-', command=self.minimize_window,
-                                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG,
+                                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
                                         font=self.custom_font)
         self.minimize_button.pack(side=tk.RIGHT)
                
@@ -571,15 +562,54 @@ class NetworkMapGUI:
         button_style = {
             'font': self.custom_font,
             'bg': ColorConfig.current.BUTTON_BG,
-            'fg': ColorConfig.current.BUTTON_FG,
+            'fg': ColorConfig.current.BUTTON_TEXT,
             'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG,
-            'activeforeground': ColorConfig.current.BUTTON_ACTIVE_FG,
+            'activeforeground': ColorConfig.current.BUTTON_ACTIVE_TEXT,
             'padx': 5,
             'pady': 2
         }
 
-        start_menu_style = button_style.copy()  # Create a copy to avoid modifying the original
-        start_menu_style['font'] = ("Helvetica", 12, "bold")  # Override font with bold version
+        #scrollbar style
+        style = ttk.Style()
+        style.theme_use('clam')  # 'clam' allows customization
+
+        style.configure("LightScrollbar.Vertical.TScrollbar",
+            gripcount=0,
+            background=ColorConfig.Light.BUTTON_BG,
+            troughcolor=ColorConfig.Light.FRAME_BG,
+            bordercolor=ColorConfig.Light.FRAME_BG,
+            lightcolor=ColorConfig.Light.FRAME_BG,
+            darkcolor=ColorConfig.Light.FRAME_BG,
+            arrowsize=12
+        )
+
+        style.configure("DarkScrollbar.Vertical.TScrollbar",
+            gripcount=0,
+            background=ColorConfig.Dark.INFO_NOTE_BG,
+            troughcolor=ColorConfig.Dark.FRAME_BG,
+            bordercolor=ColorConfig.Dark.FRAME_BG,
+            lightcolor=ColorConfig.Dark.FRAME_BG,
+            darkcolor=ColorConfig.Dark.FRAME_BG,
+            arrowsize=12
+        )
+
+        # Dark scrollbar theme fix (hover color issue)
+        style.element_create("Dark.Vertical.Scrollbar.trough", "from", "clam")
+        style.layout("DarkScrollbar.Vertical.TScrollbar", [
+            ("Vertical.Scrollbar.trough", {
+                "children": [("Vertical.Scrollbar.thumb", {"unit": "1", "sticky": "nswe"})],
+                "sticky": "ns"
+            })
+        ])
+
+        style.map("DarkScrollbar.Vertical.TScrollbar",
+            background=[("active", ColorConfig.Dark.BUTTON_ACTIVE_BG),
+                        ("!active", ColorConfig.Dark.INFO_NOTE_BG)]
+        )
+
+
+        start_menu_style = button_style.copy()
+        start_menu_style['font'] = ("Helvetica", 12, "bold")
 
         start_menu_button = tk.Button(self.buttons_frame, text="Start Menu", command=self.display_legend, **start_menu_style)
         start_menu_button.pack(side=tk.LEFT, padx=5, pady=5)
@@ -609,10 +639,10 @@ class NetworkMapGUI:
                 text=self.vlan_label_names[vlan],
                 variable=var,
                 bg=ColorConfig.current.FRAME_BG,
-                fg=ColorConfig.current.BUTTON_FG,
+                fg=ColorConfig.current.BUTTON_TEXT,
                 selectcolor=ColorConfig.current.FRAME_BG,
                 activebackground=ColorConfig.current.BUTTON_BG,
-                activeforeground=ColorConfig.current.BUTTON_FG,
+                activeforeground=ColorConfig.current.BUTTON_TEXT,
                 command=self.update_vlan_visibility
             )
             cb.pack(side=tk.LEFT, padx=5)
@@ -625,7 +655,7 @@ class NetworkMapGUI:
 
         def make_zoom_button(text, command):
             return tk.Label(zoom_frame, text=text, font=("Helvetica", 12),
-                            fg=ColorConfig.current.BUTTON_FG, bg=ColorConfig.current.FRAME_BG,
+                            fg=ColorConfig.current.BUTTON_TEXT, bg=ColorConfig.current.FRAME_BG,
                             cursor="hand2", padx=5)
         
         zoom_in_btn = make_zoom_button("+", self.zoom_in)
@@ -677,16 +707,16 @@ class NetworkMapGUI:
         self.root.focus_set()
 
          # Info Panel
-        self.info_panel = tk.Frame(self.root, bg=ColorConfig.current.INFO_PANEL_BG)
+        self.info_panel = tk.Frame(self.root, bg=ColorConfig.current.INFO_NOTE_BG)
         self.info_panel.place(relx=1.0, rely=0.05, anchor='ne')
 
         info_label_style = {'font': ('Helvetica', 10), 
-                            'bg': ColorConfig.current.INFO_PANEL_BG, 
-                            'fg': ColorConfig.current.INFO_PANEL_TEXT,
+                            'bg': ColorConfig.current.INFO_NOTE_BG, 
+                            'fg': ColorConfig.current.INFO_TEXT,
                             'anchor': 'w'}
         info_value_style = {'font': ('Helvetica', 10), 
-                            'bg': ColorConfig.current.INFO_PANEL_BG, 
-                            'fg': ColorConfig.current.INFO_PANEL_TEXT}
+                            'bg': ColorConfig.current.INFO_NOTE_BG, 
+                            'fg': ColorConfig.current.INFO_TEXT}
 
         tk.Label(self.info_panel, text="Name:", **info_label_style).grid(row=0, column=0, sticky='w', padx=5, pady=2)
         self.node_name_label = tk.Label(self.info_panel, text="-", **info_value_style)
@@ -796,11 +826,13 @@ class NetworkMapGUI:
 
     def show_color_editor(self):
         """Open a window to edit ColorConfig attributes."""
+        if self.legend_window:
+            self.legend_window.withdraw()
         editor_window = tk.Toplevel(self.root)
         editor_window.title("Color Scheme Editor")
         editor_window.geometry("400x600")
         editor_window.transient(self.root)  # Tie it to the main window
-        editor_window.grab_set()  # Make it modal
+        #editor_window.grab_set()  # Make it modal
 
         # Theme selection
         theme_var = tk.StringVar(value="Dark")  # Default to Dark
@@ -850,6 +882,8 @@ class NetworkMapGUI:
         tk.Button(editor_window, text="Close", command=editor_window.destroy).pack(pady=10)
 
     def edit_vlan_labels(self):
+        if self.legend_window:
+            self.legend_window.withdraw()
         label_window = tk.Toplevel(self.root)
         label_window.title("Edit VLAN Labels")
         label_window.geometry("300x250")
@@ -876,103 +910,111 @@ class NetworkMapGUI:
     def show_help(self, event=None):
         help_window = tk.Toplevel(self.root)
         help_window.title("Help - Keyboard Shortcuts and Functions")
-        help_window.geometry("1000x800")
         help_window.overrideredirect(True)
         help_window.transient(self.root)
 
-        # Outer frame for border
+        # Outer border frame
         outer_frame = tk.Frame(help_window, bg=ColorConfig.current.BORDER_COLOR, padx=2, pady=2)
         outer_frame.pack(fill=tk.BOTH, expand=True)
 
         # Title bar
-        title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.LEGEND_BG)
+        title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
         title_bar.pack(side=tk.TOP, fill=tk.X)
 
         title_label = tk.Label(title_bar, text="Help - Keyboard Shortcuts and Functions",
-                            bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG,
+                            bg=ColorConfig.current.FRAME_BG,
+                            fg=ColorConfig.current.BUTTON_TEXT,
                             font=self.custom_font)
         title_label.pack(side=tk.LEFT, padx=10)
 
-        close_button = tk.Button(title_bar, text='X', 
+        close_button = tk.Button(title_bar, text='X',
                                 command=lambda: [help_window.destroy(), self.root.focus_force(), self.root.lift()],
-                                bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG,
+                                bg=ColorConfig.current.FRAME_BG,
+                                fg=ColorConfig.current.BUTTON_TEXT,
                                 font=self.custom_font)
         close_button.pack(side=tk.RIGHT)
 
-        # Make the title bar draggable (like legend)
-        title_bar.bind("<ButtonPress-1>", self.start_move_legend)  # Reusing legend's move method
-        title_bar.bind("<B1-Motion>", self.do_move_legend)
-        title_label.bind("<ButtonPress-1>", self.start_move_legend)
-        title_label.bind("<B1-Motion>", self.do_move_legend)
+        # Make draggable
+        def start_drag(event):
+            help_window._x = event.x
+            help_window._y = event.y
+
+        def do_drag(event):
+            x = help_window.winfo_x() + event.x - help_window._x
+            y = help_window.winfo_y() + event.y - help_window._y
+            help_window.geometry(f"+{x}+{y}")
+
+        title_bar.bind("<ButtonPress-1>", start_drag)
+        title_bar.bind("<B1-Motion>", do_drag)
+        title_label.bind("<ButtonPress-1>", start_drag)
+        title_label.bind("<B1-Motion>", do_drag)
+        
         help_window.bind('<Escape>', lambda e: help_window.destroy())
 
-        # Content frame
-        content_frame = tk.Frame(outer_frame, bg=ColorConfig.current.LEGEND_BG)
+        # Content area with scroll
+        content_frame = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
         content_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Text area
-        text_area = tk.Text(content_frame, wrap="word", font="Helvetica 10",
-                            bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG,
-                            state="disabled")
-        text_area.pack(expand=True, fill="both", padx=10, pady=10)
+        text_frame = tk.Frame(content_frame, bg=ColorConfig.current.FRAME_BG)
+        text_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        help_text = """
-        NodeSailor v0.9.10 - Help
+        theme = "Dark" if ColorConfig.current == ColorConfig.Dark else "Light"
+        scrollbar = ttk.Scrollbar(text_frame, orient="vertical", style=f"{theme}Scrollbar.Vertical.TScrollbar")
 
-        Overview:
-        NodeSailor is a network visualization tool.
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        User Modes:
-        - Operator: Monitor and interact with the network.
-        - Configuration: Build and edit the network layout.
+        text_area = tk.Text(text_frame, wrap="word", yscrollcommand=scrollbar.set,
+                            font="Helvetica 10",
+                            bg=ColorConfig.current.FRAME_BG,
+                            fg=ColorConfig.current.BUTTON_TEXT,
+                            insertbackground=ColorConfig.current.BUTTON_TEXT,
+                            relief=tk.FLAT)
+        scrollbar.config(command=text_area.yview)
+        text_area.pack(fill=tk.BOTH, expand=True)
 
-        Operator Mode:
-        - Left Click on Node: Ping the node (Green = all VLANs up, Yellow = partial, Red = none).
-        - Right Click on Node: Open context menu (Edit Node, Remote Desktop, File Explorer, Web Browser, Delete).
-        - 'Who am I?': Highlight nodes matching the user machine's IP addresses.
-        - 'Ping All': Ping all nodes and update their status.
-        - 'Clear Status': Reset all node colors to default.
+        help_lines = [
+            ("NodeSailor v0.9.10 - Help\n", "title"),
+            ("\nOverview:\n", "header"),
+            ("NodeSailor is a network visualization tool.\n", "text"),
 
-        Configuration Mode:
-        - Double Left Click: Create a new node.
-        - Shift + Double Left Click: Add a sticky note.
-        - Middle Click on Node: Start/end a connection line between nodes (prompts for a label).
-        - Shift + Middle Click on Line: Remove a connection.
-        - Left Click + Drag: Move nodes or sticky notes (Shift + Drag for sticky notes).
-        - Right Click on Node: Open context menu for editing or deletion.
+            ("\nUser Modes:\n", "header"),
+            ("- Operator: Monitor and interact with the network.\n"
+            "- Configuration: Build and edit the network layout.\n", "text"),
 
-        Node Context Menu:
-        - Edit Node Information: Modify name, VLAN IPs, remote desktop, file path, or web URL.
-        - Open Remote Desktop: Launch RDP (Windows only) using the node's address.
-        - Open File Explorer: Open the specified file path.
-        - Open Web Browser: Open the node's web config URL.
-        - Delete Node: Remove the node and its connections (Configuration mode only).
-        - Custom Commands: User-defined commands that can be executed on the node's IP address.
+            ("\nOperator Mode:\n", "header"),
+            ("- Left Click on Node: Ping the node (Green = all VLANs up, Yellow = partial, Red = none).\n"
+            "- Right Click on Node: Open context menu.\n"
+            "- Who am I?: Highlight nodes matching your machine’s IP.\n"
+            "- Ping All: Ping every node.\n"
+            "- Clear Status: Reset node colors.\n", "text"),
 
-        VLAN Checkboxes:
-        - Toggle visibility of nodes based on VLANs (checked = visible, unchecked = greyed out).
+            ("\nConfiguration Mode:\n", "header"),
+            ("- Double Left Click: Create a new node.\n"
+            "- Shift + Double Left Click: Add a sticky note.\n"
+            "- Middle Click: Create a connection line.\n"
+            "- Shift + Middle Click: Remove connection line.\n"
+            "- Left Click + Drag: Move nodes or notes.\n"
+            "- Right Click: Open context menu.\n", "text"),
 
-        Custom Commands:
-        - Access through 'Manage Custom Commands' in the Start Menu
-        - Use {ip} as a placeholder for the node's IP address in command templates
-        - Commands appear in the node's context menu
-        - Example: ping {ip} -t will ping the node's IP address until the user stops it
-        """
+            ("\nVLAN Checkboxes:\n", "header"),
+            ("- Toggle visibility of VLAN nodes.\n", "text"),
 
-        text_area.config(state="normal")
-        text_area.insert("1.0", help_text)
-        text_area.tag_add("bold", "1.0", "4.end")
-        text_area.tag_add("bold", "7.0", "7.end")
-        text_area.tag_add("bold", "11.0", "11.end")
-        text_area.tag_add("bold", "18.0", "18.end")
-        text_area.tag_add("bold", "26.0", "26.end")
-        text_area.tag_add("bold", "33.0", "33.end")
-        text_area.tag_config("bold", font="Helvetica 10 bold")
+            ("\nCustom Commands:\n", "header"),
+            ("- Access through 'Start Menu > Manage Custom Commands'.\n"
+            "- Use placeholders like {ip}, {name}, {file}, {web}.\n"
+            "- Example: ping {ip} -t\n", "text"),
+        ]
+
+        for line, tag in help_lines:
+            text_area.insert(tk.END, line, tag)
+
+        text_area.tag_config("title", font="Helvetica 12 bold")
+        text_area.tag_config("header", font="Helvetica 10 bold", spacing3=4)
+        text_area.tag_config("text", font="Helvetica 10", spacing1=1)
+
         text_area.config(state="disabled")
-
-        # Center the window (reuse existing method)
-        help_window.lift()        # Bring to front
-        help_window.focus_set()   # Set focus
+        help_window.lift()
+        help_window.focus_set()
         self.center_window_on_screen(help_window)
 
     def toggle_mode(self):
@@ -1080,7 +1122,7 @@ class NetworkMapGUI:
                 color = ColorConfig.current.NODE_PING_SUCCESS if ping_results[i] else ColorConfig.current.NODE_PING_FAILURE
                 self.vlan_labels[vlan].config(bg=color)
             else:
-                self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_PANEL_BG)
+                self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_NOTE_BG)
 
 
     def display_legend(self):
@@ -1100,15 +1142,15 @@ class NetworkMapGUI:
             outer_frame.pack(fill=tk.BOTH, expand=True)
             
             # Title bar
-            title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.LEGEND_BG)
+            title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="Nodesailor v0.9.10", bg=ColorConfig.current.LEGEND_BG,
-                                fg=ColorConfig.current.BUTTON_FG, font=self.custom_font)
+            title_label = tk.Label(title_bar, text="Nodesailor v0.9.10", bg=ColorConfig.current.FRAME_BG,
+                                fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
             close_button = tk.Button(title_bar, text='X', command=self.close_legend,
-                                    bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG,
+                                    bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
                                     font=self.custom_font)
             close_button.pack(side=tk.RIGHT)
 
@@ -1120,13 +1162,13 @@ class NetworkMapGUI:
             self.legend_window.bind("<Escape>", lambda e: self.close_legend())
 
             # Content frame
-            content_frame = tk.Frame(outer_frame, bg=ColorConfig.current.LEGEND_BG)
+            content_frame = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             content_frame.pack(fill=tk.BOTH, expand=True)
 
             # Image
             img = Image.open("_internal/legend.png").resize((404, 400), Image.Resampling.LANCZOS)
             photo_img = ImageTk.PhotoImage(img)
-            img_label = tk.Label(content_frame, image=photo_img, bg=ColorConfig.current.LEGEND_BG)
+            img_label = tk.Label(content_frame, image=photo_img, bg=ColorConfig.current.FRAME_BG)
             img_label.image = photo_img  # Keep a reference to avoid garbage collection
             img_label.pack(pady=5)
 
@@ -1134,9 +1176,9 @@ class NetworkMapGUI:
             button_style = {
                 'font': self.custom_font,
                 'bg': ColorConfig.current.BUTTON_BG,
-                'fg': ColorConfig.current.BUTTON_FG,
+                'fg': ColorConfig.current.BUTTON_TEXT,
                 'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG,
-                'activeforeground': ColorConfig.current.BUTTON_ACTIVE_FG,
+                'activeforeground': ColorConfig.current.BUTTON_ACTIVE_TEXT,
                 'relief': tk.FLAT,
                 'padx': 5,
                 'pady': 2
@@ -1188,11 +1230,11 @@ class NetworkMapGUI:
                 text="Hide this window on next startup and load most recent on next startup",
                 variable=self.hide_legend_on_start,
                 command=self.save_legend_state,
-                bg=ColorConfig.current.LEGEND_BG,
-                fg=ColorConfig.current.BUTTON_FG,
-                selectcolor=ColorConfig.current.LEGEND_BG,
+                bg=ColorConfig.current.FRAME_BG,
+                fg=ColorConfig.current.BUTTON_TEXT,
+                selectcolor=ColorConfig.current.FRAME_BG,
                 activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                activeforeground=ColorConfig.current.BUTTON_ACTIVE_FG
+                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT
             )
             self.hide_legend_checkbox.pack(pady=5)
 
@@ -1267,7 +1309,7 @@ class NetworkMapGUI:
 
         # Reset VLAN label colors immediately when a new node is selected
         for vlan in ['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400']:
-            self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_PANEL_BG)
+            self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_NOTE_BG)
 
         # Update the information panel
         self.node_name_label.config(text=node.name)
@@ -1868,21 +1910,21 @@ class NetworkMapGUI:
 
         # Title bar and its components
         self.title_bar.config(bg=ColorConfig.current.FRAME_BG)
-        self.title_label.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG)
-        self.close_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG)
-        self.maximize_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG)
-        self.minimize_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG)
+        self.title_label.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+        self.close_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+        self.maximize_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+        self.minimize_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
 
         # Resize grip
         self.resize_grip.config(bg=ColorConfig.current.FRAME_BG)
 
        # Buttons frame and its buttons
         self.buttons_frame.config(bg=ColorConfig.current.FRAME_BG)
-        button_style = {'bg': ColorConfig.current.BUTTON_BG, 'fg': ColorConfig.current.BUTTON_FG, 
+        button_style = {'bg': ColorConfig.current.BUTTON_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 
                         'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG, 
-                        'activeforeground': ColorConfig.current.BUTTON_ACTIVE_FG}
+                        'activeforeground': ColorConfig.current.BUTTON_ACTIVE_TEXT}
         self.mode_button.config(bg=ColorConfig.current.BUTTON_CONFIGURATION_MODE if self.mode == "Configuration" else ColorConfig.current.BUTTON_BG, 
-                            fg=ColorConfig.current.BUTTON_FG)
+                            fg=ColorConfig.current.BUTTON_TEXT)
         
         # Safely configure theme_button only if it exists
         if hasattr(self, 'theme_button') and self.theme_button.winfo_exists():
@@ -1903,14 +1945,14 @@ class NetworkMapGUI:
         for cb in self.buttons_frame.winfo_children()[5:9]:  # Adjusted indices since theme_button is removed
             cb.config(
                     bg=ColorConfig.current.FRAME_BG, 
-                    fg=ColorConfig.current.BUTTON_FG,
+                    fg=ColorConfig.current.BUTTON_TEXT,
                     selectcolor=ColorConfig.current.FRAME_BG, 
                     activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                    activeforeground=ColorConfig.current.BUTTON_FG)
+                    activeforeground=ColorConfig.current.BUTTON_TEXT)
         self.canvas.config(bg=ColorConfig.current.FRAME_BG)
-        self.info_panel.config(bg=ColorConfig.current.INFO_PANEL_BG)
+        self.info_panel.config(bg=ColorConfig.current.INFO_NOTE_BG)
         for child in self.info_panel.winfo_children():
-            child.config(bg=ColorConfig.current.INFO_PANEL_BG, fg=ColorConfig.current.INFO_PANEL_TEXT)
+            child.config(bg=ColorConfig.current.INFO_NOTE_BG, fg=ColorConfig.current.INFO_TEXT)
         
         # Update legend window if it exists
         if self.legend_window and self.legend_window.winfo_exists():
@@ -1919,44 +1961,44 @@ class NetworkMapGUI:
             content_frame = outer_frame.winfo_children()[1]
             
             outer_frame.config(bg=ColorConfig.current.BORDER_COLOR)
-            title_bar.config(bg=ColorConfig.current.LEGEND_BG)
-            title_bar.winfo_children()[0].config(bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG)  # title_label
-            title_bar.winfo_children()[1].config(bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG)  # close_button
-            content_frame.config(bg=ColorConfig.current.LEGEND_BG)
+            title_bar.config(bg=ColorConfig.current.FRAME_BG)
+            title_bar.winfo_children()[0].config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)  # title_label
+            title_bar.winfo_children()[1].config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)  # close_button
+            content_frame.config(bg=ColorConfig.current.FRAME_BG)
             
             for widget in content_frame.winfo_children():
                 if isinstance(widget, tk.Label):  # Image label
-                    widget.config(bg=ColorConfig.current.LEGEND_BG)
+                    widget.config(bg=ColorConfig.current.FRAME_BG)
                 elif isinstance(widget, tk.Button):  # Buttons
-                    widget.config(bg=ColorConfig.current.BUTTON_BG, fg=ColorConfig.current.BUTTON_FG,
+                    widget.config(bg=ColorConfig.current.BUTTON_BG, fg=ColorConfig.current.BUTTON_TEXT,
                                 activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_FG)
+                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)
                 elif isinstance(widget, tk.Checkbutton):  # Checkbox
-                    widget.config(bg=ColorConfig.current.LEGEND_BG, fg=ColorConfig.current.BUTTON_FG,
-                                selectcolor=ColorConfig.current.LEGEND_BG,
+                    widget.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
+                                selectcolor=ColorConfig.current.FRAME_BG,
                                 activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_FG)
+                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)
             # Update theme button text
             self.theme_button.config(text="Dark Mode" if ColorConfig.current == ColorConfig.Light else "Light Mode")
 
         # VLAN checkboxes
         for cb in self.buttons_frame.winfo_children()[6:10]:
-            cb.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG,
+            cb.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
                     selectcolor=ColorConfig.current.FRAME_BG, activebackground=ColorConfig.current.BUTTON_BG,
-                    activeforeground=ColorConfig.current.BUTTON_FG)
+                    activeforeground=ColorConfig.current.BUTTON_TEXT)
 
         # Canvas
         self.canvas.config(bg=ColorConfig.current.FRAME_BG)
         self.top_left_resize_grip.config(bg=ColorConfig.current.FRAME_BG)
         # Info panel and labels
-        self.info_panel.config(bg=ColorConfig.current.INFO_PANEL_BG)
+        self.info_panel.config(bg=ColorConfig.current.INFO_NOTE_BG)
         for child in self.info_panel.winfo_children():
-            child.config(bg=ColorConfig.current.INFO_PANEL_BG, fg=ColorConfig.current.INFO_PANEL_TEXT)
+            child.config(bg=ColorConfig.current.INFO_NOTE_BG, fg=ColorConfig.current.INFO_TEXT)
         # Reset VLAN label colors unless updated by ping
         for vlan in self.vlan_labels:
             current_bg = self.vlan_labels[vlan].cget("bg")
             if current_bg not in [ColorConfig.current.NODE_PING_SUCCESS, ColorConfig.current.NODE_PING_PARTIAL_SUCCESS, ColorConfig.current.NODE_PING_FAILURE]:
-                self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_PANEL_BG)
+                self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_NOTE_BG)
 
         # Update legend window if it exists
         if self.legend_window and self.legend_window.winfo_exists():
@@ -1968,10 +2010,10 @@ class NetworkMapGUI:
                     widget.config(**button_style)
                 elif isinstance(widget, tk.Checkbutton):  # Checkbox
                     widget.config(bg=ColorConfig.current.FRAME_BG,
-                                fg=ColorConfig.current.BUTTON_FG,
+                                fg=ColorConfig.current.BUTTON_TEXT,
                                 selectcolor=ColorConfig.current.FRAME_BG,
                                 activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_FG)
+                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)
             # Update theme button text explicitly
             if hasattr(self, 'theme_button') and self.theme_button.winfo_exists():
                 self.theme_button.config(text="Dark Mode" if ColorConfig.current == ColorConfig.Light else "Light Mode", **button_style)
@@ -1982,6 +2024,7 @@ class NetworkMapGUI:
             if current_fill not in [ColorConfig.current.NODE_PING_SUCCESS, ColorConfig.current.NODE_PING_PARTIAL_SUCCESS, ColorConfig.current.NODE_PING_FAILURE, ColorConfig.current.NODE_HOST]:
                 self.canvas.itemconfig(node.shape, fill=ColorConfig.current.NODE_DEFAULT)
             self.canvas.itemconfig(node.shape, outline=ColorConfig.current.NODE_OUTLINE_DEFAULT)
+            self.canvas.itemconfig(node.text, fill=ColorConfig.current.BUTTON_TEXT)
             if node == self.selected_node:
                 self.canvas.itemconfig(node.shape, outline=ColorConfig.current.NODE_HIGHLIGHT)
 
@@ -1990,20 +2033,20 @@ class NetworkMapGUI:
             for conn in node.connections:
                 self.canvas.itemconfig(conn.line, fill=ColorConfig.current.Connections)
                 if conn.label_id:
-                    self.canvas.itemconfig(conn.label_id, fill=ColorConfig.current.STICKY_NOTE_TEXT)
+                    self.canvas.itemconfig(conn.label_id, fill=ColorConfig.current.INFO_TEXT)
                     if hasattr(conn, 'label_bg') and conn.label_bg:
-                        self.canvas.itemconfig(conn.label_bg, fill=ColorConfig.current.STICKY_NOTE_BG)
+                        self.canvas.itemconfig(conn.label_bg, fill=ColorConfig.current.INFO_NOTE_BG)
 
         # Sticky notes
         for item in self.canvas.find_withtag("sticky_note"):
-            self.canvas.itemconfig(item, fill=ColorConfig.current.STICKY_NOTE_TEXT)
+            self.canvas.itemconfig(item, fill=ColorConfig.current.INFO_TEXT)
         for bg in self.canvas.find_withtag("sticky_bg"):
-            self.canvas.itemconfig(bg, fill=ColorConfig.current.STICKY_NOTE_BG)
+            self.canvas.itemconfig(bg, fill=ColorConfig.current.INFO_NOTE_BG)
 
         # Zoom buttons
         if hasattr(self, 'zoom_level_label') and self.zoom_level_label.winfo_exists():
             for widget in (self.zoom_in_btn, self.zoom_out_btn, self.zoom_level_label):
-                widget.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_FG)
+                widget.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
 
         if hasattr(self, 'zoom_frame') and self.zoom_frame.winfo_exists():
             self.zoom_frame.config(bg=ColorConfig.current.FRAME_BG)
@@ -2085,7 +2128,7 @@ class NetworkMapGUI:
         window.title("Manage Custom Commands")
         window.geometry("400x500")
         window.transient(self.root)
-        window.grab_set()
+        #window.grab_set()
 
         # Create listbox for commands
         listbox = tk.Listbox(window, width=50, height=15)
