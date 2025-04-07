@@ -21,6 +21,44 @@ def get_ip_addresses():
     return ip_addresses
 
 #testing nightmode colours
+class ToolTip:
+    def __init__(self, widget, text, gui, bg=None, fg=None):
+        self.widget = widget
+        self.text = text
+        self.gui = gui
+        self.bg_func = bg if callable(bg) else (lambda: bg or "#ffffe0")
+        self.fg_func = fg if callable(fg) else (lambda: fg or "black")
+        self.tip_window = None
+        self.widget.bind("<Enter>", self.on_enter)
+        self.widget.bind("<Leave>", self.on_leave)
+
+    def on_enter(self, event=None):
+        if self.gui.show_tooltips:
+            self.show_tip()
+
+    def on_leave(self, event=None):
+        self.hide_tip()
+
+    def show_tip(self):
+        if self.tip_window or not self.text:
+            return
+        x = self.widget.winfo_rootx()
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 2
+        self.tip_window = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.wm_geometry(f"+{x}+{y}")
+        label = tk.Label(tw, text=self.text, justify='left',
+                         background=self.bg_func(), foreground=self.fg_func(),
+                         relief='solid', borderwidth=1,
+                         font=("tahoma", "8", "normal"))
+        label.pack(ipadx=1)
+
+    def hide_tip(self):
+        if self.tip_window:
+            self.tip_window.destroy()
+            self.tip_window = None
+
+
 
 class ColorConfig:
     class Light:
@@ -472,6 +510,7 @@ class NetworkMapGUI:
         self.root.overrideredirect(True)
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
         self.custom_font = font.Font(family="Helvetica", size=12)
+        self.show_tooltips = False
         self.vlan_label_names = {
             'VLAN_100': 'VLAN_100',
             'VLAN_200': 'VLAN_200',
@@ -538,7 +577,12 @@ class NetworkMapGUI:
                                         bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
                                         font=self.custom_font)
         self.minimize_button.pack(side=tk.RIGHT)
-               
+
+        self.help_button = tk.Button(self.title_bar, text='?', command=self.toggle_tooltips,
+                             bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
+                             font=self.custom_font)
+        self.help_button.pack(side=tk.RIGHT)
+       
         self.is_maximized = False #track if maximized
         
         # Bind dragging events
@@ -614,24 +658,44 @@ class NetworkMapGUI:
         start_menu_button = tk.Button(self.buttons_frame, text="Start Menu", command=self.display_legend, **start_menu_style)
         start_menu_button.pack(side=tk.LEFT, padx=5, pady=5)
 
+        ToolTip(start_menu_button, "Open the Start Menu", self,
+        bg=lambda: ColorConfig.current.INFO_NOTE_BG,
+        fg=lambda: ColorConfig.current.INFO_TEXT)
+
         self.mode_button = tk.Button(self.buttons_frame, text='Configuration', command=self.toggle_mode, **button_style)
         self.mode_button.pack(side=tk.LEFT, padx=(5, 100), pady=5)        
         
+        ToolTip(self.mode_button, "Toggle Operator/Configuration mode", self,
+        bg=lambda: ColorConfig.current.INFO_NOTE_BG,
+        fg=lambda: ColorConfig.current.INFO_TEXT)
+
         whoamI_button = tk.Button(self.buttons_frame, text='Who am I?', command=self.highlight_matching_nodes, **button_style)
         whoamI_button.pack(side=tk.LEFT, padx=5, pady=5)
         
+        ToolTip(whoamI_button, "Highlight matching nodes", self,
+        bg=lambda: ColorConfig.current.INFO_NOTE_BG,
+        fg=lambda: ColorConfig.current.INFO_TEXT)
+
         clear_status_button = tk.Button(self.buttons_frame, text='Clear Status', command=self.clear_node_status, **button_style)
         clear_status_button.pack(side=tk.LEFT, padx=5, pady=5)
 
+        ToolTip(clear_status_button, "Clear the status of all nodes", self,
+        bg=lambda: ColorConfig.current.INFO_NOTE_BG,
+        fg=lambda: ColorConfig.current.INFO_TEXT)
+
         ping_all_button = tk.Button(self.buttons_frame, text='Ping All', command=self.ping_all, **button_style)
         ping_all_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+        ToolTip(ping_all_button, "Ping all nodes", self,
+        bg=lambda: ColorConfig.current.INFO_NOTE_BG,
+        fg=lambda: ColorConfig.current.INFO_TEXT)
 
         # Checkboxes for VLANs
         self.vlan_visibility = {'VLAN_100': tk.BooleanVar(value=True),
                                 'VLAN_200': tk.BooleanVar(value=True),
                                 'VLAN_300': tk.BooleanVar(value=True),
                                 'VLAN_400': tk.BooleanVar(value=True)}
-
+        
         self.vlan_checkboxes = {}
         for vlan, var in self.vlan_visibility.items():
             cb = tk.Checkbutton(
@@ -751,6 +815,10 @@ class NetworkMapGUI:
         self.resize_grip.place(relx=1.0, rely=1.0, anchor="se")
 
         self.update_ui_colors()
+
+    def toggle_tooltips(self):
+        self.show_tooltips = not self.show_tooltips
+        self.help_button.config(relief=tk.SUNKEN if self.show_tooltips else tk.RAISED)
 
     def start_move_legend(self, event):
         self.legend_window._x = event.x
@@ -984,6 +1052,8 @@ class NetworkMapGUI:
             ("\nOperator Mode:\n", "header"),
             ("- Left Click on Node: Ping the node (Green = all VLANs up, Yellow = partial, Red = none).\n"
             "- Right Click on Node: Open context menu.\n"
+            "- Right Click and Drag: Pan the canvas.\n"
+            "- Scroll Wheel: Zoom in and out.\n"
             "- Who am I?: Highlight nodes matching your machine’s IP.\n"
             "- Ping All: Ping every node.\n"
             "- Clear Status: Reset node colors.\n", "text"),
@@ -991,7 +1061,7 @@ class NetworkMapGUI:
             ("\nConfiguration Mode:\n", "header"),
             ("- Double Left Click: Create a new node.\n"
             "- Shift + Double Left Click: Add a sticky note.\n"
-            "- Middle Click: Create a connection line.\n"
+            "- Middle Click: Create a connection line between two nodes.\n"
             "- Shift + Middle Click: Remove connection line.\n"
             "- Left Click + Drag: Move nodes or notes.\n"
             "- Right Click: Open context menu.\n", "text"),
