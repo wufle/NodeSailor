@@ -62,7 +62,6 @@ class ToolTip:
 
 class ColorConfig:
     class Light:
-        BUTTON_TEXT = '#000000'
         NODE_DEFAULT = 'light steel blue'
         NODE_GREYED_OUT = 'gainsboro'
         NODE_HIGHLIGHT = 'gold'
@@ -83,7 +82,6 @@ class ColorConfig:
         BORDER_COLOR = '#f7f7f7'
 
     class Dark:
-        BUTTON_TEXT = '#ffffff'
         NODE_DEFAULT = '#4B5EAA'
         NODE_GREYED_OUT = '#4B5563'
         NODE_HIGHLIGHT = '#D97706'
@@ -92,11 +90,11 @@ class ColorConfig:
         NODE_PING_SUCCESS = '#047857'
         NODE_PING_PARTIAL_SUCCESS = '#B45309'
         NODE_PING_FAILURE = '#991B1B'
-        FRAME_BG = '#1F2937' #MAIN BACKBROUND
+        FRAME_BG = "#0c0f14" #MAIN BACKBROUND
         INFO_NOTE_BG = '#111827'
         INFO_TEXT = '#8f8f8f'
         BUTTON_BG = '#4B5EAA'
-        BUTTON_TEXT = 'black'
+        BUTTON_TEXT = '#c7c7c7'
         BUTTON_ACTIVE_BG = '#111827' #button when pressed
         BUTTON_ACTIVE_TEXT = 'black'  #button text when pressed
         BUTTON_CONFIGURATION_MODE = '#F87171'
@@ -819,6 +817,8 @@ class NetworkMapGUI:
     def toggle_tooltips(self):
         self.show_tooltips = not self.show_tooltips
         self.help_button.config(relief=tk.SUNKEN if self.show_tooltips else tk.RAISED)
+        if self.show_tooltips:
+            self.show_help()
 
     def start_move_legend(self, event):
         self.legend_window._x = event.x
@@ -1981,6 +1981,7 @@ class NetworkMapGUI:
         # Title bar and its components
         self.title_bar.config(bg=ColorConfig.current.FRAME_BG)
         self.title_label.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+        self.help_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
         self.close_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
         self.maximize_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
         self.minimize_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
