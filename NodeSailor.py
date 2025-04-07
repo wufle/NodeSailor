@@ -458,12 +458,13 @@ class NetworkNode:
 
 
 class ConnectionLine:
-    def __init__(self, canvas, node1, node2, label=''):
+    def __init__(self, canvas, node1, node2, label='', connectioninfo=None):
         self.canvas = canvas
         self.node1 = node1
         self.node2 = node2
         self.line = canvas.create_line(node1.x, node1.y, node2.x, node2.y,width=2, fill=ColorConfig.current.Connections)
         self.label = label
+        self.connectioninfo = connectioninfo
         self.label_id = None
         if label:
             self.update_label()
@@ -489,6 +490,54 @@ class ConnectionLine:
         # Create a text object similar to StickyNote
         self.label_id = self.canvas.create_text(mid_x, mid_y, text=self.label, font=('Helvetica', '12'), fill=ColorConfig.current.INFO_TEXT, tags="connection_label", anchor="center")
 
+        self.info_popup = None
+
+        if self.connectioninfo:
+            def show_info(event):
+                self.info_popup = tk.Toplevel(self.canvas)
+                self.info_popup.wm_overrideredirect(True)
+                self.info_popup.wm_geometry(f"+{event.x_root + 10}+{event.y_root + 10}")
+                label = tk.Label(self.info_popup, text=self.connectioninfo,
+                                background=ColorConfig.current.INFO_NOTE_BG,
+                                foreground=ColorConfig.current.INFO_TEXT,
+                                relief='solid', borderwidth=1,
+                                font=("Helvetica", 10), justify='left')
+                label.pack()
+
+            def hide_info(event):
+                if self.info_popup:
+                    self.info_popup.destroy()
+                    self.info_popup = None
+
+            self.canvas.tag_bind(self.label_id, "<Enter>", show_info)
+            self.canvas.tag_bind(self.label_id, "<Leave>", hide_info)
+
+            def edit_connectioninfo(event):
+                dialog = tk.Toplevel(self.canvas)
+                dialog.title("Edit Connection Details")
+                tk.Label(dialog, text="Label:").grid(row=0, column=0, padx=10, pady=5)
+                label_entry = tk.Entry(dialog, width=40)
+                label_entry.insert(0, self.label)
+                label_entry.grid(row=0, column=1, padx=10, pady=5)
+
+                tk.Label(dialog, text="Info (on hover):").grid(row=1, column=0, padx=10, pady=5)
+                info_entry = tk.Entry(dialog, width=40)
+                info_entry.insert(0, self.connectioninfo or "")
+                info_entry.grid(row=1, column=1, padx=10, pady=5)
+
+                def submit():
+                    self.label = label_entry.get()
+                    self.connectioninfo = info_entry.get()
+                    self.update_label()
+                    dialog.destroy()
+
+                tk.Button(dialog, text="Save", command=submit).grid(row=2, column=0, columnspan=2, pady=10)
+                dialog.transient(self.canvas)
+                dialog.grab_set()
+                self.canvas.wait_window(dialog)
+
+            self.canvas.tag_bind(self.label_id, "<Button-3>", edit_connectioninfo)
+    
         # Recreate a background similar to StickyNote
         bbox = self.canvas.bbox(self.label_id)
         if bbox:
@@ -1568,8 +1617,29 @@ class NetworkMapGUI:
                             self.connection_start_node = node
                             return  # Return after setting the start node
                         elif self.connection_start_node != node:
-                            label = simpledialog.askstring("Label", "Enter label for connection:", parent=self.root)
-                            connection = ConnectionLine(self.canvas, self.connection_start_node, node, label=label)
+                            dialog = tk.Toplevel(self.root)
+                            dialog.title("Connection Details")
+                            tk.Label(dialog, text="Label:").grid(row=0, column=0, padx=10, pady=5)
+                            label_entry = tk.Entry(dialog, width=40)
+                            label_entry.grid(row=0, column=1, padx=10, pady=5)
+
+                            tk.Label(dialog, text="Info (on hover):").grid(row=1, column=0, padx=10, pady=5)
+                            info_entry = tk.Entry(dialog, width=40)
+                            info_entry.grid(row=1, column=1, padx=10, pady=5)
+
+                            def submit():
+                                label = label_entry.get()
+                                info = info_entry.get()
+                                connection = ConnectionLine(self.canvas, self.connection_start_node, node, label=label, connectioninfo=info)
+                                self.connection_start_node = None
+                                self.raise_all_nodes()
+                                self.unsaved_changes = True
+                                dialog.destroy()
+
+                            tk.Button(dialog, text="OK", command=submit).grid(row=2, column=0, columnspan=2, pady=10)
+                            dialog.transient(self.root)
+                            dialog.grab_set()
+                            self.root.wait_window(dialog)
                             self.connection_start_node = None
                             self.raise_all_nodes()
                             self.unsaved_changes = True
@@ -1642,8 +1712,11 @@ class NetworkMapGUI:
                         'to': self.nodes.index(conn.node2),
                         'label': conn.label
                     }
+                    if conn.connectioninfo:
+                        connection_data['connectioninfo'] = conn.connectioninfo  # <-- add this
                     state['connections'].append(connection_data)
                     lines_seen.add(conn)
+
 
         # Gather sticky-note data
         for note in self.stickynotes:
@@ -1713,7 +1786,9 @@ class NetworkMapGUI:
                 node1 = self.nodes[conn_data['from']]
                 node2 = self.nodes[conn_data['to']]
                 label = conn_data.get('label', '')
-                ConnectionLine(self.canvas, node1, node2, label=label)
+                tooltip = conn_data.get('connectioninfo', None)
+                ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip)
+
 
             # Load sticky notes
             self.stickynotes.clear()
@@ -1768,7 +1843,9 @@ class NetworkMapGUI:
                     node1 = self.nodes[conn_data['from']]
                     node2 = self.nodes[conn_data['to']]
                     label = conn_data.get('label', '')  # Get the label if it exists
-                    ConnectionLine(self.canvas, node1, node2, label=label)
+                    tooltip = conn_data.get('connectioninfo', None)
+                    ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip)
+
                 
                 # Raise all nodes after creating connections to ensure they appear on top
                 for node in self.nodes:
@@ -1937,6 +2014,7 @@ class NetworkMapGUI:
                         conn.node2.connections.remove(conn)
                     self.nodes.remove(n)
                     refresh_editor()
+                    refresh_connection_editor()
 
                 btn = tk.Button(scrollable_frame, text="Remove", command=remove_this_node)
                 btn.grid(row=i, column=10, padx=4)
@@ -1964,8 +2042,61 @@ class NetworkMapGUI:
             self.nodes.append(node)
             node.raise_node()
             refresh_editor()
+            refresh_connection_editor()
             canvas.update_idletasks()
             canvas.yview_moveto(1.0)
+        
+        def refresh_connection_editor():
+            for widget in conn_frame.winfo_children():
+                widget.destroy()
+
+            tk.Label(conn_frame, text="From").grid(row=0, column=0, padx=5, pady=5)
+            tk.Label(conn_frame, text="To").grid(row=0, column=1, padx=5, pady=5)
+            tk.Label(conn_frame, text="Label").grid(row=0, column=2, padx=5, pady=5)
+            tk.Label(conn_frame, text="Info (hover)").grid(row=0, column=3, padx=5, pady=5)
+
+            connections_seen = set()
+            row = 1
+            for node in self.nodes:
+                for conn in node.connections:
+                    if conn in connections_seen:
+                        continue
+                    connections_seen.add(conn)
+
+                    from_node = conn.node1.name
+                    to_node = conn.node2.name
+
+                    tk.Label(conn_frame, text=from_node).grid(row=row, column=0)
+                    tk.Label(conn_frame, text=to_node).grid(row=row, column=1)
+
+                    label_entry = tk.Entry(conn_frame, width=20)
+                    label_entry.insert(0, conn.label)
+                    label_entry.grid(row=row, column=2)
+
+                    info_entry = tk.Entry(conn_frame, width=30)
+                    info_entry.insert(0, conn.connectioninfo or "")
+                    info_entry.grid(row=row, column=3)
+
+                    def save_fields(e=None, c=conn, le=label_entry, ie=info_entry):
+                        c.label = le.get()
+                        c.connectioninfo = ie.get()
+                        c.update_label()
+
+                    label_entry.bind("<FocusOut>", save_fields)
+                    info_entry.bind("<FocusOut>", save_fields)
+
+                    def remove_conn(c=conn):
+                        self.canvas.delete(c.line)
+                        if c.label_id:
+                            self.canvas.delete(c.label_id)
+                        if hasattr(c, 'label_bg') and c.label_bg:
+                            self.canvas.delete(c.label_bg)
+                        c.node1.connections.remove(c)
+                        c.node2.connections.remove(c)
+                        refresh_connection_editor()
+
+                    tk.Button(conn_frame, text="Remove", command=remove_conn).grid(row=row, column=4, padx=5)
+                    row += 1
 
         # Add/Close buttons at bottom
         btn_frame = tk.Frame(window)
@@ -1974,8 +2105,13 @@ class NetworkMapGUI:
         tk.Button(btn_frame, text="Add Node", command=add_node).pack(side=tk.LEFT, padx=10)
         tk.Button(btn_frame, text="Close", command=window.destroy).pack(side=tk.RIGHT, padx=10)
 
+                # --- Connection Editor Section ---
+        conn_frame = tk.Frame(window)
+        conn_frame.pack(fill=tk.X, pady=20)
+
         refresh_editor()
-       
+        refresh_connection_editor()
+
     def update_ui_colors(self):
         """Update all UI colors when the theme changes."""
         # Root window
