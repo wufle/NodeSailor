@@ -1043,20 +1043,20 @@ class NetworkMapGUI:
         help_lines = [
             ("NodeSailor v0.9.10 - Help\n", "title"),
             ("\nOverview:\n", "header"),
-            ("NodeSailor is a network visualization tool.\n", "text"),
-
+            ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, RDP and more with the implementation of custom commands.\n", "text"),
+            
             ("\nUser Modes:\n", "header"),
             ("- Operator: Monitor and interact with the network.\n"
             "- Configuration: Build and edit the network layout.\n", "text"),
 
             ("\nOperator Mode:\n", "header"),
-            ("- Left Click on Node: Ping the node (Green = all VLANs up, Yellow = partial, Red = none).\n"
+            ("- Left Click on Node: Ping the node (Green = all assigned IP addresses connected, Yellow = partial connection, Red = no connection).\n"
             "- Right Click on Node: Open context menu.\n"
             "- Right Click and Drag: Pan the canvas.\n"
             "- Scroll Wheel: Zoom in and out.\n"
-            "- Who am I?: Highlight nodes matching your machine’s IP.\n"
+            "- Who am I?: Highlight then node matching your machine’s IP.\n"
             "- Ping All: Ping every node.\n"
-            "- Clear Status: Reset node colors.\n", "text"),
+            "- Clear Status: Reset node status.\n", "text"),
 
             ("\nConfiguration Mode:\n", "header"),
             ("- Double Left Click: Create a new node.\n"
@@ -1073,6 +1073,9 @@ class NetworkMapGUI:
             ("- Access through 'Start Menu > Manage Custom Commands'.\n"
             "- Use placeholders like {ip}, {name}, {file}, {web}.\n"
             "- Example: ping {ip} -t\n", "text"),
+
+            ("\nKeyboard Shortcuts:\n", "header"),
+            ("- Ctrl-Shift-C Change color theme.\n", "text"),
         ]
 
         for line, tag in help_lines:
