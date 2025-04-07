@@ -1925,7 +1925,18 @@ class NetworkMapGUI:
 
         canvas = tk.Canvas(container)
         scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+
         scrollable_frame = tk.Frame(canvas)
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
+        def on_configure(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+
+        scrollable_frame.bind("<Configure>", on_configure)
 
         scrollable_frame.bind(
             "<Configure>",
@@ -2105,13 +2116,13 @@ class NetworkMapGUI:
         tk.Button(btn_frame, text="Add Node", command=add_node).pack(side=tk.LEFT, padx=10)
         tk.Button(btn_frame, text="Close", command=window.destroy).pack(side=tk.RIGHT, padx=10)
 
-                # --- Connection Editor Section ---
-        conn_frame = tk.Frame(window)
-        conn_frame.pack(fill=tk.X, pady=20)
-
         refresh_editor()
         refresh_connection_editor()
 
+                # --- Connection Editor Section ---
+        conn_frame = tk.Frame(scrollable_frame)
+        conn_frame.pack(fill=tk.X, pady=20)
+        
     def update_ui_colors(self):
         """Update all UI colors when the theme changes."""
         # Root window
