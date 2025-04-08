@@ -999,19 +999,35 @@ class NetworkMapGUI:
         tk.Button(editor_window, text="Close", command=editor_window.destroy).pack(pady=10)
 
     def edit_vlan_labels(self):
-        if self.legend_window:
+        if hasattr(self, 'vlan_label_editor') and self.vlan_label_editor is not None and self.vlan_label_editor.winfo_exists():
+            self.vlan_label_editor.lift()
+            return
+
+        if self.legend_window and self.legend_window.winfo_exists():
             self.legend_window.withdraw()
-        label_window = tk.Toplevel(self.root)
-        label_window.title("Edit VLAN Labels")
-        label_window.geometry("300x250")
+
+        self.vlan_label_editor = tk.Toplevel(self.root)
+        self.vlan_label_editor.title("Edit VLAN Labels")
+        self.vlan_label_editor.geometry("300x250")
+        self.vlan_label_editor.transient(self.root)
+        self.vlan_label_editor.grab_set()
+
         entries = {}
 
         for i, vlan in enumerate(self.vlan_label_names.keys()):
-            tk.Label(label_window, text=vlan + ":").grid(row=i, column=0, padx=10, pady=5)
-            entry = tk.Entry(label_window)
+            tk.Label(self.vlan_label_editor, text=vlan + ":").grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.vlan_label_editor)
             entry.insert(0, self.vlan_label_names[vlan])
             entry.grid(row=i, column=1, padx=10, pady=5)
             entries[vlan] = entry
+
+        def close_vlan_editor():
+            try:
+                self.vlan_label_editor.grab_release()
+            except:
+                pass
+            self.vlan_label_editor.destroy()
+            self.vlan_label_editor = None
 
         def save_labels():
             for vlan, entry in entries.items():
@@ -1020,9 +1036,12 @@ class NetworkMapGUI:
                 label.config(text=self.vlan_label_names[vlan] + ":")
             for vlan, cb in self.vlan_checkboxes.items():
                 cb.config(text=self.vlan_label_names[vlan])
-            label_window.destroy()
+            close_vlan_editor()
 
-        tk.Button(label_window, text="Save", command=save_labels).grid(row=5, column=0, columnspan=2, pady=10)
+        self.vlan_label_editor.protocol("WM_DELETE_WINDOW", close_vlan_editor)
+
+        tk.Button(self.vlan_label_editor, text="Save", command=save_labels).grid(row=5, column=0, columnspan=2, pady=10)
+
 
     def show_help(self, event=None):
         help_window = tk.Toplevel(self.root)
