@@ -2046,116 +2046,6 @@ class NetworkMapGUI:
 
         rebuild_editor_content()
 
-    def open_node_list_editor(self):
-        if self.legend_window and self.legend_window.winfo_exists():
-            self.legend_window.destroy()
-            self.legend_window = None
-        
-        if hasattr(self, 'node_list_editor') and self.node_list_editor.winfo_exists():
-            self.node_list_editor.lift()
-            return
-
-        self.node_list_editor = tk.Toplevel(self.root)
-        self.node_list_editor.title("Node List Editor")
-        self.node_list_editor.geometry("1500x800")
-        self.node_list_editor.transient(self.root)
-
-        container = tk.Frame(self.node_list_editor)
-        container.pack(fill="both", expand=True)
-
-        canvas = tk.Canvas(container)
-        scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
-        self.node_list_frame = tk.Frame(canvas)
-
-        self.node_list_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-
-        canvas.create_window((0, 0), window=self.node_list_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-
-        self.list_editor_xy_fields = {}
-
-        def rebuild_editor_content():
-            for widget in self.node_list_frame.winfo_children():
-                widget.destroy()
-
-            fields = [
-                ("Name", "name"),
-                ("VLAN 100", "VLAN_100"),
-                ("VLAN 200", "VLAN_200"),
-                ("VLAN 300", "VLAN_300"),
-                ("VLAN 400", "VLAN_400"),
-                ("Remote Desktop", "remote_desktop_address"),
-                ("File Path", "file_path"),
-                ("Web URL", "web_config_url"),
-                ("X", "x"),
-                ("Y", "y"),
-            ]
-
-            for col_index, (label, _) in enumerate(fields):
-                tk.Label(self.node_list_frame, text=label, font=('Helvetica', 10, 'bold')).grid(row=0, column=col_index, padx=5, pady=2)
-            tk.Label(self.node_list_frame, text="Delete", font=('Helvetica', 10, 'bold')).grid(row=0, column=len(fields), padx=5)
-
-            tk.Button(self.node_list_frame, text="➕ Add Node", command=add_node).grid(row=1, column=0, columnspan=len(fields)+1, sticky="w", pady=5)
-
-            for row_index, node in enumerate(self.nodes, start=2):
-                xy_fields = []
-                for col_index, (label, attr) in enumerate(fields):
-                    value = getattr(node, attr)
-                    entry = tk.Entry(self.node_list_frame, width=15)
-                    entry.insert(0, str(value))
-                    entry.grid(row=row_index, column=col_index, padx=2, pady=2)
-
-                    def make_callback(n=node, a=attr, e=entry):
-                        def update_field(event):
-                            val = e.get()
-                            if a in ("x", "y"):
-                                try:
-                                    val = float(val)
-                                    if a == "x":
-                                        n.update_position(val, n.y)
-                                    else:
-                                        n.update_position(n.x, val)
-                                except ValueError:
-                                    return
-                            else:
-                                setattr(n, a, val)
-                                if a == "name":
-                                    n.canvas.itemconfigure(n.text, text=n.name)
-                                n.adjust_node_size()
-                                self.unsaved_changes = True
-                        return update_field
-
-                    entry.bind("<FocusOut>", make_callback())
-
-                    if attr in ("x", "y"):
-                        xy_fields.append(entry)
-
-                self.list_editor_xy_fields[node] = xy_fields
-
-                def delete_node_callback(n=node):
-                    def delete():
-                        self.remove_node(n)
-                        rebuild_editor_content()
-                    return delete
-
-                btn = tk.Button(self.node_list_frame, text="🗑", fg="red", command=delete_node_callback())
-                btn.grid(row=row_index, column=len(fields), padx=5)
-
-        def add_node():
-            new_node = NetworkNode(self.canvas, name="NewNode", x=100, y=100)
-            self.nodes.append(new_node)
-            self.on_node_select(new_node)
-            self.unsaved_changes = True
-            rebuild_editor_content()
-
-        rebuild_editor_content()
-
     def open_connection_list_editor(self):
         if self.legend_window and self.legend_window.winfo_exists():
             self.legend_window.destroy()
@@ -2167,7 +2057,7 @@ class NetworkMapGUI:
 
         self.connection_list_editor = tk.Toplevel(self.root)
         self.connection_list_editor.title("Connection List Editor")
-        self.connection_list_editor.geometry("1000x600")
+        self.connection_list_editor.geometry("750x600")
         self.connection_list_editor.transient(self.root)
 
         container = tk.Frame(self.connection_list_editor)
