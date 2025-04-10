@@ -558,6 +558,7 @@ class NetworkMapGUI:
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
         self.custom_font = font.Font(family="Helvetica", size=12)
         self.show_tooltips = False
+        self.color_editor_window = None
         self.vlan_label_names = {
             'VLAN_100': 'VLAN_100',
             'VLAN_200': 'VLAN_200',
@@ -942,51 +943,72 @@ class NetworkMapGUI:
             self.root.geometry(f"+{x}+{y}")
 
     def show_color_editor(self):
-        """Open a window to edit ColorConfig attributes."""
-        if self.legend_window:
-            self.legend_window.withdraw()
+        if self.legend_window and self.legend_window.winfo_exists():
+            self.legend_window.destroy()
+            self.legend_window = None
+            
+        if hasattr(self, 'color_editor_window'):
+            try:
+                if self.color_editor_window.winfo_exists():
+                    self.color_editor_window.lift()
+                    return
+            except:
+                self.color_editor_window = None  # stale reference cleanup
+
         editor_window = tk.Toplevel(self.root)
         editor_window.title("Color Scheme Editor")
         editor_window.geometry("400x600")
-        editor_window.transient(self.root)  # Tie it to the main window
-        #editor_window.grab_set()  # Make it modal
+        editor_window.transient(self.root)
 
-        # Theme selection
-        theme_var = tk.StringVar(value="Dark")  # Default to Dark
+        # Properly track this new instance
+        self.color_editor_window = editor_window
+        editor_window.grab_set()
+
+        def on_close():
+            if self.color_editor_window:
+                try:
+                    self.color_editor_window.grab_release()
+                    self.color_editor_window.destroy()
+                except:
+                    pass
+                self.color_editor_window = None
+
+        editor_window.protocol("WM_DELETE_WINDOW", on_close)
+
+        # ---------------------
+        # everything below here is identical to your existing layout logic
+        # ---------------------
+        theme_var = tk.StringVar(value="Dark" if ColorConfig.current == ColorConfig.Dark else "Light")
+
         tk.Label(editor_window, text="Select Theme:").pack(pady=5)
         tk.Button(editor_window, text="Load Colors", command=self.load_colors).pack(pady=5)
         tk.Button(editor_window, text="Save Colors", command=self.save_colors).pack(pady=5)
         tk.Radiobutton(editor_window, text="Light", variable=theme_var, value="Light").pack()
         tk.Radiobutton(editor_window, text="Dark", variable=theme_var, value="Dark").pack()
 
-        # Frame for color entries
         color_frame = tk.Frame(editor_window)
         color_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # List of ColorConfig attributes (excluding 'current')
-        color_attrs = [attr for attr in dir(ColorConfig.Light) if not attr.startswith('__') and attr != 'current']
         color_entries = {}
+        color_attrs = [attr for attr in dir(ColorConfig.Light) if not attr.startswith('__') and attr != 'current']
 
         def update_color(attr):
-            """Open color chooser and update the button's background."""
             theme = theme_var.get()
-            current_color = getattr(getattr(ColorConfig, theme), attr)
+            current_color = getattr(getattr(ColorConfig, theme), attr, "#ffffff")
             new_color = colorchooser.askcolor(title=f"Choose {attr} for {theme}", initialcolor=current_color)
-            if new_color[1]:  # If a color was selected (not canceled)
-                setattr(getattr(ColorConfig, theme), attr, new_color[1])  # Update ColorConfig
-                color_entries[attr]['button'].config(bg=new_color[1])  # Update button color
-                self.update_ui_colors()  # Apply changes live
+            if new_color[1]:
+                setattr(getattr(ColorConfig, theme), attr, new_color[1])
+                color_entries[attr]['button'].config(bg=new_color[1])
+                self.update_ui_colors()
 
-        # Populate the frame with color options
         for i, attr in enumerate(color_attrs):
             tk.Label(color_frame, text=f"{attr}:").grid(row=i, column=0, sticky="w", pady=2)
-            current_color = getattr(getattr(ColorConfig, theme_var.get()), attr)
+            current_color = getattr(getattr(ColorConfig, theme_var.get()), attr, "#ffffff")
             btn = tk.Button(color_frame, text="Pick Color", bg=current_color,
                             command=lambda a=attr: update_color(a))
             btn.grid(row=i, column=1, sticky="ew", pady=2)
             color_entries[attr] = {'button': btn}
 
-        # Update colors when theme changes
         def on_theme_change(*args):
             theme = theme_var.get()
             for attr in color_attrs:
@@ -995,8 +1017,8 @@ class NetworkMapGUI:
 
         theme_var.trace("w", on_theme_change)
 
-        # Close button
-        tk.Button(editor_window, text="Close", command=editor_window.destroy).pack(pady=10)
+        tk.Button(editor_window, text="Close", command=on_close).pack(pady=10)
+
 
     def edit_vlan_labels(self):
         if hasattr(self, 'vlan_label_editor') and self.vlan_label_editor is not None and self.vlan_label_editor.winfo_exists():
