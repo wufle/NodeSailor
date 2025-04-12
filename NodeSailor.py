@@ -1060,7 +1060,8 @@ class NetworkMapGUI:
                 activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
                 activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT).pack(pady=10)
 
-
+        self.fix_window_geometry(self.color_editor_window, 500, 900)
+        
     def edit_vlan_labels(self):
         if hasattr(self, 'vlan_label_editor') and self.vlan_label_editor and self.vlan_label_editor.winfo_exists():
             self.vlan_label_editor.lift()
@@ -1106,6 +1107,8 @@ class NetworkMapGUI:
                 activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
                 activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
                 font=('Helvetica', 10)).pack()
+        
+        self.fix_window_geometry(self.vlan_label_editor, 170, 230)
 
     def show_help(self, event=None):
         help_window = tk.Toplevel(self.root)
@@ -1611,7 +1614,7 @@ class NetworkMapGUI:
                 activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
                 font=('Helvetica', 10)).grid(row=8, column=0, columnspan=2, pady=10)
 
-
+        self.fix_window_geometry(self.node_window, 340, 360)
 
     def create_node(self, event):
         self.open_node_window(event=event)
@@ -2153,7 +2156,7 @@ class NetworkMapGUI:
 
         rebuild_editor_content()
 
-        self.fix_window_geometry(self.node_list_editor, 1100, 1000)
+        self.fix_window_geometry(self.node_list_editor, 1100, 900)
 
     def open_connection_list_editor(self):
         if self.legend_window and self.legend_window.winfo_exists():
@@ -2253,8 +2256,7 @@ class NetworkMapGUI:
                     .grid(row=row_index, column=4, padx=5)
 
         rebuild_editor_content()
-        print("🧠 rebuild_editor_content() called, nodes:", len(self.nodes))
-
+        self.fix_window_geometry(self.connection_list_editor, 1200, 700)
 
     def update_ui_colors(self):
         """Update all UI colors when the theme changes."""
@@ -2600,6 +2602,9 @@ class NetworkMapGUI:
         tk.Button(btn_frame, text="Close", command=self.make_popup_closer("custom_cmd_window"), **btn_style).pack(side=tk.LEFT, padx=5)
 
         tk.Label(content, text="""
+
+
+                 
     Custom Commands:
     - Use placeholders like {ip}, {name}, {file}, {web}, {rdp}, {vlan100}, etc.
     - {ip} defaults to the first non-empty VLAN address
@@ -2607,6 +2612,8 @@ class NetworkMapGUI:
     """, justify=tk.LEFT, bg=ColorConfig.current.FRAME_BG,
                 fg=ColorConfig.current.INFO_TEXT, font=('Helvetica', 9),
                 wraplength=380).pack(pady=10, padx=10)
+
+        self.fix_window_geometry(self.custom_cmd_window, 600, 550)
 
 if __name__ == "__main__":
     root = tk.Tk()
