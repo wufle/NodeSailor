@@ -914,6 +914,38 @@ class NetworkMapGUI:
         new_y = self.initial_y + delta_y
         self.root.geometry(f"{new_width}x{new_height}+{new_x}+{new_y}")
 
+    def add_custom_titlebar(self, window, title, on_close=None):
+        outer = tk.Frame(window, bg=ColorConfig.current.BORDER_COLOR, padx=2, pady=2)
+        outer.pack(fill=tk.BOTH, expand=True)
+
+        titlebar = tk.Frame(outer, bg=ColorConfig.current.FRAME_BG)
+        titlebar.pack(side=tk.TOP, fill=tk.X)
+
+        label = tk.Label(titlebar, text=title, bg=ColorConfig.current.FRAME_BG,
+                        fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
+        label.pack(side=tk.LEFT, padx=10)
+
+        btn = tk.Button(titlebar, text='X', command=on_close or window.destroy,
+                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
+                        font=self.custom_font)
+        btn.pack(side=tk.RIGHT)
+
+        def start(event):
+            window._x = event.x
+            window._y = event.y
+
+        def drag(event):
+            x = window.winfo_x() + event.x - window._x
+            y = window.winfo_y() + event.y - window._y
+            window.geometry(f"+{x}+{y}")
+
+        titlebar.bind("<ButtonPress-1>", start)
+        titlebar.bind("<B1-Motion>", drag)
+        label.bind("<ButtonPress-1>", start)
+        label.bind("<B1-Motion>", drag)
+
+        return outer
+
     def minimize_window(self):
         self.root.state('iconic')
 
@@ -945,48 +977,56 @@ class NetworkMapGUI:
         if self.legend_window and self.legend_window.winfo_exists():
             self.legend_window.destroy()
             self.legend_window = None
-            
+
         if hasattr(self, 'color_editor_window'):
             try:
                 if self.color_editor_window.winfo_exists():
                     self.color_editor_window.lift()
                     return
             except:
-                self.color_editor_window = None  # stale reference cleanup
-
-        editor_window = tk.Toplevel(self.root)
-        editor_window.title("Color Scheme Editor")
-        editor_window.geometry("400x900")
-        editor_window.transient(self.root)
-
-        # Properly track this new instance
-        self.color_editor_window = editor_window
-        editor_window.grab_set()
-
-        def on_close():
-            if self.color_editor_window:
-                try:
-                    self.color_editor_window.grab_release()
-                    self.color_editor_window.destroy()
-                except:
-                    pass
                 self.color_editor_window = None
 
-        editor_window.protocol("WM_DELETE_WINDOW", on_close)
+        def on_close():
+            try: self.color_editor_window.grab_release()
+            except: pass
+            self.color_editor_window.destroy()
+            self.color_editor_window = None
+
+        self.color_editor_window, content = self.create_popup("Color Scheme Editor", 400, 900, on_close=on_close)
 
         theme_var = tk.StringVar(value="Dark" if ColorConfig.current == ColorConfig.Dark else "Light")
 
-        tk.Label(editor_window, text="Select Theme:").pack(pady=5)
-        tk.Button(editor_window, text="Load Colors", command=self.load_colors).pack(pady=5)
-        tk.Button(editor_window, text="Save Colors", command=self.save_colors).pack(pady=5)
-        tk.Radiobutton(editor_window, text="Light", variable=theme_var, value="Light").pack()
-        tk.Radiobutton(editor_window, text="Dark", variable=theme_var, value="Dark").pack()
+        tk.Label(content, text="Select Theme:",
+                bg=ColorConfig.current.FRAME_BG,
+                fg=ColorConfig.current.BUTTON_TEXT,
+                font=('Helvetica', 10)).pack(pady=5)
 
-        color_frame = tk.Frame(editor_window)
+        tk.Button(content, text="Load Colors", command=self.load_colors,
+                bg=ColorConfig.current.BUTTON_BG,
+                fg=ColorConfig.current.BUTTON_TEXT,
+                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT).pack(pady=5)
+
+        tk.Button(content, text="Save Colors", command=self.save_colors,
+                bg=ColorConfig.current.BUTTON_BG,
+                fg=ColorConfig.current.BUTTON_TEXT,
+                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT).pack(pady=5)
+
+        for mode in ["Light", "Dark"]:
+            tk.Radiobutton(content, text=mode, variable=theme_var, value=mode,
+                        bg=ColorConfig.current.FRAME_BG,
+                        fg=ColorConfig.current.BUTTON_TEXT,
+                        selectcolor=ColorConfig.current.FRAME_BG,
+                        activebackground=ColorConfig.current.BUTTON_BG,
+                        activeforeground=ColorConfig.current.BUTTON_TEXT).pack()
+
+        color_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         color_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         color_entries = {}
-        color_attrs = [attr for attr in dir(ColorConfig.Light) if not attr.startswith('__') and attr != 'current']
+        color_attrs = [attr for attr in dir(ColorConfig.Light)
+                    if not attr.startswith('__') and attr != 'current']
 
         def update_color(attr):
             theme = theme_var.get()
@@ -998,7 +1038,8 @@ class NetworkMapGUI:
                 self.update_ui_colors()
 
         for i, attr in enumerate(color_attrs):
-            tk.Label(color_frame, text=f"{attr}:").grid(row=i, column=0, sticky="w", pady=2)
+            tk.Label(color_frame, text=f"{attr}:", bg=ColorConfig.current.FRAME_BG,
+                    fg=ColorConfig.current.BUTTON_TEXT).grid(row=i, column=0, sticky="w", pady=2)
             current_color = getattr(getattr(ColorConfig, theme_var.get()), attr, "#ffffff")
             btn = tk.Button(color_frame, text="Pick Color", bg=current_color,
                             command=lambda a=attr: update_color(a))
@@ -1013,41 +1054,40 @@ class NetworkMapGUI:
 
         theme_var.trace("w", on_theme_change)
 
-        tk.Button(editor_window, text="Close", command=on_close).pack(pady=10)
+        tk.Button(content, text="Close", command=on_close,
+                bg=ColorConfig.current.BUTTON_BG,
+                fg=ColorConfig.current.BUTTON_TEXT,
+                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT).pack(pady=10)
 
 
     def edit_vlan_labels(self):
-        if hasattr(self, 'vlan_label_editor') and self.vlan_label_editor is not None and self.vlan_label_editor.winfo_exists():
+        if hasattr(self, 'vlan_label_editor') and self.vlan_label_editor and self.vlan_label_editor.winfo_exists():
             self.vlan_label_editor.lift()
             return
 
         if self.legend_window and self.legend_window.winfo_exists():
             self.legend_window.withdraw()
 
-        self.vlan_label_editor = tk.Toplevel(self.root)
-        self.vlan_label_editor.title("Edit VLAN Labels")
-        self.vlan_label_editor.geometry("400x230")
-        self.vlan_label_editor.update_idletasks()
-        self.vlan_label_editor.transient(self.root)
-        self.vlan_label_editor.grab_set()
-        self.vlan_label_editor.overrideredirect(False)
+        def close_vlan_editor():
+            try: self.vlan_label_editor.grab_release()
+            except: pass
+            self.vlan_label_editor.destroy()
+            self.vlan_label_editor = None
+
+        self.vlan_label_editor, content = self.create_popup("Edit VLAN Labels", 800, 830, on_close=close_vlan_editor)
 
         entries = {}
-
         for i, vlan in enumerate(self.vlan_label_names.keys()):
-            ttk.Label(self.vlan_label_editor, text=vlan + ":").grid(row=i, column=0, padx=10, pady=5)
-            entry = ttk.Entry(self.vlan_label_editor)
+            tk.Label(content, text=vlan + ":", anchor="e",
+                    bg=ColorConfig.current.FRAME_BG,
+                    fg=ColorConfig.current.BUTTON_TEXT,
+                    font=('Helvetica', 10))\
+                .grid(row=i, column=0, padx=10, pady=5, sticky="e")
+            entry = tk.Entry(content)
             entry.insert(0, self.vlan_label_names[vlan])
             entry.grid(row=i, column=1, padx=10, pady=5)
             entries[vlan] = entry
-
-        def close_vlan_editor():
-            try:
-                self.vlan_label_editor.grab_release()
-            except:
-                pass
-            self.vlan_label_editor.destroy()
-            self.vlan_label_editor = None
 
         def save_labels():
             for vlan, entry in entries.items():
@@ -1058,10 +1098,14 @@ class NetworkMapGUI:
                 cb.config(text=self.vlan_label_names[vlan])
             close_vlan_editor()
 
-        self.vlan_label_editor.protocol("WM_DELETE_WINDOW", close_vlan_editor)
-
-        ttk.Button(self.vlan_label_editor, text="Save", command=save_labels).grid(row=5, column=0, columnspan=2, pady=10)
-
+        button_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
+        button_frame.grid(row=5, column=0, columnspan=2, pady=10)
+        tk.Button(button_frame, text="Save", command=save_labels,
+                bg=ColorConfig.current.BUTTON_BG,
+                fg=ColorConfig.current.BUTTON_TEXT,
+                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
+                font=('Helvetica', 10)).pack()
 
     def show_help(self, event=None):
         help_window = tk.Toplevel(self.root)
@@ -1489,66 +1533,86 @@ class NetworkMapGUI:
             self.vlan_labels[vlan_key].config(text=vlan_value)
 
     def open_node_window(self, node=None, event=None):
-        window = tk.Toplevel(self.canvas)
-        window.title("Edit Node" if node else "Create Node")
-        window.geometry("300x380")
+        window = tk.Toplevel(self.root)
+        window.overrideredirect(True)
+        window.transient(self.root)
+        window.grab_set()
 
-        # Entry for Node Name
-        tk.Label(window, text="Node Name:").grid(row=0, column=0, padx=10, pady=10)
-        name_entry = tk.Entry(window)
-        name_entry.grid(row=0, column=1, padx=10, pady=10)
-        if node: 
-            name_entry.insert(0, node.name)
+        def close_node_editor():
+            try:
+                window.grab_release()
+            except:
+                pass
+            window.destroy()
 
-        # Entries for VLAN IP Addresses
+        outer = self.add_custom_titlebar(window, "Edit Node" if node else "Create Node", on_close=close_node_editor)
+        content = tk.Frame(outer, bg=ColorConfig.current.FRAME_BG)
+        content.pack(fill=tk.BOTH, expand=True)
+
+        label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
+        entry_args = {'bg': 'white', 'fg': 'black'}
+
+        # Node Name
+        tk.Label(content, text="Node Name:", **label_args).grid(row=0, column=0, padx=10, pady=5, sticky="e")
+        name_entry = tk.Entry(content, **entry_args)
+        name_entry.grid(row=0, column=1, padx=10, pady=5)
+        if node: name_entry.insert(0, node.name)
+
+        # VLANs
         VLAN_entries = {}
         for i, vlan in enumerate(["VLAN_100", "VLAN_200", "VLAN_300", "VLAN_400"], start=1):
-            tk.Label(window, text=f"{vlan}:").grid(row=i, column=0, padx=10, pady=10)
-            VLAN_entry = tk.Entry(window)
-            VLAN_entry.grid(row=i, column=1, padx=10, pady=10)
-            if node:
-                VLAN_entry.insert(0, getattr(node, vlan))
-            VLAN_entries[vlan] = VLAN_entry
+            tk.Label(content, text=f"{vlan}:", **label_args).grid(row=i, column=0, padx=10, pady=5, sticky="e")
+            entry = tk.Entry(content, **entry_args)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            if node: entry.insert(0, getattr(node, vlan))
+            VLAN_entries[vlan] = entry
 
-        # Entry for Remote Desktop Address
-        tk.Label(window, text="Remote Desktop Address:").grid(row=5, column=0, padx=10, pady=10)
-        remote_desktop_entry = tk.Entry(window)
-        remote_desktop_entry.grid(row=5, column=1, padx=10, pady=10)
-        if node:
-            remote_desktop_entry.insert(0, node.remote_desktop_address)
+        # Remote Desktop
+        tk.Label(content, text="Remote Desktop Address:", **label_args).grid(row=5, column=0, padx=10, pady=5, sticky="e")
+        remote_entry = tk.Entry(content, **entry_args)
+        remote_entry.grid(row=5, column=1, padx=10, pady=5)
+        if node: remote_entry.insert(0, node.remote_desktop_address)
 
-        # Entry for File Path
-        tk.Label(window, text="File Path:").grid(row=6, column=0, padx=10, pady=10)
-        file_path_entry = tk.Entry(window)
-        file_path_entry.grid(row=6, column=1, padx=10, pady=10)
-        if node:
-            file_path_entry.insert(0, node.file_path)
+        # File Path
+        tk.Label(content, text="File Path:", **label_args).grid(row=6, column=0, padx=10, pady=5, sticky="e")
+        file_entry = tk.Entry(content, **entry_args)
+        file_entry.grid(row=6, column=1, padx=10, pady=5)
+        if node: file_entry.insert(0, node.file_path)
 
-        # Entry for Web Config URL
-        tk.Label(window, text="Web Config URL:").grid(row=7, column=0, padx=10, pady=10)
-        web_config_url_entry = tk.Entry(window)
-        web_config_url_entry.grid(row=7, column=1, padx=10, pady=10)
-        if node:
-            web_config_url_entry.insert(0, node.web_config_url)
+        # Web Config
+        tk.Label(content, text="Web Config URL:", **label_args).grid(row=7, column=0, padx=10, pady=5, sticky="e")
+        web_entry = tk.Entry(content, **entry_args)
+        web_entry.grid(row=7, column=1, padx=10, pady=5)
+        if node: web_entry.insert(0, node.web_config_url)
 
+        # Save button
         def save_node():
             name = name_entry.get()
             vlan_ips = {vlan: VLAN_entries[vlan].get() for vlan in VLAN_entries}
-            remote_desktop_address = remote_desktop_entry.get()
-            file_path = file_path_entry.get()
-            web_config_url = web_config_url_entry.get()
+            remote = remote_entry.get()
+            path = file_entry.get()
+            web = web_entry.get()
             if node:
-                node.update_info(name, **vlan_ips, remote_desktop_address=remote_desktop_address, file_path=file_path, web_config_url=web_config_url)
-                self.on_node_select(node)  # Update selected node info
+                node.update_info(name, **vlan_ips, remote_desktop_address=remote, file_path=path, web_config_url=web)
+                self.on_node_select(node)
             else:
-                if name:
-                    new_node = NetworkNode(self.canvas, name, event.x, event.y, **vlan_ips, remote_desktop_address=remote_desktop_address, file_path=file_path, web_config_url=web_config_url)
+                if name and event:
+                    new_node = NetworkNode(self.canvas, name, event.x, event.y, **vlan_ips,
+                                        remote_desktop_address=remote, file_path=path, web_config_url=web)
                     self.nodes.append(new_node)
                     self.on_node_select(new_node)
-            window.destroy()
+            close_node_editor()
 
-        save_button = tk.Button(window, text="Save", command=save_node)
-        save_button.grid(row=8, column=0, columnspan=2, pady=10)
+        button = tk.Button(content, text="Save", command=save_node,
+                        bg=ColorConfig.current.BUTTON_BG,
+                        fg=ColorConfig.current.BUTTON_TEXT,
+                        activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                        activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
+                        font=('Helvetica', 10))
+        button.grid(row=8, column=0, columnspan=2, pady=10)
+
+        self.fix_window_geometry(window, 300, 380)
+
 
     def create_node(self, event):
         self.open_node_window(event=event)
@@ -1960,22 +2024,27 @@ class NetworkMapGUI:
         if self.legend_window and self.legend_window.winfo_exists():
             self.legend_window.destroy()
             self.legend_window = None
-        
+
         if hasattr(self, 'node_list_editor') and self.node_list_editor.winfo_exists():
             self.node_list_editor.lift()
             return
 
-        self.node_list_editor = tk.Toplevel(self.root)
-        self.node_list_editor.title("Node List Editor")
-        self.node_list_editor.geometry("1100x1000")
-        self.node_list_editor.transient(self.root)
+        def close_editor():
+            try:
+                self.node_list_editor.grab_release()
+            except:
+                pass
+            self.node_list_editor.destroy()
+            self.node_list_editor = None
 
-        container = tk.Frame(self.node_list_editor)
+        self.node_list_editor, content = self.create_popup("Node List Editor", 1100, 1000, on_close=close_editor)
+        
+        container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
 
-        canvas = tk.Canvas(container)
+        canvas = tk.Canvas(container, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
         scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
-        self.node_list_frame = tk.Frame(canvas)
+        self.node_list_frame = tk.Frame(canvas, bg=ColorConfig.current.FRAME_BG)
 
         self.node_list_frame.bind(
             "<Configure>",
@@ -2008,10 +2077,19 @@ class NetworkMapGUI:
             ]
 
             for col_index, (label, _) in enumerate(fields):
-                tk.Label(self.node_list_frame, text=label, font=('Helvetica', 10, 'bold')).grid(row=0, column=col_index, padx=5, pady=2)
-            tk.Label(self.node_list_frame, text="Delete", font=('Helvetica', 10, 'bold')).grid(row=0, column=len(fields), padx=5)
+                tk.Label(self.node_list_frame, text=label, font=('Helvetica', 10, 'bold'),
+                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
+                        .grid(row=0, column=col_index, padx=5, pady=2)
+            tk.Label(self.node_list_frame, text="Delete", font=('Helvetica', 10, 'bold'),
+                    bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
+                    .grid(row=0, column=len(fields), padx=5)
 
-            tk.Button(self.node_list_frame, text="➕ Add Node", command=add_node).grid(row=1, column=0, columnspan=len(fields)+1, sticky="w", pady=5)
+            tk.Button(self.node_list_frame, text="➕ Add Node", command=add_node,
+                    bg=ColorConfig.current.BUTTON_BG,
+                    fg=ColorConfig.current.BUTTON_TEXT,
+                    activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                    activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)\
+                    .grid(row=1, column=0, columnspan=len(fields)+1, sticky="w", pady=5)
 
             for row_index, node in enumerate(self.nodes, start=2):
                 xy_fields = []
@@ -2066,26 +2144,33 @@ class NetworkMapGUI:
 
         rebuild_editor_content()
 
+        self.fix_window_geometry(self.node_list_editor, 1100, 1000)
+
     def open_connection_list_editor(self):
         if self.legend_window and self.legend_window.winfo_exists():
             self.legend_window.destroy()
             self.legend_window = None
-            
+
         if hasattr(self, 'connection_list_editor') and self.connection_list_editor.winfo_exists():
             self.connection_list_editor.lift()
             return
 
-        self.connection_list_editor = tk.Toplevel(self.root)
-        self.connection_list_editor.title("Connection List Editor")
-        self.connection_list_editor.geometry("750x600")
-        self.connection_list_editor.transient(self.root)
+        def close_editor():
+            try:
+                self.connection_list_editor.grab_release()
+            except:
+                pass
+            self.connection_list_editor.destroy()
+            self.connection_list_editor = None
 
-        container = tk.Frame(self.connection_list_editor)
+        self.connection_list_editor, content = self.create_popup("Connection List Editor", 950, 600, on_close=close_editor)
+
+        container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
 
-        canvas = tk.Canvas(container)
+        canvas = tk.Canvas(container, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
         scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
-        self.connection_list_frame = tk.Frame(canvas)
+        self.connection_list_frame = tk.Frame(canvas, bg=ColorConfig.current.FRAME_BG)
 
         self.connection_list_frame.bind(
             "<Configure>",
@@ -2104,7 +2189,9 @@ class NetworkMapGUI:
 
             headers = ["From", "To", "Label", "Info", "Delete"]
             for i, h in enumerate(headers):
-                tk.Label(self.connection_list_frame, text=h, font=('Helvetica', 10, 'bold')).grid(row=0, column=i, padx=5, pady=2)
+                tk.Label(self.connection_list_frame, text=h, font=('Helvetica', 10, 'bold'),
+                        bg=ColorConfig.current.FRAME_BG,
+                        fg=ColorConfig.current.BUTTON_TEXT).grid(row=0, column=i, padx=5, pady=2)
 
             connections = set()
             for node in self.nodes:
@@ -2113,8 +2200,12 @@ class NetworkMapGUI:
                         connections.add(conn)
 
             for row_index, conn in enumerate(connections, start=1):
-                tk.Label(self.connection_list_frame, text=conn.node1.name).grid(row=row_index, column=0, padx=5)
-                tk.Label(self.connection_list_frame, text=conn.node2.name).grid(row=row_index, column=1, padx=5)
+                tk.Label(self.connection_list_frame, text=conn.node1.name,
+                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
+                    .grid(row=row_index, column=0, padx=5)
+                tk.Label(self.connection_list_frame, text=conn.node2.name,
+                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
+                    .grid(row=row_index, column=1, padx=5)
 
                 label_entry = tk.Entry(self.connection_list_frame, width=30)
                 label_entry.insert(0, conn.label or "")
@@ -2146,9 +2237,11 @@ class NetworkMapGUI:
                     self.unsaved_changes = True
                     rebuild_editor_content()
 
-                tk.Button(self.connection_list_frame, text="🗑", fg="red", command=delete_conn).grid(row=row_index, column=4, padx=5)
+                tk.Button(self.connection_list_frame, text="🗑", fg="red", command=lambda c=conn: delete_conn(c))\
+                    .grid(row=row_index, column=4, padx=5)
 
         rebuild_editor_content()
+
 
     def update_ui_colors(self):
         """Update all UI colors when the theme changes."""
@@ -2338,6 +2431,38 @@ class NetworkMapGUI:
         except FileNotFoundError:
             pass
 
+    def create_popup(self, title, width, height, on_close=None):
+        win = tk.Toplevel(self.root)
+        win.overrideredirect(True)
+        win.transient(self.root)
+        win.grab_set()
+
+        def real_close():
+            try: win.grab_release()
+            except: pass
+            win.destroy()
+
+        wrapper = self.add_custom_titlebar(win, title, on_close or real_close)
+        content = tk.Frame(wrapper, bg=ColorConfig.current.FRAME_BG)
+        content.pack(fill=tk.BOTH, expand=True)
+
+        # Schedule geometry fix after all widgets are packed
+        def apply_geometry():
+            self.fix_window_geometry(win, width, height)
+        win.after(1, apply_geometry)
+
+        return win, content
+
+
+
+
+    #Fixes window geopetry issues for vlan, list view, edit connections and manage custom commands windows         
+    def fix_window_geometry(self, window, width, height):
+        window.update_idletasks()  # Make sure widget sizes are calculated
+        window.geometry(f"{width}x{height}")
+        self.center_window_on_screen(window)
+        window.transient(self.root)
+        window.lift()
 
     def save_colors(self):
         colors = {
@@ -2372,64 +2497,50 @@ class NetworkMapGUI:
             json.dump(self.custom_commands, f, indent=4)
 
     def manage_custom_commands(self):
-        # 1) If legend window is open, destroy it (same as show_color_editor does)
         if self.legend_window and self.legend_window.winfo_exists():
-            try:
-                self.legend_window.grab_release()
-            except:
-                pass
+            try: self.legend_window.grab_release()
+            except: pass
             self.legend_window.destroy()
             self.legend_window = None
-        # 2) If there's already a custom_cmd_window open, just lift & return
+
         if hasattr(self, 'custom_cmd_window'):
             try:
                 if self.custom_cmd_window.winfo_exists():
                     self.custom_cmd_window.lift()
                     return
             except:
-                self.custom_cmd_window = None  # stale reference cleanup
-
-        # 3) Create the new window
-        cmd_window = tk.Toplevel(self.root)
-        cmd_window.title("Manage Custom Commands")
-        cmd_window.geometry("400x500")
-        cmd_window.transient(self.root)
-
-        # 4) Store it in self.custom_cmd_window, then grab_set()
-        self.custom_cmd_window = cmd_window
-        cmd_window.grab_set()
-
-        # 5) Define on_close() (grab_release + destroy + clear reference)
-        def on_close():
-            if self.custom_cmd_window:
-                try:
-                    self.custom_cmd_window.grab_release()
-                    self.custom_cmd_window.destroy()
-                except:
-                    pass
                 self.custom_cmd_window = None
 
-        cmd_window.protocol("WM_DELETE_WINDOW", on_close)
+        def on_close():
+            if self.custom_cmd_window:
+                try: self.custom_cmd_window.grab_release()
+                except: pass
+                self.custom_cmd_window.destroy()
+                self.custom_cmd_window = None
 
-        # 6) Build your UI
-        listbox = tk.Listbox(cmd_window, width=50, height=15)
+        self.custom_cmd_window, content = self.create_popup("Manage Custom Commands", 400, 500, on_close=on_close)
+
+        listbox = tk.Listbox(content, width=50, height=10)
         listbox.pack(pady=10, padx=10)
 
         for name in self.custom_commands.keys():
             listbox.insert(tk.END, name)
 
-        frame = tk.Frame(cmd_window)
-        frame.pack(pady=10, padx=10, fill=tk.X)
+        frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
+        frame.pack(pady=5, padx=10, fill=tk.X)
 
-        tk.Label(frame, text="Command Name:").grid(row=0, column=0, sticky='w')
-        name_entry = tk.Entry(frame, width=40)
+        label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
+        entry_args = {'bg': 'white', 'fg': 'black'}
+
+        tk.Label(frame, text="Command Name:", **label_args).grid(row=0, column=0, sticky='w')
+        name_entry = tk.Entry(frame, width=40, **entry_args)
         name_entry.grid(row=0, column=1, padx=5)
 
-        tk.Label(frame, text="Command Template:").grid(row=1, column=0, sticky='w')
-        cmd_entry = tk.Entry(frame, width=40)
+        tk.Label(frame, text="Command Template:", **label_args).grid(row=1, column=0, sticky='w')
+        cmd_entry = tk.Entry(frame, width=40, **entry_args)
         cmd_entry.grid(row=1, column=1, padx=5)
 
-        btn_frame = tk.Frame(cmd_window)
+        btn_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         btn_frame.pack(pady=10)
 
         def add_command():
@@ -2460,20 +2571,31 @@ class NetworkMapGUI:
                 listbox.delete(selection[0])
                 self.save_custom_commands()
 
-        tk.Button(btn_frame, text="Add", command=add_command).pack(side=tk.LEFT, padx=5)
-        tk.Button(btn_frame, text="Edit", command=edit_command).pack(side=tk.LEFT, padx=5)
-        tk.Button(btn_frame, text="Delete", command=delete_command).pack(side=tk.LEFT, padx=5)
-        tk.Button(btn_frame, text="Close", command=on_close).pack(side=tk.LEFT, padx=5)
+        btn_style = {
+            'bg': ColorConfig.current.BUTTON_BG,
+            'fg': ColorConfig.current.BUTTON_TEXT,
+            'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG,
+            'activeforeground': ColorConfig.current.BUTTON_ACTIVE_TEXT,
+            'font': ('Helvetica', 10),
+            'padx': 5,
+            'pady': 2
+        }
 
-        help_text = """
-        Custom Commands:
-        - Access through 'Manage Custom Commands' in the Start Menu
-        - Use placeholders like {ip}, {name}, {file}, {web}, {rdp}, {vlan100}, etc.
-        - {ip} defaults to the first non-empty VLAN address
-        - Examples:
-            ping {ip} -t
-        """
-        tk.Label(cmd_window, text=help_text, justify=tk.LEFT).pack(pady=10, padx=10)
+        tk.Button(btn_frame, text="Add", command=add_command, **btn_style).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Edit", command=edit_command, **btn_style).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Delete", command=delete_command, **btn_style).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Close", command=on_close, **btn_style).pack(side=tk.LEFT, padx=5)
+
+        tk.Label(content, text="""
+    Custom Commands:
+    - Use placeholders like {ip}, {name}, {file}, {web}, {rdp}, {vlan100}, etc.
+    - {ip} defaults to the first non-empty VLAN address
+    - Example: ping {ip} -t
+    """, justify=tk.LEFT, bg=ColorConfig.current.FRAME_BG,
+                fg=ColorConfig.current.INFO_TEXT, font=('Helvetica', 9),
+                wraplength=380).pack(pady=10, padx=10)
+
+
 
 if __name__ == "__main__":
     root = tk.Tk()
