@@ -9,7 +9,7 @@ import socket
 import os
 import webbrowser
 import ctypes
-#test
+
 def get_ip_addresses():
     ip_addresses = []
     hostname = socket.gethostname()
@@ -20,7 +20,6 @@ def get_ip_addresses():
         pass
     return ip_addresses
 
-#testing nightmode colours
 class ToolTip:
     def __init__(self, widget, text, gui, bg=None, fg=None):
         self.widget = widget
@@ -957,7 +956,7 @@ class NetworkMapGUI:
 
         editor_window = tk.Toplevel(self.root)
         editor_window.title("Color Scheme Editor")
-        editor_window.geometry("400x600")
+        editor_window.geometry("400x900")
         editor_window.transient(self.root)
 
         # Properly track this new instance
@@ -975,9 +974,6 @@ class NetworkMapGUI:
 
         editor_window.protocol("WM_DELETE_WINDOW", on_close)
 
-        # ---------------------
-        # everything below here is identical to your existing layout logic
-        # ---------------------
         theme_var = tk.StringVar(value="Dark" if ColorConfig.current == ColorConfig.Dark else "Light")
 
         tk.Label(editor_window, text="Select Theme:").pack(pady=5)
@@ -1030,15 +1026,17 @@ class NetworkMapGUI:
 
         self.vlan_label_editor = tk.Toplevel(self.root)
         self.vlan_label_editor.title("Edit VLAN Labels")
-        self.vlan_label_editor.geometry("300x250")
+        self.vlan_label_editor.geometry("400x230")
+        self.vlan_label_editor.update_idletasks()
         self.vlan_label_editor.transient(self.root)
         self.vlan_label_editor.grab_set()
+        self.vlan_label_editor.overrideredirect(False)
 
         entries = {}
 
         for i, vlan in enumerate(self.vlan_label_names.keys()):
-            tk.Label(self.vlan_label_editor, text=vlan + ":").grid(row=i, column=0, padx=10, pady=5)
-            entry = tk.Entry(self.vlan_label_editor)
+            ttk.Label(self.vlan_label_editor, text=vlan + ":").grid(row=i, column=0, padx=10, pady=5)
+            entry = ttk.Entry(self.vlan_label_editor)
             entry.insert(0, self.vlan_label_names[vlan])
             entry.grid(row=i, column=1, padx=10, pady=5)
             entries[vlan] = entry
@@ -1062,7 +1060,7 @@ class NetworkMapGUI:
 
         self.vlan_label_editor.protocol("WM_DELETE_WINDOW", close_vlan_editor)
 
-        tk.Button(self.vlan_label_editor, text="Save", command=save_labels).grid(row=5, column=0, columnspan=2, pady=10)
+        ttk.Button(self.vlan_label_editor, text="Save", command=save_labels).grid(row=5, column=0, columnspan=2, pady=10)
 
 
     def show_help(self, event=None):
@@ -1969,7 +1967,7 @@ class NetworkMapGUI:
 
         self.node_list_editor = tk.Toplevel(self.root)
         self.node_list_editor.title("Node List Editor")
-        self.node_list_editor.geometry("1100x800")
+        self.node_list_editor.geometry("1100x1000")
         self.node_list_editor.transient(self.root)
 
         container = tk.Frame(self.node_list_editor)
@@ -2374,22 +2372,53 @@ class NetworkMapGUI:
             json.dump(self.custom_commands, f, indent=4)
 
     def manage_custom_commands(self):
-        window = tk.Toplevel(self.root)
-        window.title("Manage Custom Commands")
-        window.geometry("400x500")
-        window.transient(self.root)
-        #window.grab_set()
+        # 1) If legend window is open, destroy it (same as show_color_editor does)
+        if self.legend_window and self.legend_window.winfo_exists():
+            try:
+                self.legend_window.grab_release()
+            except:
+                pass
+            self.legend_window.destroy()
+            self.legend_window = None
+        # 2) If there's already a custom_cmd_window open, just lift & return
+        if hasattr(self, 'custom_cmd_window'):
+            try:
+                if self.custom_cmd_window.winfo_exists():
+                    self.custom_cmd_window.lift()
+                    return
+            except:
+                self.custom_cmd_window = None  # stale reference cleanup
 
-        # Create listbox for commands
-        listbox = tk.Listbox(window, width=50, height=15)
+        # 3) Create the new window
+        cmd_window = tk.Toplevel(self.root)
+        cmd_window.title("Manage Custom Commands")
+        cmd_window.geometry("400x500")
+        cmd_window.transient(self.root)
+
+        # 4) Store it in self.custom_cmd_window, then grab_set()
+        self.custom_cmd_window = cmd_window
+        cmd_window.grab_set()
+
+        # 5) Define on_close() (grab_release + destroy + clear reference)
+        def on_close():
+            if self.custom_cmd_window:
+                try:
+                    self.custom_cmd_window.grab_release()
+                    self.custom_cmd_window.destroy()
+                except:
+                    pass
+                self.custom_cmd_window = None
+
+        cmd_window.protocol("WM_DELETE_WINDOW", on_close)
+
+        # 6) Build your UI
+        listbox = tk.Listbox(cmd_window, width=50, height=15)
         listbox.pack(pady=10, padx=10)
 
-        # Populate listbox
         for name in self.custom_commands.keys():
             listbox.insert(tk.END, name)
 
-        # Entry fields
-        frame = tk.Frame(window)
+        frame = tk.Frame(cmd_window)
         frame.pack(pady=10, padx=10, fill=tk.X)
 
         tk.Label(frame, text="Command Name:").grid(row=0, column=0, sticky='w')
@@ -2400,8 +2429,7 @@ class NetworkMapGUI:
         cmd_entry = tk.Entry(frame, width=40)
         cmd_entry.grid(row=1, column=1, padx=5)
 
-        # Buttons frame
-        btn_frame = tk.Frame(window)
+        btn_frame = tk.Frame(cmd_window)
         btn_frame.pack(pady=10)
 
         def add_command():
@@ -2435,9 +2463,8 @@ class NetworkMapGUI:
         tk.Button(btn_frame, text="Add", command=add_command).pack(side=tk.LEFT, padx=5)
         tk.Button(btn_frame, text="Edit", command=edit_command).pack(side=tk.LEFT, padx=5)
         tk.Button(btn_frame, text="Delete", command=delete_command).pack(side=tk.LEFT, padx=5)
-        tk.Button(btn_frame, text="Close", command=window.destroy).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Close", command=on_close).pack(side=tk.LEFT, padx=5)
 
-        # Help text
         help_text = """
         Custom Commands:
         - Access through 'Manage Custom Commands' in the Start Menu
@@ -2446,7 +2473,7 @@ class NetworkMapGUI:
         - Examples:
             ping {ip} -t
         """
-        tk.Label(window, text=help_text, justify=tk.LEFT).pack(pady=10, padx=10)
+        tk.Label(cmd_window, text=help_text, justify=tk.LEFT).pack(pady=10, padx=10)
 
 if __name__ == "__main__":
     root = tk.Tk()
