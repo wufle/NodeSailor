@@ -1533,21 +1533,19 @@ class NetworkMapGUI:
             self.vlan_labels[vlan_key].config(text=vlan_value)
 
     def open_node_window(self, node=None, event=None):
-        window = tk.Toplevel(self.root)
-        window.overrideredirect(True)
-        window.transient(self.root)
-        window.grab_set()
+        if hasattr(self, 'node_window') and self.node_window and self.node_window.winfo_exists():
+            self.node_window.lift()
+            return
 
         def close_node_editor():
             try:
-                window.grab_release()
+                self.node_window.grab_release()
             except:
                 pass
-            window.destroy()
+            self.node_window.destroy()
+            self.node_window = None
 
-        outer = self.add_custom_titlebar(window, "Edit Node" if node else "Create Node", on_close=close_node_editor)
-        content = tk.Frame(outer, bg=ColorConfig.current.FRAME_BG)
-        content.pack(fill=tk.BOTH, expand=True)
+        self.node_window, content = self.create_popup("Edit Node" if node else "Create Node", 300, 380, on_close=close_node_editor)
 
         label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
         entry_args = {'bg': 'white', 'fg': 'black'}
@@ -1558,7 +1556,6 @@ class NetworkMapGUI:
         name_entry.grid(row=0, column=1, padx=10, pady=5)
         if node: name_entry.insert(0, node.name)
 
-        # VLANs
         VLAN_entries = {}
         for i, vlan in enumerate(["VLAN_100", "VLAN_200", "VLAN_300", "VLAN_400"], start=1):
             tk.Label(content, text=f"{vlan}:", **label_args).grid(row=i, column=0, padx=10, pady=5, sticky="e")
@@ -1567,25 +1564,21 @@ class NetworkMapGUI:
             if node: entry.insert(0, getattr(node, vlan))
             VLAN_entries[vlan] = entry
 
-        # Remote Desktop
         tk.Label(content, text="Remote Desktop Address:", **label_args).grid(row=5, column=0, padx=10, pady=5, sticky="e")
         remote_entry = tk.Entry(content, **entry_args)
         remote_entry.grid(row=5, column=1, padx=10, pady=5)
         if node: remote_entry.insert(0, node.remote_desktop_address)
 
-        # File Path
         tk.Label(content, text="File Path:", **label_args).grid(row=6, column=0, padx=10, pady=5, sticky="e")
         file_entry = tk.Entry(content, **entry_args)
         file_entry.grid(row=6, column=1, padx=10, pady=5)
         if node: file_entry.insert(0, node.file_path)
 
-        # Web Config
         tk.Label(content, text="Web Config URL:", **label_args).grid(row=7, column=0, padx=10, pady=5, sticky="e")
         web_entry = tk.Entry(content, **entry_args)
         web_entry.grid(row=7, column=1, padx=10, pady=5)
         if node: web_entry.insert(0, node.web_config_url)
 
-        # Save button
         def save_node():
             name = name_entry.get()
             vlan_ips = {vlan: VLAN_entries[vlan].get() for vlan in VLAN_entries}
@@ -1603,15 +1596,13 @@ class NetworkMapGUI:
                     self.on_node_select(new_node)
             close_node_editor()
 
-        button = tk.Button(content, text="Save", command=save_node,
-                        bg=ColorConfig.current.BUTTON_BG,
-                        fg=ColorConfig.current.BUTTON_TEXT,
-                        activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                        activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
-                        font=('Helvetica', 10))
-        button.grid(row=8, column=0, columnspan=2, pady=10)
+        tk.Button(content, text="Save", command=save_node,
+                bg=ColorConfig.current.BUTTON_BG,
+                fg=ColorConfig.current.BUTTON_TEXT,
+                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
+                font=('Helvetica', 10)).grid(row=8, column=0, columnspan=2, pady=10)
 
-        self.fix_window_geometry(window, 300, 380)
 
 
     def create_node(self, event):
