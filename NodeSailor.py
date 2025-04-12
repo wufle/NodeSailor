@@ -1408,23 +1408,23 @@ class NetworkMapGUI:
             self.theme_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             color_editor_button = tk.Button(content_frame, text='Edit Colors',
-                                            command=self.show_color_editor, **button_style)
+                                            command=lambda: self.defer_popup(self.show_color_editor), **button_style)
             color_editor_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             edit_labels_btn = tk.Button(content_frame, text='Edit VLAN Labels',
-                             command=self.edit_vlan_labels, **button_style)
+                             command=lambda: self.defer_popup(self.edit_vlan_labels), **button_style)
             edit_labels_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
             
             node_list_btn = tk.Button(content_frame, text='List View (Table Editor)',
-                            command=self.open_node_list_editor, **button_style)
+                            command=lambda: self.defer_popup(self.open_node_list_editor), **button_style)
             node_list_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
             
             connection_list_btn = tk.Button(content_frame, text='Edit Connections',
-                                command=self.open_connection_list_editor, **button_style)
+                                command=lambda: self.defer_popup(self.open_connection_list_editor), **button_style)
             connection_list_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             custom_cmd_btn = tk.Button(content_frame, text='Manage Custom Commands',
-                                     command=self.manage_custom_commands, **button_style)
+                                     command=lambda: self.defer_popup(self.manage_custom_commands), **button_style)
             custom_cmd_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             help_button = tk.Button(content_frame, text='Help', command=self.show_help, **button_style)
@@ -1450,6 +1450,11 @@ class NetworkMapGUI:
             self.legend_window.lift()
             self.legend_window.focus_set()
             self.center_window_on_screen(self.legend_window)
+
+    #delay window creation until after legend window is closed
+    def defer_popup(self, func):
+        self.close_legend()
+        self.root.after(100, func)
 
     # This callback closes the legend window
     def close_legend(self):
@@ -2019,20 +2024,17 @@ class NetworkMapGUI:
             self.legend_window.destroy()
             self.legend_window = None
 
-        if hasattr(self, 'node_list_editor') and self.node_list_editor.winfo_exists():
+        if getattr(self, 'node_list_editor', None) and self.node_list_editor.winfo_exists():
             self.node_list_editor.lift()
             return
 
         def close_editor():
-            try:
-                self.node_list_editor.grab_release()
-            except:
-                pass
             self.node_list_editor.destroy()
             self.node_list_editor = None
 
-        self.node_list_editor, content = self.create_popup("Node List Editor", 1100, 1000, on_close=close_editor, grab=False)
-        
+        win, content = self.create_popup("Node List Editor", 1100, 1000, on_close=self.make_popup_closer("node_list_editor"), grab=True)
+        self.node_list_editor = win
+
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
 
@@ -2145,19 +2147,16 @@ class NetworkMapGUI:
             self.legend_window.destroy()
             self.legend_window = None
 
-        if hasattr(self, 'connection_list_editor') and self.connection_list_editor.winfo_exists():
+        if getattr(self, 'connection_list_editor', None) and self.connection_list_editor.winfo_exists():
             self.connection_list_editor.lift()
             return
 
         def close_editor():
-            try:
-                self.connection_list_editor.grab_release()
-            except:
-                pass
             self.connection_list_editor.destroy()
             self.connection_list_editor = None
 
-        self.connection_list_editor, content = self.create_popup("Connection List Editor", 950, 600, on_close=close_editor, grab=False)
+        win, content = self.create_popup("Connection List Editor", 950, 600, on_close=self.make_popup_closer("connection_list_editor"), grab=True)
+        self.connection_list_editor = win
 
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
@@ -2425,18 +2424,24 @@ class NetworkMapGUI:
         except FileNotFoundError:
             pass
 
-    def create_popup(self, title, width, height, on_close=None, grab=True):
+    def create_popup(self, title, width, height, on_close=None, grab=False):
         win = tk.Toplevel(self.root)
         win.overrideredirect(True)
         win.transient(self.root)
-        if grab:
-            win.grab_set()
 
-        def real_close():
+        # Safely apply grab only if requested
+        if grab:
             try:
-                win.grab_release()
+                win.grab_set()
             except:
                 pass
+
+        def real_close():
+            if grab:
+                try:
+                    win.grab_release()
+                except:
+                    pass
             win.destroy()
 
         wrapper = self.add_custom_titlebar(win, title, on_close or real_close)
@@ -2445,9 +2450,18 @@ class NetworkMapGUI:
 
         def apply_geometry():
             self.fix_window_geometry(win, width, height)
+            win.focus_set()  # Ensure it receives focus
         win.after(1, apply_geometry)
 
         return win, content
+
+    def make_popup_closer(self, attr):
+        def closer():
+            win = getattr(self, attr, None)
+            if win and win.winfo_exists():
+                win.destroy()
+            setattr(self, attr, None)
+        return closer
 
     #Fixes window geopetry issues for vlan, list view, edit connections and manage custom commands windows         
     def fix_window_geometry(self, window, width, height):
@@ -2490,28 +2504,12 @@ class NetworkMapGUI:
             json.dump(self.custom_commands, f, indent=4)
 
     def manage_custom_commands(self):
-        if self.legend_window and self.legend_window.winfo_exists():
-            try: self.legend_window.grab_release()
-            except: pass
-            self.legend_window.destroy()
-            self.legend_window = None
+        if getattr(self, 'custom_cmd_window', None) and self.custom_cmd_window.winfo_exists():
+            self.custom_cmd_window.lift()
+            return
 
-        if hasattr(self, 'custom_cmd_window'):
-            try:
-                if self.custom_cmd_window.winfo_exists():
-                    self.custom_cmd_window.lift()
-                    return
-            except:
-                self.custom_cmd_window = None
-
-        def on_close():
-            if self.custom_cmd_window:
-                try: self.custom_cmd_window.grab_release()
-                except: pass
-                self.custom_cmd_window.destroy()
-                self.custom_cmd_window = None
-
-        self.custom_cmd_window, content = self.create_popup("Manage Custom Commands", 400, 500, on_close=on_close, grab=False)
+        win, content = self.create_popup("Manage Custom Commands", 400, 500, on_close=self.make_popup_closer("custom_cmd_window"), grab=True)
+        self.custom_cmd_window = win
 
         listbox = tk.Listbox(content, width=50, height=10)
         listbox.pack(pady=10, padx=10)
@@ -2577,7 +2575,7 @@ class NetworkMapGUI:
         tk.Button(btn_frame, text="Add", command=add_command, **btn_style).pack(side=tk.LEFT, padx=5)
         tk.Button(btn_frame, text="Edit", command=edit_command, **btn_style).pack(side=tk.LEFT, padx=5)
         tk.Button(btn_frame, text="Delete", command=delete_command, **btn_style).pack(side=tk.LEFT, padx=5)
-        tk.Button(btn_frame, text="Close", command=on_close, **btn_style).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Close", command=self.make_popup_closer("custom_cmd_window"), **btn_style).pack(side=tk.LEFT, padx=5)
 
         tk.Label(content, text="""
     Custom Commands:
@@ -2587,8 +2585,6 @@ class NetworkMapGUI:
     """, justify=tk.LEFT, bg=ColorConfig.current.FRAME_BG,
                 fg=ColorConfig.current.INFO_TEXT, font=('Helvetica', 9),
                 wraplength=380).pack(pady=10, padx=10)
-
-
 
 if __name__ == "__main__":
     root = tk.Tk()
