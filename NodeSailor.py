@@ -992,7 +992,7 @@ class NetworkMapGUI:
             self.color_editor_window.destroy()
             self.color_editor_window = None
 
-        self.color_editor_window, content = self.create_popup("Color Scheme Editor", 400, 900, on_close=on_close, grab=False)
+        self.color_editor_window, content = self.create_popup("Color Scheme Editor", 500, 900, on_close=on_close, grab=False)
 
         theme_var = tk.StringVar(value="Dark" if ColorConfig.current == ColorConfig.Dark else "Light")
 
@@ -1075,7 +1075,7 @@ class NetworkMapGUI:
             self.vlan_label_editor.destroy()
             self.vlan_label_editor = None
 
-        self.vlan_label_editor, content = self.create_popup("Edit VLAN Labels", 800, 830, on_close=close_vlan_editor, grab=False)
+        self.vlan_label_editor, content = self.create_popup("Edit VLAN Labels", 170, 230, on_close=close_vlan_editor, grab=False)
 
         entries = {}
         for i, vlan in enumerate(self.vlan_label_names.keys()):
@@ -1497,8 +1497,8 @@ class NetworkMapGUI:
     def center_window_on_screen(self, window):
         window.update_idletasks()  # Ensure all widgets are rendered
         # Use requested width/height since actual size might not be set yet
-        width = window.winfo_reqwidth()
-        height = window.winfo_reqheight()
+        width = window.winfo_width()
+        height = window.winfo_height()
         # Get main window's position and size
         main_x = self.root.winfo_x()
         main_y = self.root.winfo_y()
@@ -1550,7 +1550,7 @@ class NetworkMapGUI:
             self.node_window.destroy()
             self.node_window = None
 
-        win, content = self.create_popup("Edit Node" if node else "Create Node", 300, 380, on_close=close_node_editor, grab=False)
+        win, content = self.create_popup("Edit Node" if node else "Create Node", 340, 360, on_close=close_node_editor, grab=False)
         self.node_window = win
 
 
@@ -1885,7 +1885,7 @@ class NetworkMapGUI:
                     web_config_url=node_data.get('web_config_url', '')
                 )
                 self.nodes.append(node)
-                self.highlight_matching_nodes()
+            self.highlight_matching_nodes()
 
             # Load connections
             for conn_data in state.get('connections', []):
@@ -2032,14 +2032,18 @@ class NetworkMapGUI:
             self.node_list_editor.destroy()
             self.node_list_editor = None
 
-        win, content = self.create_popup("Node List Editor", 1100, 1000, on_close=self.make_popup_closer("node_list_editor"), grab=True)
+        win, content = self.create_popup("Node List Editor", 1100, 900, on_close=self.make_popup_closer("node_list_editor"), grab=True)
         self.node_list_editor = win
 
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
 
         canvas = tk.Canvas(container, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
-        scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        v_scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        h_scrollbar = tk.Scrollbar(container, orient="horizontal", command=canvas.xview)
+        canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+        v_scrollbar.pack(side="right", fill="y")
+        h_scrollbar.pack(side="bottom", fill="x")
         self.node_list_frame = tk.Frame(canvas, bg=ColorConfig.current.FRAME_BG)
 
         self.node_list_frame.bind(
@@ -2047,11 +2051,20 @@ class NetworkMapGUI:
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
-        canvas.create_window((0, 0), window=self.node_list_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
+        inner_window = canvas.create_window((0, 0), window=self.node_list_frame, anchor="nw")
+
+        def resize_canvas(event):
+            canvas.itemconfig(inner_window, width=canvas.winfo_width())
+
+        canvas.bind("<Configure>", resize_canvas)
+
+        canvas.configure(yscrollcommand=v_scrollbar.set)
+        canvas.configure(xscrollcommand=h_scrollbar.set)
 
         canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        container.pack(fill="both", expand=True)
+        v_scrollbar.pack(side="right", fill="y")
+        h_scrollbar.pack(side="bottom", fill="x")
 
         self.list_editor_xy_fields = {}
 
@@ -2155,26 +2168,32 @@ class NetworkMapGUI:
             self.connection_list_editor.destroy()
             self.connection_list_editor = None
 
-        win, content = self.create_popup("Connection List Editor", 950, 600, on_close=self.make_popup_closer("connection_list_editor"), grab=True)
+        win, content = self.create_popup("Connection List Editor", 800, 700, on_close=self.make_popup_closer("connection_list_editor"), grab=True)
         self.connection_list_editor = win
 
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
 
         canvas = tk.Canvas(container, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
-        scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
-        self.connection_list_frame = tk.Frame(canvas, bg=ColorConfig.current.FRAME_BG)
+        v_scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        h_scrollbar = tk.Scrollbar(container, orient="horizontal", command=canvas.xview)
 
-        self.connection_list_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
+        canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
 
-        canvas.create_window((0, 0), window=self.connection_list_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-
+        v_scrollbar.pack(side="right", fill="y")
+        h_scrollbar.pack(side="bottom", fill="x")
         canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+
+        self.connection_list_frame = tk.Frame(canvas, bg=ColorConfig.current.FRAME_BG)
+        inner_window = canvas.create_window((0, 0), window=self.connection_list_frame, anchor="nw")
+
+        def resize_canvas(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+            canvas.itemconfig(inner_window, width=canvas.winfo_width())
+
+        self.connection_list_frame.bind("<Configure>", resize_canvas)
+        canvas.bind("<Configure>", resize_canvas)
+
 
         def rebuild_editor_content():
             for widget in self.connection_list_frame.winfo_children():
@@ -2234,6 +2253,7 @@ class NetworkMapGUI:
                     .grid(row=row_index, column=4, padx=5)
 
         rebuild_editor_content()
+        print("🧠 rebuild_editor_content() called, nodes:", len(self.nodes))
 
 
     def update_ui_colors(self):
@@ -2428,20 +2448,17 @@ class NetworkMapGUI:
         win = tk.Toplevel(self.root)
         win.overrideredirect(True)
         win.transient(self.root)
+        win.resizable(True, True)
+        win.minsize(300, 200)
 
-        # Safely apply grab only if requested
         if grab:
-            try:
-                win.grab_set()
-            except:
-                pass
+            try: win.grab_set()
+            except: pass
 
         def real_close():
             if grab:
-                try:
-                    win.grab_release()
-                except:
-                    pass
+                try: win.grab_release()
+                except: pass
             win.destroy()
 
         wrapper = self.add_custom_titlebar(win, title, on_close or real_close)
@@ -2449,11 +2466,16 @@ class NetworkMapGUI:
         content.pack(fill=tk.BOTH, expand=True)
 
         def apply_geometry():
-            self.fix_window_geometry(win, width, height)
-            win.focus_set()  # Ensure it receives focus
+            # Explicitly set window size first
+            win.geometry(f"{width}x{height}")
+            self.center_window_on_screen(win)
+            win.focus_set()
+            win.lift()
+
         win.after(1, apply_geometry)
 
         return win, content
+
 
     def make_popup_closer(self, attr):
         def closer():
@@ -2508,7 +2530,7 @@ class NetworkMapGUI:
             self.custom_cmd_window.lift()
             return
 
-        win, content = self.create_popup("Manage Custom Commands", 400, 500, on_close=self.make_popup_closer("custom_cmd_window"), grab=True)
+        win, content = self.create_popup("Manage Custom Commands", 600, 550, on_close=self.make_popup_closer("custom_cmd_window"), grab=True)
         self.custom_cmd_window = win
 
         listbox = tk.Listbox(content, width=50, height=10)
