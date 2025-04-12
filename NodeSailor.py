@@ -1545,7 +1545,9 @@ class NetworkMapGUI:
             self.node_window.destroy()
             self.node_window = None
 
-        self.node_window, content = self.create_popup("Edit Node" if node else "Create Node", 300, 380, on_close=close_node_editor)
+        win, content = self.create_popup("Edit Node" if node else "Create Node", 300, 380, on_close=close_node_editor, grab=False)
+        self.node_window = win
+
 
         label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
         entry_args = {'bg': 'white', 'fg': 'black'}
@@ -1555,7 +1557,8 @@ class NetworkMapGUI:
         name_entry = tk.Entry(content, **entry_args)
         name_entry.grid(row=0, column=1, padx=10, pady=5)
         if node: name_entry.insert(0, node.name)
-
+        name_entry.focus_set()
+        
         VLAN_entries = {}
         for i, vlan in enumerate(["VLAN_100", "VLAN_200", "VLAN_300", "VLAN_400"], start=1):
             tk.Label(content, text=f"{vlan}:", **label_args).grid(row=i, column=0, padx=10, pady=5, sticky="e")
@@ -2422,30 +2425,29 @@ class NetworkMapGUI:
         except FileNotFoundError:
             pass
 
-    def create_popup(self, title, width, height, on_close=None):
+    def create_popup(self, title, width, height, on_close=None, grab=True):
         win = tk.Toplevel(self.root)
         win.overrideredirect(True)
         win.transient(self.root)
-        win.grab_set()
+        if grab:
+            win.grab_set()
 
         def real_close():
-            try: win.grab_release()
-            except: pass
+            try:
+                win.grab_release()
+            except:
+                pass
             win.destroy()
 
         wrapper = self.add_custom_titlebar(win, title, on_close or real_close)
         content = tk.Frame(wrapper, bg=ColorConfig.current.FRAME_BG)
         content.pack(fill=tk.BOTH, expand=True)
 
-        # Schedule geometry fix after all widgets are packed
         def apply_geometry():
             self.fix_window_geometry(win, width, height)
         win.after(1, apply_geometry)
 
         return win, content
-
-
-
 
     #Fixes window geopetry issues for vlan, list view, edit connections and manage custom commands windows         
     def fix_window_geometry(self, window, width, height):
