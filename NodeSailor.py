@@ -992,7 +992,7 @@ class NetworkMapGUI:
             self.color_editor_window.destroy()
             self.color_editor_window = None
 
-        self.color_editor_window, content = self.create_popup("Color Scheme Editor", 400, 900, on_close=on_close)
+        self.color_editor_window, content = self.create_popup("Color Scheme Editor", 400, 900, on_close=on_close, grab=False)
 
         theme_var = tk.StringVar(value="Dark" if ColorConfig.current == ColorConfig.Dark else "Light")
 
@@ -1075,7 +1075,7 @@ class NetworkMapGUI:
             self.vlan_label_editor.destroy()
             self.vlan_label_editor = None
 
-        self.vlan_label_editor, content = self.create_popup("Edit VLAN Labels", 800, 830, on_close=close_vlan_editor)
+        self.vlan_label_editor, content = self.create_popup("Edit VLAN Labels", 800, 830, on_close=close_vlan_editor, grab=False)
 
         entries = {}
         for i, vlan in enumerate(self.vlan_label_names.keys()):
@@ -1335,7 +1335,7 @@ class NetworkMapGUI:
         if self.legend_window is not None and self.legend_window.winfo_exists():
             self.legend_window.deiconify()  # Restore if minimized
             self.legend_window.lift()       # Bring to front
-            self.legend_window.grab_set()   # Ensure it has the grab
+            #self.legend_window.grab_set()   # Ensure it has the grab
         else:
             self.legend_window = tk.Toplevel(self.root)
             self.legend_window.overrideredirect(True)
@@ -1558,7 +1558,7 @@ class NetworkMapGUI:
         name_entry.grid(row=0, column=1, padx=10, pady=5)
         if node: name_entry.insert(0, node.name)
         name_entry.focus_set()
-        
+
         VLAN_entries = {}
         for i, vlan in enumerate(["VLAN_100", "VLAN_200", "VLAN_300", "VLAN_400"], start=1):
             tk.Label(content, text=f"{vlan}:", **label_args).grid(row=i, column=0, padx=10, pady=5, sticky="e")
@@ -2031,7 +2031,7 @@ class NetworkMapGUI:
             self.node_list_editor.destroy()
             self.node_list_editor = None
 
-        self.node_list_editor, content = self.create_popup("Node List Editor", 1100, 1000, on_close=close_editor)
+        self.node_list_editor, content = self.create_popup("Node List Editor", 1100, 1000, on_close=close_editor, grab=False)
         
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
@@ -2157,7 +2157,7 @@ class NetworkMapGUI:
             self.connection_list_editor.destroy()
             self.connection_list_editor = None
 
-        self.connection_list_editor, content = self.create_popup("Connection List Editor", 950, 600, on_close=close_editor)
+        self.connection_list_editor, content = self.create_popup("Connection List Editor", 950, 600, on_close=close_editor, grab=False)
 
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
@@ -2511,7 +2511,7 @@ class NetworkMapGUI:
                 self.custom_cmd_window.destroy()
                 self.custom_cmd_window = None
 
-        self.custom_cmd_window, content = self.create_popup("Manage Custom Commands", 400, 500, on_close=on_close)
+        self.custom_cmd_window, content = self.create_popup("Manage Custom Commands", 400, 500, on_close=on_close, grab=False)
 
         listbox = tk.Listbox(content, width=50, height=10)
         listbox.pack(pady=10, padx=10)
