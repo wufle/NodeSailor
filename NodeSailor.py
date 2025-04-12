@@ -1061,7 +1061,7 @@ class NetworkMapGUI:
                 activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT).pack(pady=10)
 
         self.fix_window_geometry(self.color_editor_window, 500, 900)
-        
+
     def edit_vlan_labels(self):
         if hasattr(self, 'vlan_label_editor') and self.vlan_label_editor and self.vlan_label_editor.winfo_exists():
             self.vlan_label_editor.lift()
@@ -2035,7 +2035,7 @@ class NetworkMapGUI:
             self.node_list_editor.destroy()
             self.node_list_editor = None
 
-        win, content = self.create_popup("Node List Editor", 1100, 900, on_close=self.make_popup_closer("node_list_editor"), grab=True)
+        win, content = self.create_popup("Node List Editor", 1100, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
         self.node_list_editor = win
 
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
@@ -2171,7 +2171,7 @@ class NetworkMapGUI:
             self.connection_list_editor.destroy()
             self.connection_list_editor = None
 
-        win, content = self.create_popup("Connection List Editor", 800, 700, on_close=self.make_popup_closer("connection_list_editor"), grab=True)
+        win, content = self.create_popup("Connection List Editor", 800, 700, on_close=self.make_popup_closer("connection_list_editor"), grab=False)
         self.connection_list_editor = win
 
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
@@ -2532,7 +2532,7 @@ class NetworkMapGUI:
             self.custom_cmd_window.lift()
             return
 
-        win, content = self.create_popup("Manage Custom Commands", 600, 550, on_close=self.make_popup_closer("custom_cmd_window"), grab=True)
+        win, content = self.create_popup("Manage Custom Commands", 600, 550, on_close=self.make_popup_closer("custom_cmd_window"), grab=False)
         self.custom_cmd_window = win
 
         listbox = tk.Listbox(content, width=50, height=10)
