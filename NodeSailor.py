@@ -1563,7 +1563,9 @@ class NetworkMapGUI:
 
         win, content = self.create_popup("Edit Node" if node else "Create Node", 340, 360, on_close=close_node_editor, grab=False)
         self.node_window = win
-
+        win.lift(self.root)
+        win.attributes("-topmost", True)
+        win.after(300, lambda: win.attributes("-topmost", False) if win.winfo_exists() else None)
 
         label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
         entry_args = {'bg': 'white', 'fg': 'black'}
@@ -2049,6 +2051,9 @@ class NetworkMapGUI:
 
         win, content = self.create_popup("Node List Editor", 1100, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
         self.node_list_editor = win
+        win.lift(self.root)
+        win.attributes("-topmost", True)
+        win.after(100, lambda: win.attributes("-topmost", False))
 
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
@@ -2185,6 +2190,10 @@ class NetworkMapGUI:
 
         win, content = self.create_popup("Connection List Editor", 800, 700, on_close=self.make_popup_closer("connection_list_editor"), grab=False)
         self.connection_list_editor = win
+        win.lift(self.root)
+        win.attributes("-topmost", True)
+        win.after(10, lambda: win.attributes("-topmost", False))
+
 
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
