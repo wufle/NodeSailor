@@ -425,6 +425,14 @@ class NetworkNode:
         pass
     
     def delete_node(self):
+        if self.connections:
+            result = messagebox.askyesno(
+                "Delete Node",
+                f"'{self.name}' is connected to {len(self.connections)} other node(s).\n\n"
+                "Do you want to delete this node and remove all its connections?"
+            )
+            if not result:
+                return
         gui.remove_node(self)
 
     def execute_custom_command(self, command_template):
@@ -1644,9 +1652,13 @@ class NetworkMapGUI:
 
     def remove_node(self, node):
         if self.mode == "Configuration":
-            # Remove all connections related to the node
+            # Remove all connections and connection labelsrelated to the node
             for connection in node.connections[:]:
                 self.canvas.delete(connection.line)
+                if connection.label_id:
+                    self.canvas.delete(connection.label_id)
+                if hasattr(connection, 'label_bg') and connection.label_bg:
+                    self.canvas.delete(connection.label_bg)
                 connection.node1.connections.remove(connection)
                 connection.node2.connections.remove(connection)
             # Remove the node from the canvas
