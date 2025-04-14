@@ -2105,49 +2105,20 @@ class NetworkMapGUI:
         self.list_editor_xy_fields = {}
 
         def rebuild_editor_content():
+            # Only destroy the existing nodes table content
             for widget in self.node_list_frame.winfo_children():
-                widget.destroy()
+                if widget.grid_info()['row'] >= 3:  # Only destroy widgets in the existing nodes section
+                    widget.destroy()
 
-            fields = [
-                ("Name", "name"),
-                ("VLAN 100", "VLAN_100"),
-                ("VLAN 200", "VLAN_200"),
-                ("VLAN 300", "VLAN_300"),
-                ("VLAN 400", "VLAN_400"),
-                ("Remote Desktop", "remote_desktop_address"),
-                ("File Path", "file_path"),
-                ("Web URL", "web_config_url"),
-                ("X", "x"),
-                ("Y", "y"),
-            ]
-
-            # Add sorting state variables if they don't exist
-            if not hasattr(self, 'sort_column'):
-                self.sort_column = None
-                self.sort_reverse = False
-
-            def sort_nodes(column_index):
-                attr = fields[column_index][1]
-                if self.sort_column == column_index:
-                    self.sort_reverse = not self.sort_reverse
-                else:
-                    self.sort_column = column_index
-                    self.sort_reverse = False
-
-                def get_sort_key(node):
-                    value = getattr(node, attr)
-                    if attr in ("x", "y"):
-                        return float(value) if value else 0
-                    return str(value).lower() if value else ""
-
-                # Sort all nodes
-                self.nodes = sorted(self.nodes, key=get_sort_key, reverse=self.sort_reverse)
-                rebuild_editor_content()
+            # Add header for existing nodes
+            tk.Label(self.node_list_frame, text="Existing Nodes:", font=('Helvetica', 12, 'bold'),
+                    bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
+                    .grid(row=3, column=0, columnspan=len(fields)+1, sticky="w", pady=5)
 
             # Create column headers with sorting indicators
             for col_index, (label, _) in enumerate(fields):
                 header_frame = tk.Frame(self.node_list_frame, bg=ColorConfig.current.FRAME_BG)
-                header_frame.grid(row=0, column=col_index, padx=5, pady=2, sticky="ew")
+                header_frame.grid(row=4, column=col_index, padx=5, pady=2, sticky="ew")
                 
                 header_label = tk.Label(header_frame, text=label, font=('Helvetica', 10, 'bold'),
                         bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
@@ -2166,14 +2137,7 @@ class NetworkMapGUI:
 
             tk.Label(self.node_list_frame, text="Delete", font=('Helvetica', 10, 'bold'),
                     bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
-                    .grid(row=0, column=len(fields), padx=5)
-
-            tk.Button(self.node_list_frame, text="➕ Add Node", command=add_node,
-                    bg=ColorConfig.current.BUTTON_BG,
-                    fg=ColorConfig.current.BUTTON_TEXT,
-                    activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                    activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)\
-                    .grid(row=1, column=0, columnspan=len(fields)+1, sticky="w", pady=5)
+                    .grid(row=4, column=len(fields), padx=5)
 
             # Use the current sort order
             if self.sort_column is not None:
@@ -2188,7 +2152,7 @@ class NetworkMapGUI:
                 # Default sort by name
                 sorted_nodes = sorted(self.nodes, key=lambda n: n.name.lower())
 
-            for row_index, node in enumerate(sorted_nodes, start=2):
+            for row_index, node in enumerate(sorted_nodes, start=5):
                 xy_fields = []
                 for col_index, (label, attr) in enumerate(fields):
                     value = getattr(node, attr)
@@ -2239,15 +2203,98 @@ class NetworkMapGUI:
                 btn = tk.Button(self.node_list_frame, text="🗑", fg="red", command=delete_node_callback())
                 btn.grid(row=row_index, column=len(fields), padx=5)
 
-        def add_node():
-            new_node = NetworkNode(self.canvas, name="NewNode", x=100, y=100)
-            # Insert new node at the beginning of the list
-            self.nodes.insert(0, new_node)
-            self.on_node_select(new_node)
-            self.unsaved_changes = True
+        # Initialize the fields list
+        fields = [
+            ("Name", "name"),
+            ("VLAN 100", "VLAN_100"),
+            ("VLAN 200", "VLAN_200"),
+            ("VLAN 300", "VLAN_300"),
+            ("VLAN 400", "VLAN_400"),
+            ("Remote Desktop", "remote_desktop_address"),
+            ("File Path", "file_path"),
+            ("Web URL", "web_config_url"),
+            ("X", "x"),
+            ("Y", "y"),
+        ]
+
+        # Initialize sorting state
+        if not hasattr(self, 'sort_column'):
+            self.sort_column = 0  # Default to sorting by name
+            self.sort_reverse = False
+
+        def sort_nodes(column_index):
+            attr = fields[column_index][1]
+            if self.sort_column == column_index:
+                self.sort_reverse = not self.sort_reverse
+            else:
+                self.sort_column = column_index
+                self.sort_reverse = False
+
+            def get_sort_key(node):
+                value = getattr(node, attr)
+                if attr in ("x", "y"):
+                    return float(value) if value else 0
+                return str(value).lower() if value else ""
+
+            # Sort all nodes
+            self.nodes = sorted(self.nodes, key=get_sort_key, reverse=self.sort_reverse)
             rebuild_editor_content()
 
-        self.rebuild_editor_content = rebuild_editor_content
+        # Add "Add new node" row
+        tk.Label(self.node_list_frame, text="Add new node:", font=('Helvetica', 12, 'bold'),
+                bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
+                .grid(row=0, column=0, columnspan=len(fields)+1, sticky="w", pady=5)
+
+        # Create entry fields for new node
+        new_node_entries = []
+        for col_index, (label, attr) in enumerate(fields):
+            entry = tk.Entry(self.node_list_frame, width=15)
+            entry.grid(row=1, column=col_index, padx=2, pady=2)
+            new_node_entries.append(entry)
+
+        def add_new_node():
+            # Get values from entries
+            values = {fields[i][1]: entry.get() for i, entry in enumerate(new_node_entries)}
+            
+            # Set default values if not provided
+            name = values.get('name', 'NewNode')
+            try:
+                x = float(values.get('x', '100')) if values.get('x') else 100
+                y = float(values.get('y', '100')) if values.get('y') else 100
+            except ValueError:
+                x, y = 100, 100  # Default values if conversion fails
+            
+            # Create new node
+            new_node = NetworkNode(self.canvas, name=name, x=x, y=y,
+                                VLAN_100=values.get('VLAN_100', ''),
+                                VLAN_200=values.get('VLAN_200', ''),
+                                VLAN_300=values.get('VLAN_300', ''),
+                                VLAN_400=values.get('VLAN_400', ''),
+                                remote_desktop_address=values.get('remote_desktop_address', ''),
+                                file_path=values.get('file_path', ''),
+                                web_config_url=values.get('web_config_url', ''))
+            
+            # Add to nodes list
+            self.nodes.append(new_node)
+            self.on_node_select(new_node)
+            self.unsaved_changes = True
+            
+            # Clear entry fields
+            for entry in new_node_entries:
+                entry.delete(0, tk.END)
+            
+            # Rebuild the editor content
+            rebuild_editor_content()
+
+        # Add button to create new node
+        add_btn = tk.Button(self.node_list_frame, text="➕ Add", command=add_new_node,
+                bg=ColorConfig.current.BUTTON_BG,
+                fg=ColorConfig.current.BUTTON_TEXT,
+                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)
+        add_btn.grid(row=1, column=len(fields), padx=5)
+
+        # Initial build of the editor content
         rebuild_editor_content()
 
         self.fix_window_geometry(self.node_list_editor, 1100, 900)
