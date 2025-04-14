@@ -183,9 +183,15 @@ class StickyNote:
         menu_frame.pack()
 
         def destroy_menu():
-            context_menu.unbind("<FocusOut>")
-            context_menu.unbind("<Escape>")
-            context_menu.destroy()
+            try:
+                context_menu.unbind("<FocusOut>")
+                context_menu.unbind("<Escape>")
+                for btn in menu_frame.winfo_children():
+                    btn.unbind("<Enter>")
+                    btn.unbind("<Leave>")
+                context_menu.destroy()
+            except tk.TclError:
+                pass  # Ignore if window is already destroyed
 
         options = [
             ("Edit Note Text", self.edit_sticky_text),
@@ -273,11 +279,16 @@ class NetworkNode:
         if gui and hasattr(gui, "list_editor_xy_fields"):
             xy_fields = gui.list_editor_xy_fields.get(self)
             if xy_fields:
-                x_entry, y_entry = xy_fields
-                x_entry.delete(0, tk.END)
-                x_entry.insert(0, str(self.x))
-                y_entry.delete(0, tk.END)
-                y_entry.insert(0, str(self.y))
+                try:
+                    x_entry, y_entry = xy_fields
+                    if x_entry.winfo_exists():
+                        x_entry.delete(0, tk.END)
+                        x_entry.insert(0, str(self.x))
+                    if y_entry.winfo_exists():
+                        y_entry.delete(0, tk.END)
+                        y_entry.insert(0, str(self.y))
+                except tk.TclError:
+                    pass  # Ignore if widget is destroyed
 
     def update_info(self, name, VLAN_100='', VLAN_200='', VLAN_300='', VLAN_400='', remote_desktop_address='', file_path='', web_config_url=''):
         self.name = name
@@ -369,12 +380,15 @@ class NetworkNode:
             options.append((name, lambda c=cmd: self.execute_custom_command(c)))
 
         def destroy_menu():
-            context_menu.unbind("<FocusOut>")
-            context_menu.unbind("<Escape>")
-            for btn in menu_frame.winfo_children():
-                btn.unbind("<Enter>")
-                btn.unbind("<Leave>")
-            context_menu.destroy()
+            try:
+                context_menu.unbind("<FocusOut>")
+                context_menu.unbind("<Escape>")
+                for btn in menu_frame.winfo_children():
+                    btn.unbind("<Enter>")
+                    btn.unbind("<Leave>")
+                context_menu.destroy()
+            except tk.TclError:
+                pass  # Ignore if window is already destroyed
 
         for text, command in options:
             btn = tk.Button(menu_frame, text=text, command=lambda c=command: [c(), destroy_menu()],
@@ -1331,9 +1345,15 @@ class NetworkMapGUI:
             self.canvas.itemconfigure(node.shape, fill=node_color)
 
     def update_vlan_colors(self, node, ping_results):
+        vlan_ips = [getattr(node, vlan) for vlan in ['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400']]
+        ips_to_ping = [ip for ip in vlan_ips if ip]  # Filter out empty strings
         for i, vlan in enumerate(['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400']):
             if getattr(node, vlan):
-                color = ColorConfig.current.NODE_PING_SUCCESS if ping_results[i] else ColorConfig.current.NODE_PING_FAILURE
+                # Only try to access ping_results[i] if we have a result for this IP
+                if i < len(ping_results):
+                    color = ColorConfig.current.NODE_PING_SUCCESS if ping_results[i] else ColorConfig.current.NODE_PING_FAILURE
+                else:
+                    color = ColorConfig.current.NODE_PING_FAILURE  # Default to failure if no result
                 self.vlan_labels[vlan].config(bg=color)
             else:
                 self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_NOTE_BG)
