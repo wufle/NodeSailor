@@ -79,6 +79,14 @@ class ColorConfig:
         BUTTON_CONFIGURATION_MODE = 'light coral'
         Connections = 'dim gray'
         BORDER_COLOR = '#f7f7f7'
+        # New for list editor readability
+        ROW_BG_EVEN = '#f9f9f9'
+        ROW_BG_ODD = '#e6f0fa'
+        HEADER_BG = '#dbeafe'
+        HEADER_TEXT = '#1e293b'
+        ENTRY_FOCUS_BG = '#fffbe6'
+        CELL_BORDER = '#b6b6b6'
+        ENTRY_TEXT = '#222222'
 
     class Dark:
         NODE_DEFAULT = '#4B5EAA'
@@ -99,6 +107,14 @@ class ColorConfig:
         BUTTON_CONFIGURATION_MODE = '#F87171'
         Connections = '#6a7586'
         BORDER_COLOR = '#374151' #f1 and legend window border colour
+        # New for list editor readability
+        ROW_BG_EVEN = '#181e29'
+        ROW_BG_ODD = '#232b3a'
+        HEADER_BG = '#22304a'
+        HEADER_TEXT = '#e0e7ef'
+        ENTRY_FOCUS_BG = '#2d3748'
+        CELL_BORDER = '#3b4252'
+        ENTRY_TEXT = '#e0e7ef'
 
     # Default to Dark mode
     current = Dark
@@ -2074,7 +2090,7 @@ class NetworkMapGUI:
             self.node_list_editor.destroy()
             self.node_list_editor = None
 
-        win, content = self.create_popup("Node List Editor", 1100, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
+        win, content = self.create_popup("Node List Editor", 1375, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
         self.node_list_editor = win
         win.lift(self.root)
         win.attributes("-topmost", True)
@@ -2110,7 +2126,14 @@ class NetworkMapGUI:
         inner_window = canvas.create_window((0, 0), window=self.node_list_frame, anchor="nw")
 
         def resize_canvas(event):
-            canvas.itemconfig(inner_window, width=canvas.winfo_width())
+            # Only force width if canvas is wider than content, else allow horizontal scrolling
+            frame_reqwidth = self.node_list_frame.winfo_reqwidth()
+            canvas_width = canvas.winfo_width()
+            if canvas_width > frame_reqwidth:
+                canvas.itemconfig(inner_window, width=canvas_width)
+            else:
+                canvas.itemconfig(inner_window, width=frame_reqwidth)
+        canvas.bind("<Configure>", resize_canvas)
 
         canvas.bind("<Configure>", resize_canvas)
 
@@ -2137,12 +2160,18 @@ class NetworkMapGUI:
 
             # Create column headers with sorting indicators
             for col_index, (label, _) in enumerate(fields):
-                header_frame = tk.Frame(self.node_list_frame, bg=ColorConfig.current.FRAME_BG)
-                header_frame.grid(row=4, column=col_index, padx=5, pady=2, sticky="ew")
+                header_frame = tk.Frame(self.node_list_frame, bg=ColorConfig.current.HEADER_BG, highlightbackground=ColorConfig.current.CELL_BORDER, highlightthickness=1)
+                header_frame.grid(row=4, column=col_index, padx=1, pady=0, sticky="ew")
                 
-                header_label = tk.Label(header_frame, text=label, font=('Helvetica', 10, 'bold'),
-                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
-                header_label.pack(side=tk.LEFT)
+                header_label = tk.Label(
+                    header_frame,
+                    text=label,
+                    font=('Helvetica', 10, 'bold'),
+                    bg=ColorConfig.current.HEADER_BG,
+                    fg=ColorConfig.current.HEADER_TEXT,
+                    padx=6, pady=6
+                )
+                header_label.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
                 
                 # Add sorting indicator
                 if self.sort_column == col_index:
@@ -2176,9 +2205,66 @@ class NetworkMapGUI:
                 xy_fields = []
                 for col_index, (label, attr) in enumerate(fields):
                     value = getattr(node, attr)
-                    entry = tk.Entry(self.node_list_frame, width=15)
-                    entry.insert(0, str(value))
-                    entry.grid(row=row_index, column=col_index, padx=2, pady=2)
+                    # Set column widths
+                    if attr in ("x", "y"):
+                        entry_width = 8
+                        # Format to 2 decimal places if possible
+                        try:
+                            value_str = "{:.2f}".format(float(value))
+                        except (ValueError, TypeError):
+                            value_str = str(value)
+                    elif attr in ("file_path", "web_config_url"):
+                        entry_width = 30
+                        value_str = str(value)
+                    else:
+                        entry_width = 15
+                        value_str = str(value)
+                    # Alternating row background
+                    row_bg = ColorConfig.current.ROW_BG_EVEN if (row_index % 2 == 0) else ColorConfig.current.ROW_BG_ODD
+                    entry = tk.Entry(
+                        self.node_list_frame,
+                        width=entry_width,
+                        font=('Helvetica', 10),
+                        bg=row_bg,
+                        fg=ColorConfig.current.ENTRY_TEXT,
+                        relief='solid',
+                        borderwidth=1,
+                        highlightthickness=0
+                    )
+                    entry.insert(0, value_str)
+                    entry.grid(row=row_index, column=col_index, padx=1, pady=3, ipady=3)
+                    # Focus highlight
+                    def on_focus_in(event, e=entry):
+                        e.config(bg=ColorConfig.current.ENTRY_FOCUS_BG)
+                        e.select_range(0, tk.END)
+                        return 'break'
+                    def on_focus_out(event, n=node, a=attr, e=entry):
+                        val = e.get()
+                        if a in ("x", "y"):
+                            try:
+                                val = float(val)
+                                if a == "x":
+                                    n.update_position(val, n.y)
+                                else:
+                                    n.update_position(n.x, val)
+                            except ValueError:
+                                return
+                        else:
+                            setattr(n, a, val)
+                            if a == "name":
+                                n.canvas.itemconfigure(n.text, text=n.name)
+                            n.adjust_node_size()
+                            self.unsaved_changes = True
+                        # Restore row background
+                        e.config(bg=row_bg)
+                        return 'break'
+                    entry.bind('<FocusIn>', on_focus_in)
+                    entry.bind('<FocusOut>', on_focus_out)
+                    entry.bind('<Return>', on_focus_out)
+                    entry.bind('<Tab>', on_focus_out)
+                    # Tooltip for truncated cells
+                    if attr in ("file_path", "web_config_url") and len(value_str) > entry_width:
+                        ToolTip(entry, value_str, self, bg="#ffffe0", fg="black")
                     
                     # Simplified event bindings
                     def on_focus_in(event, e=entry):
@@ -2268,8 +2354,40 @@ class NetworkMapGUI:
         # Create entry fields for new node
         new_node_entries = []
         for col_index, (label, attr) in enumerate(fields):
-            entry = tk.Entry(self.node_list_frame, width=15)
-            entry.grid(row=1, column=col_index, padx=2, pady=2)
+            # Set column widths and formatting
+            if attr in ("x", "y"):
+                entry_width = 8
+            elif attr in ("file_path", "web_config_url"):
+                entry_width = 30
+            else:
+                entry_width = 15
+            row_bg = ColorConfig.current.ROW_BG_EVEN
+            entry = tk.Entry(
+                self.node_list_frame,
+                width=entry_width,
+                font=('Helvetica', 10),
+                bg=row_bg,
+                fg=ColorConfig.current.ENTRY_TEXT,
+                relief='solid',
+                borderwidth=1,
+                highlightthickness=0
+            )
+            entry.grid(row=1, column=col_index, padx=1, pady=3, ipady=3)
+            # Focus highlight
+            def on_focus_in(event, e=entry):
+                e.config(bg=ColorConfig.current.ENTRY_FOCUS_BG)
+                e.select_range(0, tk.END)
+                return 'break'
+            def on_focus_out(event, e=entry):
+                e.config(bg=row_bg)
+                return 'break'
+            entry.bind('<FocusIn>', on_focus_in)
+            entry.bind('<FocusOut>', on_focus_out)
+            entry.bind('<Return>', on_focus_out)
+            entry.bind('<Tab>', on_focus_out)
+            # Tooltip for truncated cells
+            if attr in ("file_path", "web_config_url"):
+                ToolTip(entry, "", self, bg="#ffffe0", fg="black")
             new_node_entries.append(entry)
 
         def add_new_node():
