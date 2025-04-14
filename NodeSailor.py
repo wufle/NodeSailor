@@ -1616,6 +1616,10 @@ class NetworkMapGUI:
                                         remote_desktop_address=remote, file_path=path, web_config_url=web)
                     self.nodes.append(new_node)
                     self.on_node_select(new_node)
+            # Return focus to the node list editor if it's open before closing
+            if hasattr(self, 'node_list_editor') and self.node_list_editor and self.node_list_editor.winfo_exists():
+                self.node_list_editor.lift()
+                self.node_list_editor.focus_set()
             close_node_editor()
 
         tk.Button(content, text="Save", command=save_node,
