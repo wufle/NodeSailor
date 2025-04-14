@@ -2121,10 +2121,49 @@ class NetworkMapGUI:
                 ("Y", "y"),
             ]
 
+            # Add sorting state variables if they don't exist
+            if not hasattr(self, 'sort_column'):
+                self.sort_column = None
+                self.sort_reverse = False
+
+            def sort_nodes(column_index):
+                attr = fields[column_index][1]
+                if self.sort_column == column_index:
+                    self.sort_reverse = not self.sort_reverse
+                else:
+                    self.sort_column = column_index
+                    self.sort_reverse = False
+
+                def get_sort_key(node):
+                    value = getattr(node, attr)
+                    if attr in ("x", "y"):
+                        return float(value) if value else 0
+                    return str(value).lower() if value else ""
+
+                # Sort all nodes
+                self.nodes = sorted(self.nodes, key=get_sort_key, reverse=self.sort_reverse)
+                rebuild_editor_content()
+
+            # Create column headers with sorting indicators
             for col_index, (label, _) in enumerate(fields):
-                tk.Label(self.node_list_frame, text=label, font=('Helvetica', 10, 'bold'),
-                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
-                        .grid(row=0, column=col_index, padx=5, pady=2)
+                header_frame = tk.Frame(self.node_list_frame, bg=ColorConfig.current.FRAME_BG)
+                header_frame.grid(row=0, column=col_index, padx=5, pady=2, sticky="ew")
+                
+                header_label = tk.Label(header_frame, text=label, font=('Helvetica', 10, 'bold'),
+                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+                header_label.pack(side=tk.LEFT)
+                
+                # Add sorting indicator
+                if self.sort_column == col_index:
+                    indicator = "▼" if self.sort_reverse else "▲"
+                    indicator_label = tk.Label(header_frame, text=indicator, font=('Helvetica', 10, 'bold'),
+                            bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+                    indicator_label.pack(side=tk.LEFT, padx=2)
+                
+                # Make header clickable
+                header_frame.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
+                header_label.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
+
             tk.Label(self.node_list_frame, text="Delete", font=('Helvetica', 10, 'bold'),
                     bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
                     .grid(row=0, column=len(fields), padx=5)
@@ -2136,10 +2175,19 @@ class NetworkMapGUI:
                     activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)\
                     .grid(row=1, column=0, columnspan=len(fields)+1, sticky="w", pady=5)
 
-            # Sort nodes by name to ensure consistent ordering, but keep new nodes at the top
-            sorted_nodes = sorted(self.nodes[1:], key=lambda n: n.name.lower())  # Sort all nodes except the first one
-            sorted_nodes.insert(0, self.nodes[0])  # Add the first node (newest) at the top
-            
+            # Use the current sort order
+            if self.sort_column is not None:
+                attr = fields[self.sort_column][1]
+                def get_sort_key(node):
+                    value = getattr(node, attr)
+                    if attr in ("x", "y"):
+                        return float(value) if value else 0
+                    return str(value).lower() if value else ""
+                sorted_nodes = sorted(self.nodes, key=get_sort_key, reverse=self.sort_reverse)
+            else:
+                # Default sort by name
+                sorted_nodes = sorted(self.nodes, key=lambda n: n.name.lower())
+
             for row_index, node in enumerate(sorted_nodes, start=2):
                 xy_fields = []
                 for col_index, (label, attr) in enumerate(fields):
