@@ -524,12 +524,10 @@ class ConnectionLine:
                 dialog.title("Edit Connection Details")
                 tk.Label(dialog, text="Label:").grid(row=0, column=0, padx=10, pady=5)
                 label_entry = tk.Entry(dialog, width=40)
-                label_entry.insert(0, self.label)
                 label_entry.grid(row=0, column=1, padx=10, pady=5)
 
                 tk.Label(dialog, text="Info (on hover):").grid(row=1, column=0, padx=10, pady=5)
                 info_entry = tk.Entry(dialog, width=40)
-                info_entry.insert(0, self.connectioninfo or "")
                 info_entry.grid(row=1, column=1, padx=10, pady=5)
 
                 def submit():
@@ -539,7 +537,7 @@ class ConnectionLine:
                     dialog.destroy()
 
                 tk.Button(dialog, text="Save", command=submit).grid(row=2, column=0, columnspan=2, pady=10)
-                dialog.transient(self.canvas)
+                dialog.transient(self.root)
                 dialog.grab_set()
                 self.canvas.wait_window(dialog)
 
@@ -1565,7 +1563,6 @@ class NetworkMapGUI:
         self.node_window = win
         win.lift(self.root)
         win.attributes("-topmost", True)
-        win.after(300, lambda: win.attributes("-topmost", False) if win.winfo_exists() else None)
 
         label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
         entry_args = {'bg': 'white', 'fg': 'black'}
@@ -2053,7 +2050,6 @@ class NetworkMapGUI:
         self.node_list_editor = win
         win.lift(self.root)
         win.attributes("-topmost", True)
-        win.after(100, lambda: win.attributes("-topmost", False))
 
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
@@ -2192,7 +2188,6 @@ class NetworkMapGUI:
         self.connection_list_editor = win
         win.lift(self.root)
         win.attributes("-topmost", True)
-        win.after(10, lambda: win.attributes("-topmost", False))
 
 
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
