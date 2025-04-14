@@ -1558,6 +1558,10 @@ class NetworkMapGUI:
                 pass
             self.node_window.destroy()
             self.node_window = None
+            # Return focus to the node list editor if it's open
+            if hasattr(self, 'node_list_editor') and self.node_list_editor and self.node_list_editor.winfo_exists():
+                self.node_list_editor.lift()
+                self.node_list_editor.focus_set()
 
         win, content = self.create_popup("Edit Node" if node else "Create Node", 340, 360, on_close=close_node_editor, grab=False)
         self.node_window = win
@@ -2128,8 +2132,9 @@ class NetworkMapGUI:
                     activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)\
                     .grid(row=1, column=0, columnspan=len(fields)+1, sticky="w", pady=5)
 
-            # Sort nodes by name to ensure consistent ordering
-            sorted_nodes = sorted(self.nodes, key=lambda n: n.name.lower())
+            # Sort nodes by name to ensure consistent ordering, but keep new nodes at the top
+            sorted_nodes = sorted(self.nodes[1:], key=lambda n: n.name.lower())  # Sort all nodes except the first one
+            sorted_nodes.insert(0, self.nodes[0])  # Add the first node (newest) at the top
             
             for row_index, node in enumerate(sorted_nodes, start=2):
                 xy_fields = []
@@ -2138,33 +2143,35 @@ class NetworkMapGUI:
                     entry = tk.Entry(self.node_list_frame, width=15)
                     entry.insert(0, str(value))
                     entry.grid(row=row_index, column=col_index, padx=2, pady=2)
-
-                    def make_callback(n=node, a=attr, e=entry):
-                        def update_field(event):
-                            val = e.get()
-                            if a in ("x", "y"):
-                                try:
-                                    val = float(val)
-                                    if a == "x":
-                                        n.update_position(val, n.y)
-                                    else:
-                                        n.update_position(n.x, val)
-                                except ValueError:
-                                    return
-                            else:
-                                setattr(n, a, val)
-                                if a == "name":
-                                    n.canvas.itemconfigure(n.text, text=n.name)
-                                n.adjust_node_size()
-                                self.unsaved_changes = True
-                                # Update list views if they're open
-                                if hasattr(self, 'node_list_editor') and self.node_list_editor and self.node_list_editor.winfo_exists():
-                                    self.rebuild_editor_content()
-                                if hasattr(self, 'connection_list_editor') and self.connection_list_editor and self.connection_list_editor.winfo_exists():
-                                    self.rebuild_connection_editor_content()
-                        return update_field
-
-                    entry.bind("<FocusOut>", make_callback())
+                    
+                    # Simplified event bindings
+                    def on_focus_in(event, e=entry):
+                        e.select_range(0, tk.END)
+                        return 'break'  # Prevent default focus behavior
+                    
+                    def on_focus_out(event, n=node, a=attr, e=entry):
+                        val = e.get()
+                        if a in ("x", "y"):
+                            try:
+                                val = float(val)
+                                if a == "x":
+                                    n.update_position(val, n.y)
+                                else:
+                                    n.update_position(n.x, val)
+                            except ValueError:
+                                return
+                        else:
+                            setattr(n, a, val)
+                            if a == "name":
+                                n.canvas.itemconfigure(n.text, text=n.name)
+                            n.adjust_node_size()
+                            self.unsaved_changes = True
+                        return 'break'  # Prevent default focus behavior
+                    
+                    entry.bind('<FocusIn>', on_focus_in)
+                    entry.bind('<FocusOut>', on_focus_out)
+                    entry.bind('<Return>', on_focus_out)
+                    entry.bind('<Tab>', on_focus_out)
 
                     if attr in ("x", "y"):
                         xy_fields.append(entry)
