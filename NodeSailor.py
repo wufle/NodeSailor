@@ -2051,6 +2051,18 @@ class NetworkMapGUI:
         win.lift(self.root)
         win.attributes("-topmost", True)
 
+        # Add refresh button at the top
+        button_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
+        button_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        refresh_btn = tk.Button(button_frame, text="🔄 Refresh List", 
+                              command=lambda: rebuild_editor_content(),
+                              bg=ColorConfig.current.BUTTON_BG,
+                              fg=ColorConfig.current.BUTTON_TEXT,
+                              activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                              activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)
+        refresh_btn.pack(side=tk.LEFT, padx=5)
+
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
 
@@ -2116,7 +2128,10 @@ class NetworkMapGUI:
                     activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)\
                     .grid(row=1, column=0, columnspan=len(fields)+1, sticky="w", pady=5)
 
-            for row_index, node in enumerate(self.nodes, start=2):
+            # Sort nodes by name to ensure consistent ordering
+            sorted_nodes = sorted(self.nodes, key=lambda n: n.name.lower())
+            
+            for row_index, node in enumerate(sorted_nodes, start=2):
                 xy_fields = []
                 for col_index, (label, attr) in enumerate(fields):
                     value = getattr(node, attr)
@@ -2142,6 +2157,11 @@ class NetworkMapGUI:
                                     n.canvas.itemconfigure(n.text, text=n.name)
                                 n.adjust_node_size()
                                 self.unsaved_changes = True
+                                # Update list views if they're open
+                                if hasattr(self, 'node_list_editor') and self.node_list_editor and self.node_list_editor.winfo_exists():
+                                    self.rebuild_editor_content()
+                                if hasattr(self, 'connection_list_editor') and self.connection_list_editor and self.connection_list_editor.winfo_exists():
+                                    self.rebuild_connection_editor_content()
                         return update_field
 
                     entry.bind("<FocusOut>", make_callback())
@@ -2162,11 +2182,13 @@ class NetworkMapGUI:
 
         def add_node():
             new_node = NetworkNode(self.canvas, name="NewNode", x=100, y=100)
-            self.nodes.append(new_node)
+            # Insert new node at the beginning of the list
+            self.nodes.insert(0, new_node)
             self.on_node_select(new_node)
             self.unsaved_changes = True
             rebuild_editor_content()
 
+        self.rebuild_editor_content = rebuild_editor_content
         rebuild_editor_content()
 
         self.fix_window_geometry(self.node_list_editor, 1100, 900)
@@ -2189,6 +2211,17 @@ class NetworkMapGUI:
         win.lift(self.root)
         win.attributes("-topmost", True)
 
+        # Add refresh button at the top
+        button_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
+        button_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        refresh_btn = tk.Button(button_frame, text="🔄 Refresh List", 
+                              command=lambda: rebuild_editor_content(),
+                              bg=ColorConfig.current.BUTTON_BG,
+                              fg=ColorConfig.current.BUTTON_TEXT,
+                              activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                              activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)
+        refresh_btn.pack(side=tk.LEFT, padx=5)
 
         container = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         container.pack(fill="both", expand=True)
