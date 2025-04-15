@@ -1591,14 +1591,13 @@ class NetworkMapGUI:
     def open_node_window(self, node=None, event=None):
         import logging
         logging.basicConfig(level=logging.DEBUG)
-        print("[DEBUG] open_node_window called. node_window exists:", hasattr(self, 'node_window') and self.node_window and self.node_window.winfo_exists())
+        
         if hasattr(self, 'node_window') and self.node_window and self.node_window.winfo_exists():
-            print("[DEBUG] Node window already exists, lifting.")
+            
             self.node_window.lift()
             return
 
-        # Toggle this to False to test if grab_set/grab_release is the cause of the bug
-        USE_GRAB = False  # Set to False for troubleshooting
+        USE_GRAB = False  # Modal grab disabled to avoid focus/input bugs
 
         # Placeholders for widget references so they are accessible in close_node_editor
         name_entry = None
@@ -1607,44 +1606,37 @@ class NetworkMapGUI:
         file_entry = None
         web_entry = None
 
-        def print_focus_state(context):
-            try:
-                focus_widget = self.root.focus_get()
-                print(f"[DEBUG] {context} - focus_get: {focus_widget}")
-                if focus_widget is not None:
-                    print(f"[DEBUG] {context} - focus_get widget type: {type(focus_widget)}")
-            except Exception as e:
-                print(f"[DEBUG] {context} - focus_get error: {e}")
-            try:
-                print(f"[DEBUG] {context} - focus_displayof: {self.root.focus_displayof()}")
-            except Exception as e:
-                print(f"[DEBUG] {context} - focus_displayof error: {e}")
+        # Removed print_focus_state and debug prints
 
         def close_node_editor():
-            print_focus_state("close_node_editor (before grab_release)")
             if USE_GRAB:
                 try:
                     self.node_window.grab_release()
-                    print("[DEBUG] grab_release called on node_window.")
-                except Exception as e:
-                    print(f"[DEBUG] grab_release failed: {e}")
+                except Exception:
+                    pass
             try:
-                print("[DEBUG] Closing node window. Entry states:")
-                print("  name_entry state:", getattr(name_entry, 'cget', lambda x: 'N/A')('state'))
-                for vlan, entry in VLAN_entries.items():
-                    print(f"  {vlan} entry state:", getattr(entry, 'cget', lambda x: 'N/A')('state'))
-                print("  remote_entry state:", getattr(remote_entry, 'cget', lambda x: 'N/A')('state'))
-                print("  file_entry state:", getattr(file_entry, 'cget', lambda x: 'N/A')('state'))
-                print("  web_entry state:", getattr(web_entry, 'cget', lambda x: 'N/A')('state'))
                 self.node_window.destroy()
-                print("[DEBUG] Node window destroyed.")
-            except Exception as e:
-                print(f"[DEBUG] Destroy failed: {e}")
+            except Exception:
+                pass
             self.node_window = None
-            print_focus_state("close_node_editor (after destroy)")
+            # Ensure node_list_editor is re-enabled if it exists
             if hasattr(self, 'node_list_editor') and self.node_list_editor and self.node_list_editor.winfo_exists():
-                self.node_list_editor.lift()
-                self.node_list_editor.focus_set()
+                # Ensure the node list editor is enabled and interactive
+                try:
+                    self.node_list_editor.attributes("-disabled", False)
+                except Exception:
+                    pass
+                try:
+                    self.node_list_editor.deiconify()
+                    self.node_list_editor.lift()
+                    self.node_list_editor.focus_force()
+                except Exception:
+                    pass
+            # Optionally, restore focus to the main window as well
+            try:
+                self.root.focus_force()
+            except Exception:
+                pass
 
         win, content = self.create_popup("Edit Node" if node else "Create Node", 340, 360, on_close=close_node_editor, grab=False)
         self.node_window = win
@@ -1653,13 +1645,10 @@ class NetworkMapGUI:
         if USE_GRAB:
             try:
                 win.grab_set()
-                print("[DEBUG] grab_set called on node_window.")
-            except Exception as e:
-                print(f"[DEBUG] grab_set failed: {e}")
+            except Exception:
+                pass
         win.protocol("WM_DELETE_WINDOW", close_node_editor)
-        # Force focus to the window and print focus state
         win.focus_force()
-        print_focus_state("after win.focus_force()")
 
         label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
         entry_args = {'bg': 'white', 'fg': 'black'}
@@ -1670,10 +1659,7 @@ class NetworkMapGUI:
         name_entry.grid(row=0, column=1, padx=10, pady=5)
         if node: name_entry.insert(0, node.name)
         name_entry.focus_set()
-        print("[DEBUG] name_entry created. state:", name_entry.cget('state'))
-        print_focus_state("after name_entry.focus_set()")
         name_entry.focus_force()
-        print_focus_state("after name_entry.focus_force()")
 
         VLAN_entries = {}
         for i, vlan in enumerate(["VLAN_100", "VLAN_200", "VLAN_300", "VLAN_400"], start=1):
@@ -1682,34 +1668,27 @@ class NetworkMapGUI:
             entry.grid(row=i, column=1, padx=10, pady=5)
             if node: entry.insert(0, getattr(node, vlan))
             VLAN_entries[vlan] = entry
-            print(f"[DEBUG] {vlan} entry created. state:", entry.cget('state'))
+            
 
         tk.Label(content, text="Remote Desktop Address:", **label_args).grid(row=5, column=0, padx=10, pady=5, sticky="e")
         remote_entry = tk.Entry(content, **entry_args)
         remote_entry.grid(row=5, column=1, padx=10, pady=5)
         if node: remote_entry.insert(0, node.remote_desktop_address)
-        print("[DEBUG] remote_entry created. state:", remote_entry.cget('state'))
+        
 
         tk.Label(content, text="File Path:", **label_args).grid(row=6, column=0, padx=10, pady=5, sticky="e")
         file_entry = tk.Entry(content, **entry_args)
         file_entry.grid(row=6, column=1, padx=10, pady=5)
         if node: file_entry.insert(0, node.file_path)
-        print("[DEBUG] file_entry created. state:", file_entry.cget('state'))
+        
 
         tk.Label(content, text="Web Config URL:", **label_args).grid(row=7, column=0, padx=10, pady=5, sticky="e")
         web_entry = tk.Entry(content, **entry_args)
         web_entry.grid(row=7, column=1, padx=10, pady=5)
         if node: web_entry.insert(0, node.web_config_url)
-        print("[DEBUG] web_entry created. state:", web_entry.cget('state'))
+        
 
         def save_node():
-            print("[DEBUG] save_node called. Entry states:")
-            print("  name_entry state:", name_entry.cget('state'))
-            for vlan, entry in VLAN_entries.items():
-                print(f"  {vlan} entry state:", entry.cget('state'))
-            print("  remote_entry state:", remote_entry.cget('state'))
-            print("  file_entry state:", file_entry.cget('state'))
-            print("  web_entry state:", web_entry.cget('state'))
             name = name_entry.get()
             vlan_ips = {vlan: VLAN_entries[vlan].get() for vlan in VLAN_entries}
             remote = remote_entry.get()
@@ -1737,7 +1716,7 @@ class NetworkMapGUI:
                 font=('Helvetica', 10)).grid(row=8, column=0, columnspan=2, pady=10)
 
         self.fix_window_geometry(self.node_window, 340, 360)
-        print("[DEBUG] Node window created and ready.")
+        
 
     def create_node(self, event):
         self.open_node_window(event=event)
