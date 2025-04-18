@@ -2143,7 +2143,7 @@ class NetworkMapGUI:
             self.node_list_editor.destroy()
             self.node_list_editor = None
 
-        win, content = self.create_popup("Node List Editor", 1800, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
+        win, content = self.create_popup("Node List Editor", 1700, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
         self.node_list_editor = win
         win.lift(self.root)
         win.attributes("-topmost", True)
@@ -2247,6 +2247,7 @@ class NetworkMapGUI:
                                     self.column_entries[col_index].append(widget)
             
             # ── Add “new node” row (always shown) ───────────────────────────────
+            
             tk.Label(self.node_list_frame, text="Add new node:",
                     font=('Helvetica', 12, 'bold'),
                     bg=ColorConfig.current.FRAME_BG,
@@ -2258,7 +2259,7 @@ class NetworkMapGUI:
             for col_index, (label, attr) in enumerate(fields):
                 # sensible default widths
                 if attr in ("x", "y"):
-                    entry_width = 6
+                    entry_width = 4
                 elif attr in ("file_path", "web_config_url"):
                     entry_width = 30
                 elif attr == "remote_desktop_address":
@@ -2433,7 +2434,7 @@ class NetworkMapGUI:
                     value = getattr(node, attr)
                     # Set column widths
                     if attr in ("x", "y"):
-                        entry_width = 6
+                        entry_width = 4
                         # Format to 0 decimal places if possible
                         try:
                             value_str = "{:.0f}".format(float(value))
