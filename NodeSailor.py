@@ -299,10 +299,10 @@ class NetworkNode:
                     x_entry, y_entry = xy_fields
                     if x_entry.winfo_exists():
                         x_entry.delete(0, tk.END)
-                        x_entry.insert(0, str(self.x))
+                        x_entry.insert(0, str(int(self.x)))
                     if y_entry.winfo_exists():
                         y_entry.delete(0, tk.END)
-                        y_entry.insert(0, str(self.y))
+                        y_entry.insert(0, str(int(self.y)))
                 except tk.TclError:
                     pass  # Ignore if widget is destroyed
 
