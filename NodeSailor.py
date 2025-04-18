@@ -1401,7 +1401,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="Nodesailor v0.9.17", bg=ColorConfig.current.FRAME_BG,
+            title_label = tk.Label(title_bar, text="NodeSailor v0.9.17", bg=ColorConfig.current.FRAME_BG,
                                 fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
