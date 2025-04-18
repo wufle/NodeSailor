@@ -2143,7 +2143,7 @@ class NetworkMapGUI:
             self.node_list_editor.destroy()
             self.node_list_editor = None
 
-        win, content = self.create_popup("Node List Editor", 1375, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
+        win, content = self.create_popup("Node List Editor", 1800, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
         self.node_list_editor = win
         win.lift(self.root)
         win.attributes("-topmost", True)
@@ -2196,10 +2196,7 @@ class NetworkMapGUI:
             # Only force width if canvas is wider than content, else allow horizontal scrolling
             frame_reqwidth = self.node_list_frame.winfo_reqwidth()
             canvas_width = canvas.winfo_width()
-            if canvas_width > frame_reqwidth:
-                canvas.itemconfig(inner_window, width=canvas_width)
-            else:
-                canvas.itemconfig(inner_window, width=frame_reqwidth)
+            canvas.itemconfig(inner_window, width=frame_reqwidth)
         canvas.bind("<Configure>", resize_canvas)
 
         canvas.bind("<Configure>", resize_canvas)
@@ -2225,7 +2222,7 @@ class NetworkMapGUI:
                         break
             
             # let every data cell expand horizontally
-            self.node_list_frame.grid_columnconfigure(col_index, weight=1)
+            #self.node_list_frame.grid_columnconfigure(col_index, weight=1)
 
             # Only destroy the existing nodes table content
             for widget in self.node_list_frame.winfo_children():
@@ -2314,7 +2311,7 @@ class NetworkMapGUI:
                 header_label.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
                 
                 # let every data cell expand horizontally
-                self.node_list_frame.grid_columnconfigure(col_index, weight=1)
+                #self.node_list_frame.grid_columnconfigure(col_index, weight=1)
 
                 # Add sorting indicator
                 if self.sort_column == col_index:
@@ -2662,7 +2659,7 @@ class NetworkMapGUI:
         # Initial build of the editor content
         rebuild_editor_content()
 
-        self.fix_window_geometry(self.node_list_editor, 1100, 900)
+        self.fix_window_geometry(self.node_list_editor, 1600, 900)
 
     def open_connection_list_editor(self):
         if self.legend_window and self.legend_window.winfo_exists():
