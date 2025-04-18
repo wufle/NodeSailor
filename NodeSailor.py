@@ -2249,6 +2249,51 @@ class NetworkMapGUI:
                                 if col_index in self.column_entries:
                                     self.column_entries[col_index].append(widget)
             
+            # ── Add “new node” row (always shown) ───────────────────────────────
+            tk.Label(self.node_list_frame, text="Add new node:",
+                    font=('Helvetica', 12, 'bold'),
+                    bg=ColorConfig.current.FRAME_BG,
+                    fg=ColorConfig.current.BUTTON_TEXT) \
+            .grid(row=0, column=0, columnspan=len(fields)+1,
+                    sticky="w", pady=5)
+
+            new_node_entries = []
+            for col_index, (label, attr) in enumerate(fields):
+                # sensible default widths
+                if attr in ("x", "y"):
+                    entry_width = 6
+                elif attr in ("file_path", "web_config_url"):
+                    entry_width = 30
+                elif attr == "remote_desktop_address":
+                    entry_width = 20
+                else:
+                    entry_width = 15
+
+                # honour any saved column resize
+                if col_index in column_widths and column_widths[col_index] > 50:
+                    entry_width = max(entry_width,
+                                    px_to_cols(column_widths[col_index]))
+
+                e = tk.Entry(self.node_list_frame, width=entry_width,
+                            font=('Helvetica', 10),
+                            bg=ColorConfig.current.ROW_BG_EVEN,
+                            fg=ColorConfig.current.ENTRY_TEXT,
+                            relief='solid', borderwidth=1,
+                            highlightthickness=0)
+                e.grid(row=1, column=col_index,
+                    padx=1, pady=3, ipady=3, sticky="nsew")
+
+                self.column_entries.setdefault(col_index, []).append(e)
+                new_node_entries.append(e)
+
+            add_btn = tk.Button(self.node_list_frame, text="➕ Add",
+                                command=add_new_node,
+                                bg=ColorConfig.current.BUTTON_BG,
+                                fg=ColorConfig.current.BUTTON_TEXT,
+                                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)
+            add_btn.grid(row=1, column=len(fields), padx=5)
+
             # Add header for existing nodes
             tk.Label(self.node_list_frame, text="Existing Nodes:", font=('Helvetica', 12, 'bold'),
                     bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
@@ -2551,50 +2596,7 @@ class NetworkMapGUI:
             # Sort all nodes
             self.nodes = sorted(self.nodes, key=get_sort_key, reverse=self.sort_reverse)
             rebuild_editor_content()
-
-            # ── Add “new node” row ───────────────────────────────────────────────────
-            tk.Label(self.node_list_frame, text="Add new node:", font=('Helvetica', 12, 'bold'),
-                    bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT) \
-            .grid(row=0, column=0, columnspan=len(fields) + 1, sticky="w", pady=5)
-
-            new_node_entries = []
-            for col_index, (label, attr) in enumerate(fields):
-                # default widths
-                if attr in ("x", "y"):
-                    entry_width = 6
-                elif attr in ("file_path", "web_config_url"):
-                    entry_width = 30
-                elif attr == "remote_desktop_address":
-                    entry_width = 20
-                else:
-                    entry_width = 15
-
-                # if the column was resized, match it
-                for w in self.node_list_frame.winfo_children():
-                    gi = w.grid_info()
-                    if gi and gi['row'] == 4 and gi['column'] == col_index and w.winfo_width() > 50:
-                        entry_width = max(entry_width, px_to_cols(w.winfo_width()))
-                        break
-
-                row_bg = ColorConfig.current.ROW_BG_EVEN
-                e = tk.Entry(self.node_list_frame, width=entry_width,
-                            font=('Helvetica', 10),
-                            bg=row_bg, fg=ColorConfig.current.ENTRY_TEXT,
-                            relief='solid', borderwidth=1, highlightthickness=0)
-                e.grid(row=1, column=col_index, padx=1, pady=3, ipady=3, sticky="nsew")
-
-                # track entries per column (used by the resizer)
-                self.column_entries.setdefault(col_index, []).append(e)
-                new_node_entries.append(e)
-
-            add_btn = tk.Button(self.node_list_frame, text="➕ Add", command=add_new_node,
-                                bg=ColorConfig.current.BUTTON_BG, fg=ColorConfig.current.BUTTON_TEXT,
-                                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)
-            add_btn.grid(row=1, column=len(fields), padx=5)
-            # ─────────────────────────────────────────────────────────────────────────
-
-            
+           
             # Add entry to column tracking
             if col_index in self.column_entries:
                 self.column_entries[col_index].append(entry)
