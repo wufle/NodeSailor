@@ -9,6 +9,7 @@ import socket
 import os
 import webbrowser
 import ctypes
+import math
 
 def get_ip_addresses():
     ip_addresses = []
@@ -2152,6 +2153,12 @@ class NetworkMapGUI:
         start_x = 0
         original_width = 0
         
+        # --- helper: convert pixels → character columns for this font ---
+        def px_to_cols(px, min_cols=3):
+            """Return the smallest Entry ‘width’ (in characters) that will fill ≥ px."""
+            glyph_px = self.custom_font.measure("0") or 8   # average width of one glyph
+            return max(min_cols, math.ceil(px / glyph_px))  #  <-  round **up**
+
         # Dictionary to store all Entry widgets for each column
         self.column_entries = {}
 
@@ -2217,6 +2224,9 @@ class NetworkMapGUI:
                         column_widths[col_index] = widget.winfo_width()
                         break
             
+            # let every data cell expand horizontally
+            self.node_list_frame.grid_columnconfigure(col_index, weight=1)
+
             # Only destroy the existing nodes table content
             for widget in self.node_list_frame.winfo_children():
                 if widget.grid_info()['row'] >= 3:  # Only destroy widgets in the existing nodes section
@@ -2247,7 +2257,7 @@ class NetworkMapGUI:
             # Create column headers with sorting indicators
             for col_index, (label, _) in enumerate(fields):
                 header_frame = tk.Frame(self.node_list_frame, bg=ColorConfig.current.HEADER_BG, highlightbackground=ColorConfig.current.CELL_BORDER, highlightthickness=1)
-                header_frame.grid(row=4, column=col_index, padx=1, pady=0, sticky="ew")
+                header_frame.grid(row=4, column=col_index, padx=1, pady=3, ipady=3, sticky="ew")
                 
                 header_label = tk.Label(
                     header_frame,
@@ -2258,6 +2268,9 @@ class NetworkMapGUI:
                 )
                 header_label.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
                 
+                # let every data cell expand horizontally
+                self.node_list_frame.grid_columnconfigure(col_index, weight=1)
+
                 # Add sorting indicator
                 if self.sort_column == col_index:
                     indicator = "▼" if self.sort_reverse else "▲"
@@ -2324,8 +2337,7 @@ class NetworkMapGUI:
                             self.node_list_frame.grid_columnconfigure(resizing_column, minsize=new_width)
                             
                             # Convert pixel width to character width for Entry widgets
-                            # Approximate conversion: 1 character ≈ 8 pixels for standard font
-                            char_width = max(3, int(new_width / 8))
+                            char_width = px_to_cols(new_width)
                             
                             # Update all Entry widgets in this column, including the "add new node row"
                             if resizing_column in self.column_entries:
@@ -2397,15 +2409,14 @@ class NetworkMapGUI:
                     # Alternating row background
                     row_bg = ColorConfig.current.ROW_BG_EVEN if (row_index % 2 == 0) else ColorConfig.current.ROW_BG_ODD
                     entry = tk.Entry(
-                        self.node_list_frame,
-                        width=entry_width,
-                        font=('Helvetica', 10),
-                        bg=row_bg,
-                        fg=ColorConfig.current.ENTRY_TEXT,
-                        relief='solid',
-                        borderwidth=1,
-                        highlightthickness=0
+                            self.node_list_frame,
+                            font=('Helvetica', 10),
+                            bg=row_bg,
+                            fg=ColorConfig.current.ENTRY_TEXT,
+                            relief='solid', borderwidth=1, highlightthickness=0
                     )
+                    entry.grid(row=row_index, column=col_index,
+                            padx=1, pady=3, ipady=3, sticky="nsew")
                     entry.insert(0, value_str)
                     entry.grid(row=row_index, column=col_index, padx=1, pady=3, ipady=3)
                     
@@ -2499,7 +2510,7 @@ class NetworkMapGUI:
                             
                     # Apply width to all entry widgets in this column
                     if col_index in self.column_entries:
-                        char_width = max(3, int(column_widths[col_index] / 8))
+                        char_width = px_to_cols(column_widths[col_index])
                         for entry in self.column_entries[col_index]:
                             if entry.winfo_exists():
                                 entry.config(width=char_width)
@@ -2541,45 +2552,48 @@ class NetworkMapGUI:
             self.nodes = sorted(self.nodes, key=get_sort_key, reverse=self.sort_reverse)
             rebuild_editor_content()
 
-        # Add "Add new node" row
-        tk.Label(self.node_list_frame, text="Add new node:", font=('Helvetica', 12, 'bold'),
-                bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
-                .grid(row=0, column=0, columnspan=len(fields)+1, sticky="w", pady=5)
+            # ── Add “new node” row ───────────────────────────────────────────────────
+            tk.Label(self.node_list_frame, text="Add new node:", font=('Helvetica', 12, 'bold'),
+                    bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT) \
+            .grid(row=0, column=0, columnspan=len(fields) + 1, sticky="w", pady=5)
 
-        # Create entry fields for new node
-        new_node_entries = []
-        for col_index, (label, attr) in enumerate(fields):
-            # Set column widths and formatting
-            if attr in ("x", "y"):
-                entry_width = 6
-            elif attr in ("file_path", "web_config_url"):
-                entry_width = 30
-            elif attr in ("remote_desktop_address"):
-                entry_width = 20
-            else:
-                entry_width = 15
-                
-            # Check if column has been resized and adjust entry width accordingly
-            for widget in self.node_list_frame.winfo_children():
-                grid_info = widget.grid_info()
-                if grid_info and grid_info['row'] == 4 and grid_info['column'] == col_index:
-                    if widget.winfo_width() > 50:  # If column has been resized
-                        # Convert pixel width to character width
-                        entry_width = max(entry_width, int(widget.winfo_width() / 8))
-                    break
-                    
-            row_bg = ColorConfig.current.ROW_BG_EVEN
-            entry = tk.Entry(
-                self.node_list_frame,
-                width=entry_width,
-                font=('Helvetica', 10),
-                bg=row_bg,
-                fg=ColorConfig.current.ENTRY_TEXT,
-                relief='solid',
-                borderwidth=1,
-                highlightthickness=0
-            )
-            entry.grid(row=1, column=col_index, padx=1, pady=3, ipady=3)
+            new_node_entries = []
+            for col_index, (label, attr) in enumerate(fields):
+                # default widths
+                if attr in ("x", "y"):
+                    entry_width = 6
+                elif attr in ("file_path", "web_config_url"):
+                    entry_width = 30
+                elif attr == "remote_desktop_address":
+                    entry_width = 20
+                else:
+                    entry_width = 15
+
+                # if the column was resized, match it
+                for w in self.node_list_frame.winfo_children():
+                    gi = w.grid_info()
+                    if gi and gi['row'] == 4 and gi['column'] == col_index and w.winfo_width() > 50:
+                        entry_width = max(entry_width, px_to_cols(w.winfo_width()))
+                        break
+
+                row_bg = ColorConfig.current.ROW_BG_EVEN
+                e = tk.Entry(self.node_list_frame, width=entry_width,
+                            font=('Helvetica', 10),
+                            bg=row_bg, fg=ColorConfig.current.ENTRY_TEXT,
+                            relief='solid', borderwidth=1, highlightthickness=0)
+                e.grid(row=1, column=col_index, padx=1, pady=3, ipady=3, sticky="nsew")
+
+                # track entries per column (used by the resizer)
+                self.column_entries.setdefault(col_index, []).append(e)
+                new_node_entries.append(e)
+
+            add_btn = tk.Button(self.node_list_frame, text="➕ Add", command=add_new_node,
+                                bg=ColorConfig.current.BUTTON_BG, fg=ColorConfig.current.BUTTON_TEXT,
+                                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)
+            add_btn.grid(row=1, column=len(fields), padx=5)
+            # ─────────────────────────────────────────────────────────────────────────
+
             
             # Add entry to column tracking
             if col_index in self.column_entries:
