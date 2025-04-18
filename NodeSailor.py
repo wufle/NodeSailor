@@ -2208,6 +2208,15 @@ class NetworkMapGUI:
         self.list_editor_xy_fields = {}
 
         def rebuild_editor_content():
+            # Store current column widths before destroying widgets
+            column_widths = {}
+            for col_index in range(len(fields)):
+                for widget in self.node_list_frame.winfo_children():
+                    grid_info = widget.grid_info()
+                    if grid_info and grid_info['row'] == 4 and grid_info['column'] == col_index:
+                        column_widths[col_index] = widget.winfo_width()
+                        break
+            
             # Only destroy the existing nodes table content
             for widget in self.node_list_frame.winfo_children():
                 if widget.grid_info()['row'] >= 3:  # Only destroy widgets in the existing nodes section
@@ -2215,6 +2224,20 @@ class NetworkMapGUI:
             
             # Reset column entries tracking
             self.column_entries = {col_index: [] for col_index in range(len(fields))}
+            
+            # Update "add new node row" entries with stored column widths
+            for col_index in range(len(fields)):
+                if col_index in column_widths and column_widths[col_index] > 50:
+                    for widget in self.node_list_frame.winfo_children():
+                        grid_info = widget.grid_info()
+                        if grid_info and grid_info['row'] == 1 and grid_info['column'] == col_index:
+                            if isinstance(widget, tk.Entry):
+                                # Convert pixel width to character width
+                                char_width = max(3, int(column_widths[col_index] / 8))
+                                widget.config(width=char_width)
+                                # Add to column entries tracking
+                                if col_index in self.column_entries:
+                                    self.column_entries[col_index].append(widget)
             
             # Add header for existing nodes
             tk.Label(self.node_list_frame, text="Existing Nodes:", font=('Helvetica', 12, 'bold'),
@@ -2300,18 +2323,22 @@ class NetworkMapGUI:
                             header_frame.config(width=new_width)
                             self.node_list_frame.grid_columnconfigure(resizing_column, minsize=new_width)
                             
-                            # Update all Entry widgets in this column
+                            # Convert pixel width to character width for Entry widgets
+                            # Approximate conversion: 1 character ≈ 8 pixels for standard font
+                            char_width = max(3, int(new_width / 8))
+                            
+                            # Update all Entry widgets in this column, including the "add new node row"
                             if resizing_column in self.column_entries:
-                                # Convert pixel width to character width for Entry widgets
-                                # Approximate conversion: 1 character ≈ 8 pixels for standard font
-                                char_width = max(3, int(new_width / 8))
-                                
                                 for entry in self.column_entries[resizing_column]:
                                     if entry.winfo_exists():
                                         entry.config(width=char_width)
                             
                             # Force update of the UI
                             self.node_list_frame.update_idletasks()
+                            
+                # Apply stored column width to the grid column configuration
+                if col_index in column_widths and column_widths[col_index] > 50:
+                    self.node_list_frame.grid_columnconfigure(col_index, minsize=column_widths[col_index])
 
                 def end_resize(event):
                     global resizing_column
@@ -2460,6 +2487,22 @@ class NetworkMapGUI:
 
                 btn = tk.Button(self.node_list_frame, text="🗑", fg="red", command=delete_node_callback())
                 btn.grid(row=row_index, column=len(fields), padx=5)
+                
+            # Apply stored column widths to all rows after rebuilding
+            for col_index in range(len(fields)):
+                if col_index in column_widths and column_widths[col_index] > 50:
+                    # Apply width to header frames
+                    for widget in self.node_list_frame.winfo_children():
+                        grid_info = widget.grid_info()
+                        if grid_info and grid_info['row'] == 4 and grid_info['column'] == col_index:
+                            widget.config(width=column_widths[col_index])
+                            
+                    # Apply width to all entry widgets in this column
+                    if col_index in self.column_entries:
+                        char_width = max(3, int(column_widths[col_index] / 8))
+                        for entry in self.column_entries[col_index]:
+                            if entry.winfo_exists():
+                                entry.config(width=char_width)
 
         # Initialize the fields list
         fields = [
@@ -2515,6 +2558,16 @@ class NetworkMapGUI:
                 entry_width = 20
             else:
                 entry_width = 15
+                
+            # Check if column has been resized and adjust entry width accordingly
+            for widget in self.node_list_frame.winfo_children():
+                grid_info = widget.grid_info()
+                if grid_info and grid_info['row'] == 4 and grid_info['column'] == col_index:
+                    if widget.winfo_width() > 50:  # If column has been resized
+                        # Convert pixel width to character width
+                        entry_width = max(entry_width, int(widget.winfo_width() / 8))
+                    break
+                    
             row_bg = ColorConfig.current.ROW_BG_EVEN
             entry = tk.Entry(
                 self.node_list_frame,
