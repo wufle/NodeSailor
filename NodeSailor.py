@@ -1218,7 +1218,7 @@ class NetworkMapGUI:
         text_area.pack(fill=tk.BOTH, expand=True)
 
         help_lines = [
-            ("NodeSailor v0.9.16- Help\n", "title"),
+            ("NodeSailor v0.9.17- Help\n", "title"),
             ("\nOverview:\n", "header"),
             ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, RDP and more with the implementation of custom commands.\n", "text"),
             
@@ -1401,7 +1401,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="Nodesailor v0.9.16", bg=ColorConfig.current.FRAME_BG,
+            title_label = tk.Label(title_bar, text="Nodesailor v0.9.17", bg=ColorConfig.current.FRAME_BG,
                                 fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
@@ -2203,7 +2203,7 @@ class NetworkMapGUI:
             for widget in self.node_list_frame.winfo_children():
                 if widget.grid_info()['row'] >= 3:  # Only destroy widgets in the existing nodes section
                     widget.destroy()
-
+            
             # Add header for existing nodes
             tk.Label(self.node_list_frame, text="Existing Nodes:", font=('Helvetica', 12, 'bold'),
                     bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
@@ -2220,7 +2220,6 @@ class NetworkMapGUI:
                     font=('Helvetica', 10, 'bold'),
                     bg=ColorConfig.current.HEADER_BG,
                     fg=ColorConfig.current.HEADER_TEXT,
-                    padx=6, pady=6
                 )
                 header_label.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
                 
@@ -2235,6 +2234,7 @@ class NetworkMapGUI:
                 header_frame.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
                 header_label.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
 
+            # Add delete button     
             tk.Label(self.node_list_frame, text="Delete", font=('Helvetica', 10, 'bold'),
                     bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
                     .grid(row=4, column=len(fields), padx=5)
@@ -2258,14 +2258,17 @@ class NetworkMapGUI:
                     value = getattr(node, attr)
                     # Set column widths
                     if attr in ("x", "y"):
-                        entry_width = 8
-                        # Format to 2 decimal places if possible
+                        entry_width = 6
+                        # Format to 0 decimal places if possible
                         try:
-                            value_str = "{:.2f}".format(float(value))
+                            value_str = "{:.0f}".format(float(value))
                         except (ValueError, TypeError):
                             value_str = str(value)
                     elif attr in ("file_path", "web_config_url"):
                         entry_width = 30
+                        value_str = str(value)
+                    elif attr == "remote_desktop_address":
+                        entry_width = 20
                         value_str = str(value)
                     else:
                         entry_width = 15
@@ -2363,11 +2366,11 @@ class NetworkMapGUI:
         # Initialize the fields list
         fields = [
             ("Name", "name"),
-            ("VLAN 100", "VLAN_100"),
-            ("VLAN 200", "VLAN_200"),
-            ("VLAN 300", "VLAN_300"),
-            ("VLAN 400", "VLAN_400"),
-            ("Remote Desktop", "remote_desktop_address"),
+            (self.vlan_label_names["VLAN_100"], "VLAN_100"),
+            (self.vlan_label_names["VLAN_200"], "VLAN_200"),
+            (self.vlan_label_names["VLAN_300"], "VLAN_300"),
+            (self.vlan_label_names["VLAN_400"], "VLAN_400"),
+            ("RDP Address", "remote_desktop_address"),
             ("File Path", "file_path"),
             ("Web URL", "web_config_url"),
             ("X", "x"),
@@ -2407,9 +2410,11 @@ class NetworkMapGUI:
         for col_index, (label, attr) in enumerate(fields):
             # Set column widths and formatting
             if attr in ("x", "y"):
-                entry_width = 8
+                entry_width = 6
             elif attr in ("file_path", "web_config_url"):
                 entry_width = 30
+            elif attr in ("remote_desktop_address"):
+                entry_width = 20
             else:
                 entry_width = 15
             row_bg = ColorConfig.current.ROW_BG_EVEN
