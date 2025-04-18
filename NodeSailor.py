@@ -917,6 +917,7 @@ class NetworkMapGUI:
         self.legend_window.geometry(f"+{x}+{y}")
 
     def start_resize(self, event):
+        print(f"start_resize: Column {self.resizing_column} resizing started at x={event.x}, y={event.y}")
         self.start_x = event.x_root
         self.start_y = event.y_root
         self.initial_width = self.root.winfo_width()
@@ -2145,6 +2146,14 @@ class NetworkMapGUI:
         self.node_list_editor = win
         win.lift(self.root)
         win.attributes("-topmost", True)
+        # Initialize global variables for column resizing
+        global resizing_column, start_x, original_width
+        resizing_column = None
+        start_x = 0
+        original_width = 0
+        
+        # Dictionary to store all Entry widgets for each column
+        self.column_entries = {}
 
         # Add refresh button at the top
         button_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
@@ -2204,6 +2213,9 @@ class NetworkMapGUI:
                 if widget.grid_info()['row'] >= 3:  # Only destroy widgets in the existing nodes section
                     widget.destroy()
             
+            # Reset column entries tracking
+            self.column_entries = {col_index: [] for col_index in range(len(fields))}
+            
             # Add header for existing nodes
             tk.Label(self.node_list_frame, text="Existing Nodes:", font=('Helvetica', 12, 'bold'),
                     bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
@@ -2227,12 +2239,94 @@ class NetworkMapGUI:
                 if self.sort_column == col_index:
                     indicator = "▼" if self.sort_reverse else "▲"
                     indicator_label = tk.Label(header_frame, text=indicator, font=('Helvetica', 10, 'bold'),
-                            bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
-                    indicator_label.pack(side=tk.LEFT, padx=2)
+                    		bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+                    indicator_label.pack(side=tk.RIGHT, padx=2)
                 
                 # Make header clickable
                 header_frame.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
                 header_label.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
+
+                # Add column divider for resizing
+                divider = tk.Frame(header_frame, width=4, bg='#666666', cursor="sb_h_double_arrow") # Increased width and changed color for better visibility
+                print(f"Divider widget type: {type(divider)}")
+                divider.pack(side=tk.RIGHT, fill=tk.Y, pady=2) # Added padding and ensure it fills vertical space
+
+                def start_resize(event, col=col_index):
+                    print(f"start_resize called with col={col}, event.x={event.x}")
+                    global resizing_column, start_x, original_width
+                    print(f"Before assignment: resizing_column={resizing_column if 'resizing_column' in globals() else 'not defined'}")
+                    resizing_column = col
+                    start_x = event.x
+                    
+                    # Find the header frame to get its original width
+                    for widget in self.node_list_frame.winfo_children():
+                        grid_info = widget.grid_info()
+                        if grid_info and grid_info['row'] == 4 and grid_info['column'] == col:
+                            original_width = widget.winfo_width()
+                            break
+                    
+                    print(f"After assignment: resizing_column={resizing_column}, start_x={start_x}, original_width={original_width}")
+                    print(f"node_list_frame type: {type(self.node_list_frame)}, widget exists: {self.node_list_frame.winfo_exists()}")
+                    
+                    # Bind to the entire window for better mouse tracking
+                    self.node_list_editor.bind("<B1-Motion>", resize_column)
+                    self.node_list_editor.bind("<ButtonRelease-1>", end_resize)
+                    print(f"Event bindings set for resize on the entire window for better tracking")
+
+                def resize_column(event):
+                    print(f"resize_column CALLED: Mouse motion at x={event.x}")
+                    global start_x, original_width
+                    print(f"resize_column: resizing_column={resizing_column if 'resizing_column' in globals() else 'not defined'}")
+                    if resizing_column is not None:
+                        # Calculate total delta from the original position
+                        total_delta = event.x - start_x
+                        print(f"resize_column: total_delta={total_delta}, start_x={start_x}")
+                        
+                        # Find the header frame
+                        for widget in self.node_list_frame.winfo_children():
+                            grid_info = widget.grid_info()
+                            if grid_info and grid_info['row'] == 4 and grid_info['column'] == resizing_column:
+                                header_frame = widget
+                                break
+                        else:
+                            return  # No header frame found in this column
+
+                        # Calculate new width based on original width plus total delta
+                        new_width = original_width + total_delta
+                        print(f"resize_column: original_width={original_width}, new_width={new_width}")
+                        
+                        if new_width > 50:  # Minimum width
+                            # Apply the new width to both the header frame and the grid column
+                            header_frame.config(width=new_width)
+                            self.node_list_frame.grid_columnconfigure(resizing_column, minsize=new_width)
+                            
+                            # Update all Entry widgets in this column
+                            if resizing_column in self.column_entries:
+                                # Convert pixel width to character width for Entry widgets
+                                # Approximate conversion: 1 character ≈ 8 pixels for standard font
+                                char_width = max(3, int(new_width / 8))
+                                
+                                for entry in self.column_entries[resizing_column]:
+                                    if entry.winfo_exists():
+                                        entry.config(width=char_width)
+                            
+                            # Force update of the UI
+                            self.node_list_frame.update_idletasks()
+
+                def end_resize(event):
+                    global resizing_column
+                    print(f"end_resize: Resizing ended for column {resizing_column}")
+                    
+                    # Unbind the motion and release events
+                    if resizing_column is not None:
+                        self.node_list_editor.unbind("<B1-Motion>")
+                        self.node_list_editor.unbind("<ButtonRelease-1>")
+                    
+                    resizing_column = None
+                    print(f"Resize ended, resizing_column set to None")
+
+                print(f"Binding <ButtonPress-1> to divider for column {col_index}")
+                divider.bind("<ButtonPress-1>", lambda event, col=col_index: print(f"Lambda for column {col} triggered") or start_resize(event, col))
 
             # Add delete button     
             tk.Label(self.node_list_frame, text="Delete", font=('Helvetica', 10, 'bold'),
@@ -2287,6 +2381,10 @@ class NetworkMapGUI:
                     )
                     entry.insert(0, value_str)
                     entry.grid(row=row_index, column=col_index, padx=1, pady=3, ipady=3)
+                    
+                    # Add entry to column tracking
+                    if col_index in self.column_entries:
+                        self.column_entries[col_index].append(entry)
                     # Focus highlight
                     def on_focus_in(event, e=entry):
                         e.config(bg=ColorConfig.current.ENTRY_FOCUS_BG)
@@ -2429,6 +2527,10 @@ class NetworkMapGUI:
                 highlightthickness=0
             )
             entry.grid(row=1, column=col_index, padx=1, pady=3, ipady=3)
+            
+            # Add entry to column tracking
+            if col_index in self.column_entries:
+                self.column_entries[col_index].append(entry)
             # Focus highlight
             def on_focus_in(event, e=entry):
                 e.config(bg=ColorConfig.current.ENTRY_FOCUS_BG)
