@@ -586,6 +586,20 @@ class ConnectionLine:
         self.update_label()
 
 class NetworkMapGUI:
+    def _setup_scrollbar_styles(self):
+        style = ttk.Style()
+        theme = "Dark" if ColorConfig.current == ColorConfig.Dark else "Light"
+        style.configure(f"{theme}Scrollbar.Vertical.TScrollbar",
+                        troughcolor=ColorConfig.current.FRAME_BG,
+                        background=ColorConfig.current.BUTTON_BG,
+                        bordercolor=ColorConfig.current.BORDER_COLOR,
+                        arrowcolor=ColorConfig.current.BUTTON_TEXT)
+        style.configure(f"{theme}Scrollbar.Horizontal.TScrollbar",
+                        troughcolor=ColorConfig.current.FRAME_BG,
+                        background=ColorConfig.current.BUTTON_BG,
+                        bordercolor=ColorConfig.current.BORDER_COLOR,
+                        arrowcolor=ColorConfig.current.BUTTON_TEXT)
+
     def __init__(self, root):
         self.root = root
         self.load_window_geometry()  # Load saved window size and position
@@ -601,6 +615,8 @@ class NetworkMapGUI:
             'VLAN_300': 'VLAN_300',
             'VLAN_400': 'VLAN_400'
         }
+        # Setup custom scrollbar styles for current theme
+        self._setup_scrollbar_styles()
         
         # Load custom commands
         self.custom_commands = self.load_custom_commands()
@@ -2178,11 +2194,10 @@ class NetworkMapGUI:
         container.pack(fill="both", expand=True)
 
         canvas = tk.Canvas(container, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
-        v_scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
-        h_scrollbar = tk.Scrollbar(container, orient="horizontal", command=canvas.xview)
-        canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+        theme = "Dark" if ColorConfig.current == ColorConfig.Dark else "Light"
+        v_scrollbar = ttk.Scrollbar(container, orient="vertical", style=f"{theme}Scrollbar.Vertical.TScrollbar", command=canvas.yview)
+        canvas.configure(yscrollcommand=v_scrollbar.set)
         v_scrollbar.pack(side="right", fill="y")
-        h_scrollbar.pack(side="bottom", fill="x")
         self.node_list_frame = tk.Frame(canvas, bg=ColorConfig.current.FRAME_BG)
 
         self.node_list_frame.bind(
@@ -2206,12 +2221,10 @@ class NetworkMapGUI:
         canvas.bind("<Configure>", resize_canvas)
 
         canvas.configure(yscrollcommand=v_scrollbar.set)
-        canvas.configure(xscrollcommand=h_scrollbar.set)
 
         canvas.pack(side="left", fill="both", expand=True)
         container.pack(fill="both", expand=True)
         v_scrollbar.pack(side="right", fill="y")
-        h_scrollbar.pack(side="bottom", fill="x")
 
         self.list_editor_xy_fields = {}
 
@@ -2747,13 +2760,10 @@ class NetworkMapGUI:
         container.pack(fill="both", expand=True)
 
         canvas = tk.Canvas(container, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
-        v_scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
-        h_scrollbar = tk.Scrollbar(container, orient="horizontal", command=canvas.xview)
-
-        canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
-
+        theme = "Dark" if ColorConfig.current == ColorConfig.Dark else "Light"
+        v_scrollbar = ttk.Scrollbar(container, orient="vertical", style=f"{theme}Scrollbar.Vertical.TScrollbar", command=canvas.yview)
+        canvas.configure(yscrollcommand=v_scrollbar.set)
         v_scrollbar.pack(side="right", fill="y")
-        h_scrollbar.pack(side="bottom", fill="x")
         canvas.pack(side="left", fill="both", expand=True)
 
         self.connection_list_frame = tk.Frame(canvas, bg=ColorConfig.current.FRAME_BG)
@@ -2835,6 +2845,8 @@ class NetworkMapGUI:
     
     def update_ui_colors(self):
         """Update all UI colors when the theme changes."""
+        # Update scrollbar styles (re-apply for current theme)
+        self._setup_scrollbar_styles()
         # Root window
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
 
