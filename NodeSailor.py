@@ -2314,21 +2314,21 @@ class NetworkMapGUI:
                 # let every data cell expand horizontally
                 #self.node_list_frame.grid_columnconfigure(col_index, weight=1)
 
-                # Add sorting indicator
+                # Add column divider for resizing (always at the far right)
+                divider = tk.Frame(header_frame, width=4, bg='#666666', cursor="sb_h_double_arrow") # Increased width and changed color for better visibility
+                print(f"Divider widget type: {type(divider)}")
+                divider.pack(side=tk.RIGHT, fill=tk.Y, pady=2) # Ensure divider is at the far right
+
+                # Add sorting indicator (just left of divider if present)
                 if self.sort_column == col_index:
                     indicator = "▼" if self.sort_reverse else "▲"
                     indicator_label = tk.Label(header_frame, text=indicator, font=('Helvetica', 10, 'bold'),
-                    		bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+                                              bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
                     indicator_label.pack(side=tk.RIGHT, padx=2)
-                
+
                 # Make header clickable
                 header_frame.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
                 header_label.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
-
-                # Add column divider for resizing
-                divider = tk.Frame(header_frame, width=4, bg='#666666', cursor="sb_h_double_arrow") # Increased width and changed color for better visibility
-                print(f"Divider widget type: {type(divider)}")
-                divider.pack(side=tk.RIGHT, fill=tk.Y, pady=2) # Added padding and ensure it fills vertical space
 
                 def start_resize(event, col=col_index):
                     print(f"start_resize called with col={col}, event.x={event.x}")
