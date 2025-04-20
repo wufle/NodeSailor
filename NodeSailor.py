@@ -2411,9 +2411,16 @@ class NetworkMapGUI:
                 divider.bind("<ButtonPress-1>", lambda event, col=col_index: print(f"Lambda for column {col} triggered") or start_resize(event, col))
 
             # Add delete button     
-            tk.Label(self.node_list_frame, text="Delete", font=('Helvetica', 10, 'bold'),
-                    bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
-                    .grid(row=4, column=len(fields), padx=5)
+            header_label = tk.Label(
+                self.node_list_frame,
+                text="Delete",
+                font=('Helvetica', 10, 'bold'),
+                bg=ColorConfig.current.HEADER_BG,
+                fg=ColorConfig.current.HEADER_TEXT,
+                padx=8, pady=4, borderwidth=1, relief='solid',
+            )
+            header_label.grid(row=4, column=len(fields), padx=1, pady=1, sticky="nsew")
+            self.node_list_frame.grid_columnconfigure(len(fields), weight=1, minsize=80)
 
             # Use the current sort order
             if self.sort_column is not None:
@@ -2539,8 +2546,16 @@ class NetworkMapGUI:
                         rebuild_editor_content()
                     return delete
 
-                btn = tk.Button(self.node_list_frame, text="🗑", fg="red", command=delete_node_callback())
-                btn.grid(row=row_index, column=len(fields), padx=5)
+                del_btn = tk.Button(
+                    self.node_list_frame,
+                    text="🗑",
+                    fg="red",
+                    bg=row_bg,
+                    borderwidth=1,
+                    relief='solid',
+                    command=delete_node_callback(node)
+                )
+                del_btn.grid(row=row_index, column=len(fields), padx=1, pady=1, sticky="nsew")
                 
             # Apply stored column widths to all rows after rebuilding
             for col_index in range(len(fields)):
