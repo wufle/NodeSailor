@@ -2715,7 +2715,6 @@ class NetworkMapGUI:
         self.connection_list_frame.bind("<Configure>", resize_canvas)
         canvas.bind("<Configure>", resize_canvas)
 
-
         def rebuild_editor_content():
             for widget in self.connection_list_frame.winfo_children():
                 widget.destroy()
@@ -2733,18 +2732,19 @@ class NetworkMapGUI:
                         connections.add(conn)
 
             for row_index, conn in enumerate(connections, start=1):
+                row_bg = ColorConfig.current.ROW_BG_EVEN if row_index % 2 == 0 else ColorConfig.current.ROW_BG_ODD
                 tk.Label(self.connection_list_frame, text=conn.node1.name,
-                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
-                    .grid(row=row_index, column=0, padx=5)
+                        bg=row_bg, fg=ColorConfig.current.BUTTON_TEXT).grid(row=row_index, column=0, padx=5)
                 tk.Label(self.connection_list_frame, text=conn.node2.name,
-                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
-                    .grid(row=row_index, column=1, padx=5)
+                        bg=row_bg, fg=ColorConfig.current.BUTTON_TEXT).grid(row=row_index, column=1, padx=5)
 
-                label_entry = tk.Entry(self.connection_list_frame, width=30)
+                label_entry = tk.Entry(self.connection_list_frame, width=30, bg=row_bg, fg=ColorConfig.current.BUTTON_TEXT,
+                                      insertbackground=ColorConfig.current.BUTTON_TEXT)
                 label_entry.insert(0, conn.label or "")
                 label_entry.grid(row=row_index, column=2, padx=5)
 
-                info_entry = tk.Entry(self.connection_list_frame, width=50)
+                info_entry = tk.Entry(self.connection_list_frame, width=50, bg=row_bg, fg=ColorConfig.current.BUTTON_TEXT,
+                                     insertbackground=ColorConfig.current.BUTTON_TEXT)
                 info_entry.insert(0, conn.connectioninfo or "")
                 info_entry.grid(row=row_index, column=3, padx=5)
 
@@ -2770,12 +2770,11 @@ class NetworkMapGUI:
                     self.unsaved_changes = True
                     rebuild_editor_content()
 
-                tk.Button(self.connection_list_frame, text="🗑", fg="red", command=lambda c=conn: delete_conn(c))\
-                    .grid(row=row_index, column=4, padx=5)
+                tk.Button(self.connection_list_frame, text="🗑", fg="red", bg=row_bg, command=lambda c=conn: delete_conn(c)).grid(row=row_index, column=4, padx=5)
 
+        # Call the function immediately after it is defined
         rebuild_editor_content()
-        self.fix_window_geometry(self.connection_list_editor, 1200, 700)
-
+    
     def update_ui_colors(self):
         """Update all UI colors when the theme changes."""
         # Root window
