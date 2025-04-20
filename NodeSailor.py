@@ -2143,7 +2143,7 @@ class NetworkMapGUI:
             self.node_list_editor.destroy()
             self.node_list_editor = None
 
-        win, content = self.create_popup("Node List Editor", 1000, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
+        win, content = self.create_popup("Node List Editor", 1100, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
         self.node_list_editor = win
         win.lift(self.root)
         win.attributes("-topmost", True)
@@ -2218,11 +2218,18 @@ class NetworkMapGUI:
         def rebuild_editor_content():
             # Store current column widths before destroying widgets
             column_widths = {}
-            for col_index in range(len(fields)):
-                # pull the grid's current minsize (falls back to widget width once)
-                cfg = self.node_list_frame.grid_columnconfigure(col_index)
-                w = cfg.get('minsize', 0) or  self.node_list_frame.winfo_reqwidth()
-                column_widths[col_index] = max(50, w)
+            for col_index, (label, attr) in enumerate(fields):
+                if attr in ("x", "y"):
+                    entry_width = 2
+                elif attr in ("file_path", "web_config_url"):
+                    entry_width = 15
+                elif attr == "remote_desktop_address":
+                    entry_width = 10
+                else:
+                    entry_width = 9
+                glyph_px = self.custom_font.measure("0") or 8
+                initial_width = entry_width * glyph_px + 10
+                column_widths[col_index] = initial_width
             
             # Only destroy the existing nodes table content
             for widget in self.node_list_frame.winfo_children():
@@ -2261,7 +2268,7 @@ class NetworkMapGUI:
                 if attr in ("x", "y"):
                     entry_width = 4
                 elif attr in ("file_path", "web_config_url"):
-                    entry_width = 30
+                    entry_width = 60
                 elif attr == "remote_desktop_address":
                     entry_width = 20
                 else:
@@ -2283,6 +2290,40 @@ class NetworkMapGUI:
 
                 self.column_entries.setdefault(col_index, []).append(e)
                 new_node_entries.append(e)
+
+            def add_new_node():
+                # Get values from entries
+                values = {fields[i][1]: entry.get() for i, entry in enumerate(new_node_entries)}
+                
+                # Set default values if not provided
+                name = values.get('name', 'NewNode')
+                try:
+                    x = float(values.get('x', '100')) if values.get('x') else 100
+                    y = float(values.get('y', '100')) if values.get('y') else 100
+                except ValueError:
+                    x, y = 100, 100  # Default values if conversion fails
+                
+                # Create new node
+                new_node = NetworkNode(self.canvas, name=name, x=x, y=y,
+                                    VLAN_100=values.get('VLAN_100', ''),
+                                    VLAN_200=values.get('VLAN_200', ''),
+                                    VLAN_300=values.get('VLAN_300', ''),
+                                    VLAN_400=values.get('VLAN_400', ''),
+                                    remote_desktop_address=values.get('remote_desktop_address', ''),
+                                    file_path=values.get('file_path', ''),
+                                    web_config_url=values.get('web_config_url', ''))
+                
+                # Add to nodes list
+                self.nodes.append(new_node)
+                self.on_node_select(new_node)
+                self.unsaved_changes = True
+                
+                # Clear entry fields
+                for entry in new_node_entries:
+                    entry.delete(0, tk.END)
+                
+                # Rebuild the editor content
+                rebuild_editor_content()
 
             add_btn = tk.Button(self.node_list_frame, text="➕ Add",
                                 command=add_new_node,
@@ -2436,7 +2477,7 @@ class NetworkMapGUI:
                         except (ValueError, TypeError):
                             value_str = str(value)
                     elif attr in ("file_path", "web_config_url"):
-                        entry_width = 30
+                        entry_width = 60
                         value_str = str(value)
                     elif attr == "remote_desktop_address":
                         entry_width = 20
@@ -2451,7 +2492,8 @@ class NetworkMapGUI:
                             font=('Helvetica', 10),
                             bg=row_bg,
                             fg=ColorConfig.current.ENTRY_TEXT,
-                            relief='solid', borderwidth=1, highlightthickness=0
+                            relief='solid', borderwidth=1, highlightthickness=0,
+                            width=entry_width
                     )
                     entry.grid(row=row_index, column=col_index,
                             padx=1, pady=3, ipady=3, sticky="nsew")
