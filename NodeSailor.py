@@ -2721,9 +2721,16 @@ class NetworkMapGUI:
 
             headers = ["From", "To", "Label", "Info", "Delete"]
             for i, h in enumerate(headers):
-                tk.Label(self.connection_list_frame, text=h, font=('Helvetica', 10, 'bold'),
-                        bg=ColorConfig.current.FRAME_BG,
-                        fg=ColorConfig.current.BUTTON_TEXT).grid(row=0, column=i, padx=5, pady=2)
+                header_label = tk.Label(
+                    self.connection_list_frame,
+                    text=h,
+                    font=('Helvetica', 10, 'bold'),
+                    bg=ColorConfig.current.HEADER_BG,
+                    fg=ColorConfig.current.HEADER_TEXT,
+                    padx=8, pady=4, borderwidth=1, relief='solid',
+                )
+                header_label.grid(row=0, column=i, padx=1, pady=1, sticky="nsew")
+                self.connection_list_frame.grid_columnconfigure(i, weight=1, minsize=80)
 
             connections = set()
             for node in self.nodes:
@@ -2734,19 +2741,19 @@ class NetworkMapGUI:
             for row_index, conn in enumerate(connections, start=1):
                 row_bg = ColorConfig.current.ROW_BG_EVEN if row_index % 2 == 0 else ColorConfig.current.ROW_BG_ODD
                 tk.Label(self.connection_list_frame, text=conn.node1.name,
-                        bg=row_bg, fg=ColorConfig.current.BUTTON_TEXT).grid(row=row_index, column=0, padx=5)
+                        bg=row_bg, fg=ColorConfig.current.BUTTON_TEXT, padx=8, pady=4, borderwidth=1, relief='solid').grid(row=row_index, column=0, padx=1, pady=1, sticky="nsew")
                 tk.Label(self.connection_list_frame, text=conn.node2.name,
-                        bg=row_bg, fg=ColorConfig.current.BUTTON_TEXT).grid(row=row_index, column=1, padx=5)
+                        bg=row_bg, fg=ColorConfig.current.BUTTON_TEXT, padx=8, pady=4, borderwidth=1, relief='solid').grid(row=row_index, column=1, padx=1, pady=1, sticky="nsew")
 
-                label_entry = tk.Entry(self.connection_list_frame, width=30, bg=row_bg, fg=ColorConfig.current.BUTTON_TEXT,
-                                      insertbackground=ColorConfig.current.BUTTON_TEXT)
+                label_entry = tk.Entry(self.connection_list_frame, width=30, bg=row_bg, fg=ColorConfig.current.ENTRY_TEXT,
+                                      insertbackground=ColorConfig.current.ENTRY_TEXT, borderwidth=1, relief='solid')
                 label_entry.insert(0, conn.label or "")
-                label_entry.grid(row=row_index, column=2, padx=5)
+                label_entry.grid(row=row_index, column=2, padx=1, pady=1, sticky="nsew")
 
-                info_entry = tk.Entry(self.connection_list_frame, width=50, bg=row_bg, fg=ColorConfig.current.BUTTON_TEXT,
-                                     insertbackground=ColorConfig.current.BUTTON_TEXT)
+                info_entry = tk.Entry(self.connection_list_frame, width=50, bg=row_bg, fg=ColorConfig.current.ENTRY_TEXT,
+                                     insertbackground=ColorConfig.current.ENTRY_TEXT, borderwidth=1, relief='solid')
                 info_entry.insert(0, conn.connectioninfo or "")
-                info_entry.grid(row=row_index, column=3, padx=5)
+                info_entry.grid(row=row_index, column=3, padx=1, pady=1, sticky="nsew")
 
                 def make_update_callback(c=conn, le=label_entry, ie=info_entry):
                     def update_fields(event=None):
@@ -2770,7 +2777,7 @@ class NetworkMapGUI:
                     self.unsaved_changes = True
                     rebuild_editor_content()
 
-                tk.Button(self.connection_list_frame, text="🗑", fg="red", bg=row_bg, command=lambda c=conn: delete_conn(c)).grid(row=row_index, column=4, padx=5)
+                tk.Button(self.connection_list_frame, text="🗑", fg="red", bg=row_bg, borderwidth=1, relief='solid', command=lambda c=conn: delete_conn(c)).grid(row=row_index, column=4, padx=1, pady=1, sticky="nsew")
 
         # Call the function immediately after it is defined
         rebuild_editor_content()
