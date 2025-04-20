@@ -2309,7 +2309,7 @@ class NetworkMapGUI:
                     bg=ColorConfig.current.HEADER_BG,
                     fg=ColorConfig.current.HEADER_TEXT,
                 )
-                header_label.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+                header_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
                 
                 # let every data cell expand horizontally
                 #self.node_list_frame.grid_columnconfigure(col_index, weight=1)
@@ -2353,47 +2353,32 @@ class NetworkMapGUI:
                     print(f"Event bindings set for resize on the entire window for better tracking")
 
                 def resize_column(event):
-                    print(f"resize_column CALLED: Mouse motion at x={event.x}")
-                    global start_x, original_width
-                    print(f"resize_column: resizing_column={resizing_column if 'resizing_column' in globals() else 'not defined'}")
-                    if resizing_column is not None:
-                        # Calculate total delta from the original position
-                        total_delta = event.x - start_x
-                        print(f"resize_column: total_delta={total_delta}, start_x={start_x}")
-                        
-                        # Find the header frame
-                        for widget in self.node_list_frame.winfo_children():
-                            grid_info = widget.grid_info()
-                            if grid_info and grid_info['row'] == 4 and grid_info['column'] == resizing_column:
-                                header_frame = widget
-                                break
-                        else:
-                            return  # No header frame found in this column
+                    """Live column‑drag with minimal redraw/flicker."""
+                    global start_x, original_width, resizing_column
+                    if resizing_column is None:
+                        return
 
-                        # Calculate new width based on original width plus total delta
-                        new_width = original_width + total_delta
-                        print(f"resize_column: original_width={original_width}, new_width={new_width}")
-                        
-                        if new_width > 50:  # Minimum width
-                            # Apply the new width to both the header frame and the grid column
-                            header_frame.config(width=new_width)
-                            self.node_list_frame.grid_columnconfigure(resizing_column, minsize=new_width)
-                            
-                            # Convert pixel width to character width for Entry widgets
-                            char_width = px_to_cols(new_width)
-                            
-                            # Update all Entry widgets in this column, including the "add new node row"
-                            if resizing_column in self.column_entries:
-                                for entry in self.column_entries[resizing_column]:
-                                    if entry.winfo_exists():
-                                        entry.config(width=char_width)
-                            
-                            # Force update of the UI
-                            self.node_list_frame.update_idletasks()
-                            
-                # Apply stored column width to the grid column configuration
-                if col_index in column_widths and column_widths[col_index] > 50:
-                    self.node_list_frame.grid_columnconfigure(col_index, minsize=column_widths[col_index])
+                    # how far have we dragged?
+                    delta     = event.x - start_x
+                    new_width = max(50, original_width + delta)   # 50 px minimum
+
+                    # 1️⃣  tell the grid to widen this column
+                    self.node_list_frame.grid_columnconfigure(resizing_column,
+                                                            minsize=new_width)
+
+                    # 2️⃣  update Entry widgets (convert px → chars)
+                    def apply_to_entries():
+                        char_w = px_to_cols(new_width)
+                        for e in self.column_entries.get(resizing_column, []):
+                            if e.winfo_exists():
+                                e.config(width=char_w)
+
+                    # throttle heavy work so it runs once per idle cycle,
+                    # not on every single <Motion> event
+                    if getattr(self, "_resize_job", None):
+                        self.node_list_frame.after_cancel(self._resize_job)
+                    self._resize_job = self.node_list_frame.after_idle(apply_to_entries)
+
 
                 def end_resize(event):
                     global resizing_column
@@ -2412,15 +2397,12 @@ class NetworkMapGUI:
 
             # Add delete button     
             header_label = tk.Label(
-                self.node_list_frame,
-                text="Delete",
+                self.node_list_frame, text="Delete",
                 font=('Helvetica', 10, 'bold'),
-                bg=ColorConfig.current.HEADER_BG,
-                fg=ColorConfig.current.HEADER_TEXT,
-                padx=8, pady=4, borderwidth=1, relief='solid',
-            )
+                bg=ColorConfig.current.HEADER_BG, fg=ColorConfig.current.HEADER_TEXT,
+                padx=8, pady=4, borderwidth=1, relief='solid')
             header_label.grid(row=4, column=len(fields), padx=1, pady=1, sticky="nsew")
-            self.node_list_frame.grid_columnconfigure(len(fields), weight=1, minsize=80)
+            self.node_list_frame.grid_columnconfigure(len(fields), weight=0, minsize=80)
 
             # Use the current sort order
             if self.sort_column is not None:
