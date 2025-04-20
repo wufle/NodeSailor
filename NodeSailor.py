@@ -2143,7 +2143,7 @@ class NetworkMapGUI:
             self.node_list_editor.destroy()
             self.node_list_editor = None
 
-        win, content = self.create_popup("Node List Editor", 1700, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
+        win, content = self.create_popup("Node List Editor", 1000, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
         self.node_list_editor = win
         win.lift(self.root)
         win.attributes("-topmost", True)
