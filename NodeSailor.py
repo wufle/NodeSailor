@@ -2190,13 +2190,17 @@ class NetworkMapGUI:
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
+        # Create window with the frame inside the canvas, allowing it to expand horizontally
         inner_window = canvas.create_window((0, 0), window=self.node_list_frame, anchor="nw")
 
         def resize_canvas(event):
-            # Only force width if canvas is wider than content, else allow horizontal scrolling
+            # Always update the canvas window to match the frame's required width
+            # This ensures horizontal scrolling works properly when columns are resized
             frame_reqwidth = self.node_list_frame.winfo_reqwidth()
             canvas_width = canvas.winfo_width()
-            canvas.itemconfig(inner_window, width=frame_reqwidth)
+            # Set the canvas window width to the frame's required width
+            # This allows the frame to expand horizontally as needed
+            canvas.itemconfig(inner_window, width=max(frame_reqwidth, canvas_width))
         canvas.bind("<Configure>", resize_canvas)
 
         canvas.bind("<Configure>", resize_canvas)
@@ -2215,15 +2219,11 @@ class NetworkMapGUI:
             # Store current column widths before destroying widgets
             column_widths = {}
             for col_index in range(len(fields)):
-                for widget in self.node_list_frame.winfo_children():
-                    grid_info = widget.grid_info()
-                    if grid_info and grid_info['row'] == 4 and grid_info['column'] == col_index:
-                        column_widths[col_index] = widget.winfo_width()
-                        break
+                # pull the grid's current minsize (falls back to widget width once)
+                cfg = self.node_list_frame.grid_columnconfigure(col_index)
+                w = cfg.get('minsize', 0) or  self.node_list_frame.winfo_reqwidth()
+                column_widths[col_index] = max(50, w)
             
-            # let every data cell expand horizontally
-            #self.node_list_frame.grid_columnconfigure(col_index, weight=1)
-
             # Only destroy the existing nodes table content
             for widget in self.node_list_frame.winfo_children():
                 if widget.grid_info()['row'] >= 3:  # Only destroy widgets in the existing nodes section
@@ -2360,7 +2360,7 @@ class NetworkMapGUI:
 
                     # how far have we dragged?
                     delta     = event.x - start_x
-                    new_width = max(50, original_width + delta)   # 50 px minimum
+                    new_width = max(50, original_width + delta)   # 50 px minimum
 
                     # 1️⃣  tell the grid to widen this column
                     self.node_list_frame.grid_columnconfigure(resizing_column,
@@ -2372,13 +2372,19 @@ class NetworkMapGUI:
                         for e in self.column_entries.get(resizing_column, []):
                             if e.winfo_exists():
                                 e.config(width=char_w)
+                        
+                        # Update the canvas window to match the frame's new width
+                        # This is crucial for horizontal scrolling to work properly
+                        frame_reqwidth = self.node_list_frame.winfo_reqwidth()
+                        canvas.itemconfig(inner_window, width=frame_reqwidth)
+                        canvas.configure(scrollregion=canvas.bbox("all"))
 
                     # throttle heavy work so it runs once per idle cycle,
                     # not on every single <Motion> event
                     if getattr(self, "_resize_job", None):
                         self.node_list_frame.after_cancel(self._resize_job)
                     self._resize_job = self.node_list_frame.after_idle(apply_to_entries)
-
+                    ensure_editor_can_fit()
 
                 def end_resize(event):
                     global resizing_column
@@ -2528,6 +2534,16 @@ class NetworkMapGUI:
                         rebuild_editor_content()
                     return delete
 
+                def ensure_editor_can_fit():
+                    self.node_list_editor.update_idletasks()          # sizes are now real
+                    need_px  = self.node_list_frame.winfo_reqwidth() + 20   # + margin
+                    have_px  = self.node_list_editor.winfo_width()
+                    if need_px > have_px:                             # grow only – never shrink
+                        h_px = self.node_list_editor.winfo_height()
+                        x, y = self.node_list_editor.winfo_x(), self.node_list_editor.winfo_y()
+                        self.node_list_editor.geometry(f"{need_px}x{h_px}+{x}+{y}")
+
+                # ── add delete button ──   
                 del_btn = tk.Button(
                     self.node_list_frame,
                     text="🗑",
@@ -2539,21 +2555,17 @@ class NetworkMapGUI:
                 )
                 del_btn.grid(row=row_index, column=len(fields), padx=1, pady=1, sticky="nsew")
                 
-            # Apply stored column widths to all rows after rebuilding
-            for col_index in range(len(fields)):
-                if col_index in column_widths and column_widths[col_index] > 50:
-                    # Apply width to header frames
-                    for widget in self.node_list_frame.winfo_children():
-                        grid_info = widget.grid_info()
-                        if grid_info and grid_info['row'] == 4 and grid_info['column'] == col_index:
-                            widget.config(width=column_widths[col_index])
-                            
-                    # Apply width to all entry widgets in this column
-                    if col_index in self.column_entries:
-                        char_width = px_to_cols(column_widths[col_index])
-                        for entry in self.column_entries[col_index]:
-                            if entry.winfo_exists():
-                                entry.config(width=char_width)
+            # ── set the grid’s minsize once so Refresh doesn’t grow columns ──
+            for col_index, px in column_widths.items():
+                self.node_list_frame.grid_columnconfigure(col_index, minsize=px)
+
+                # keep Entry widgets aligned with the header
+                char_w = px_to_cols(px)
+                for e in self.column_entries.get(col_index, []):
+                    if e.winfo_exists():
+                        e.config(width=char_w)
+
+            ensure_editor_can_fit()
 
         # Initialize the fields list
         fields = [
