@@ -3137,10 +3137,14 @@ class NetworkMapGUI:
             self.custom_cmd_window.lift()
             return
 
-        win, content = self.create_popup("Manage Custom Commands", 600, 550, on_close=self.make_popup_closer("custom_cmd_window"), grab=False)
+        win, content = self.create_popup("Manage Custom Commands", 400, 500, on_close=self.make_popup_closer("custom_cmd_window"), grab=False)
         self.custom_cmd_window = win
 
-        listbox = tk.Listbox(content, width=50, height=10)
+        listbox = tk.Listbox(content, width=50, height=10,
+                             bg=ColorConfig.current.ROW_BG_EVEN,
+                             fg=ColorConfig.current.ENTRY_TEXT,
+                             selectbackground=ColorConfig.current.ENTRY_FOCUS_BG,
+                             selectforeground=ColorConfig.current.BUTTON_TEXT)
         listbox.pack(pady=10, padx=10)
 
         for name in self.custom_commands.keys():
@@ -3150,7 +3154,7 @@ class NetworkMapGUI:
         frame.pack(pady=5, padx=10, fill=tk.X)
 
         label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
-        entry_args = {'bg': 'white', 'fg': 'black'}
+        entry_args = {'bg': ColorConfig.current.ENTRY_FOCUS_BG, 'fg': ColorConfig.current.ENTRY_TEXT, 'insertbackground': ColorConfig.current.ENTRY_TEXT}
 
         tk.Label(frame, text="Command Name:", **label_args).grid(row=0, column=0, sticky='w')
         name_entry = tk.Entry(frame, width=40, **entry_args)
