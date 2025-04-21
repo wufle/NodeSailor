@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox
 from tkinter import simpledialog, messagebox, font, filedialog, colorchooser, ttk
 import subprocess
 from threading import Thread
@@ -9,6 +10,7 @@ import socket
 import os
 import webbrowser
 import ctypes
+import math
 
 def get_ip_addresses():
     ip_addresses = []
@@ -84,12 +86,12 @@ class ColorConfig:
         ROW_BG_ODD = '#e6f0fa'
         HEADER_BG = '#dbeafe'
         HEADER_TEXT = '#1e293b'
-        ENTRY_FOCUS_BG = '#fffbe6'
+        ENTRY_FOCUS_BG = '#f9f9f9'
         CELL_BORDER = '#b6b6b6'
         ENTRY_TEXT = '#222222'
 
     class Dark:
-        NODE_DEFAULT = '#4B5EAA'
+        NODE_DEFAULT = '#28376c'
         NODE_GREYED_OUT = '#4B5563'
         NODE_HIGHLIGHT = '#D97706'
         NODE_HOST = '#72741f'
@@ -100,7 +102,7 @@ class ColorConfig:
         FRAME_BG = "#0c0f14" #MAIN BACKBROUND
         INFO_NOTE_BG = '#111827'
         INFO_TEXT = '#8f8f8f'
-        BUTTON_BG = '#4B5EAA'
+        BUTTON_BG = '#1e2540'
         BUTTON_TEXT = '#c7c7c7'
         BUTTON_ACTIVE_BG = '#111827' #button when pressed
         BUTTON_ACTIVE_TEXT = 'black'  #button text when pressed
@@ -299,10 +301,10 @@ class NetworkNode:
                     x_entry, y_entry = xy_fields
                     if x_entry.winfo_exists():
                         x_entry.delete(0, tk.END)
-                        x_entry.insert(0, str(self.x))
+                        x_entry.insert(0, str(int(self.x)))
                     if y_entry.winfo_exists():
                         y_entry.delete(0, tk.END)
-                        y_entry.insert(0, str(self.y))
+                        y_entry.insert(0, str(int(self.y)))
                 except tk.TclError:
                     pass  # Ignore if widget is destroyed
 
@@ -374,10 +376,22 @@ class NetworkNode:
         self.canvas.coords(self.shape, self.x - width/2 - pad, self.y - height/2 - pad, 
                            self.x + width/2 + pad, self.y + height/2 + pad)
 
+    # Class variable to track the globally open context menu
+    open_context_menu = None
+
     def show_context_menu(self, event):
+        # Ensure only one context menu is open at a time across all nodes
+        if NetworkNode.open_context_menu is not None:
+            try:
+                NetworkNode.open_context_menu.destroy()
+            except Exception:
+                pass
+            NetworkNode.open_context_menu = None
+
         context_menu = tk.Toplevel(self.canvas)
         context_menu.wm_overrideredirect(True)  # Removes OS borders and title bar
         context_menu.wm_geometry(f"+{event.x_root}+{event.y_root}")
+        NetworkNode.open_context_menu = context_menu
 
         # Frame for menu items (no border from OS)
         menu_frame = tk.Frame(context_menu, bg=ColorConfig.current.BUTTON_BG)
@@ -405,6 +419,8 @@ class NetworkNode:
                 context_menu.destroy()
             except tk.TclError:
                 pass  # Ignore if window is already destroyed
+            # Reset the class-level reference
+            NetworkNode.open_context_menu = None
 
         for text, command in options:
             btn = tk.Button(menu_frame, text=text, command=lambda c=command: [c(), destroy_menu()],
@@ -585,6 +601,20 @@ class ConnectionLine:
         self.update_label()
 
 class NetworkMapGUI:
+    def _setup_scrollbar_styles(self):
+        style = ttk.Style()
+        theme = "Dark" if ColorConfig.current == ColorConfig.Dark else "Light"
+        style.configure(f"{theme}Scrollbar.Vertical.TScrollbar",
+                        troughcolor=ColorConfig.current.FRAME_BG,
+                        background=ColorConfig.current.BUTTON_BG,
+                        bordercolor=ColorConfig.current.BORDER_COLOR,
+                        arrowcolor=ColorConfig.current.BUTTON_TEXT)
+        style.configure(f"{theme}Scrollbar.Horizontal.TScrollbar",
+                        troughcolor=ColorConfig.current.FRAME_BG,
+                        background=ColorConfig.current.BUTTON_BG,
+                        bordercolor=ColorConfig.current.BORDER_COLOR,
+                        arrowcolor=ColorConfig.current.BUTTON_TEXT)
+
     def __init__(self, root):
         self.root = root
         self.load_window_geometry()  # Load saved window size and position
@@ -600,6 +630,8 @@ class NetworkMapGUI:
             'VLAN_300': 'VLAN_300',
             'VLAN_400': 'VLAN_400'
         }
+        # Setup custom scrollbar styles for current theme
+        self._setup_scrollbar_styles()
         
         # Load custom commands
         self.custom_commands = self.load_custom_commands()
@@ -746,11 +778,41 @@ class NetworkMapGUI:
         fg=lambda: ColorConfig.current.INFO_TEXT)
 
         self.mode_button = tk.Button(self.buttons_frame, text='Configuration', command=self.toggle_mode, **button_style)
-        self.mode_button.pack(side=tk.LEFT, padx=(5, 100), pady=5)        
+        self.mode_button.pack(side=tk.LEFT, padx=5, pady=5)
         
         ToolTip(self.mode_button, "Toggle Operator/Configuration mode", self,
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
         fg=lambda: ColorConfig.current.INFO_TEXT)
+        
+        # Create list view editor and edit connections buttons
+        self.list_view_editor_button = tk.Button(self.buttons_frame, text='List View',
+                                               command=lambda: self.defer_popup(self.open_node_list_editor), **button_style)
+        self.list_view_editor_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        ToolTip(self.list_view_editor_button, "Open a window that presents the nodes in a table format for quick editing", self,
+        bg=lambda: ColorConfig.current.INFO_NOTE_BG,
+        fg=lambda: ColorConfig.current.INFO_TEXT)
+        
+        self.edit_connections_button = tk.Button(self.buttons_frame, text='Edit Connections',
+                                               command=lambda: self.defer_popup(self.open_connection_list_editor), **button_style)
+        self.edit_connections_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+        ToolTip(self.edit_connections_button, "Edit connections between nodes in a list format", self,
+        bg=lambda: ColorConfig.current.INFO_NOTE_BG,
+        fg=lambda: ColorConfig.current.INFO_TEXT)
+        
+        self.edit_VLAN_button = tk.Button(self.buttons_frame, text='Edit VLAN Labels',
+                                               command=lambda: self.defer_popup(self.edit_vlan_labels), **button_style)
+        self.edit_VLAN_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+        ToolTip(self.edit_VLAN_button, "Edit the VLAN labels", self,
+        bg=lambda: ColorConfig.current.INFO_NOTE_BG,
+        fg=lambda: ColorConfig.current.INFO_TEXT)
+        
+        # Hide these buttons initially if starting in Operator mode
+        if self.mode == "Operator":
+            self.list_view_editor_button.pack_forget()
+            self.edit_connections_button.pack_forget()
 
         whoamI_button = tk.Button(self.buttons_frame, text='Who am I?', command=self.highlight_matching_nodes, **button_style)
         whoamI_button.pack(side=tk.LEFT, padx=5, pady=5)
@@ -917,6 +979,7 @@ class NetworkMapGUI:
         self.legend_window.geometry(f"+{x}+{y}")
 
     def start_resize(self, event):
+        print(f"start_resize: Column {self.resizing_column} resizing started at x={event.x}, y={event.y}")
         self.start_x = event.x_root
         self.start_y = event.y_root
         self.initial_width = self.root.winfo_width()
@@ -1121,7 +1184,7 @@ class NetworkMapGUI:
                     fg=ColorConfig.current.BUTTON_TEXT,
                     font=('Helvetica', 10))\
                 .grid(row=i, column=0, padx=10, pady=5, sticky="e")
-            entry = tk.Entry(content)
+            entry = tk.Entry(content, bg=ColorConfig.current.ENTRY_FOCUS_BG, fg=ColorConfig.current.ENTRY_TEXT, insertbackground=ColorConfig.current.ENTRY_TEXT)
             entry.insert(0, self.vlan_label_names[vlan])
             entry.grid(row=i, column=1, padx=10, pady=5)
             entries[vlan] = entry
@@ -1218,7 +1281,7 @@ class NetworkMapGUI:
         text_area.pack(fill=tk.BOTH, expand=True)
 
         help_lines = [
-            ("NodeSailor v0.9.16- Help\n", "title"),
+            ("NodeSailor v0.9.17- Help\n", "title"),
             ("\nOverview:\n", "header"),
             ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, RDP and more with the implementation of custom commands.\n", "text"),
             
@@ -1277,6 +1340,11 @@ class NetworkMapGUI:
             self.canvas.bind('<Shift-Double-1>', self.create_sticky_note)
             self.canvas.bind('<Button-2>', self.create_connection)
             
+            # Show configuration mode buttons
+            self.list_view_editor_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.mode_button)
+            self.edit_connections_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.list_view_editor_button)
+            self.edit_VLAN_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.edit_connections_button)
+            
         else:
             self.mode = "Operator"
             self.mode_button.config(text='Operator Mode', bg=ColorConfig.current.BUTTON_BG)
@@ -1285,6 +1353,11 @@ class NetworkMapGUI:
             self.canvas.unbind('<B1-Motion>')
             self.canvas.unbind('<Shift-Double-1>')
             self.canvas.unbind('<Button-2>')
+            
+            # Hide configuration mode buttons
+            self.list_view_editor_button.pack_forget()
+            self.edit_connections_button.pack_forget()
+            self.edit_VLAN_button.pack_forget()
   
     def zoom_with_mouse(self, event):
         if event.num == 4 or event.delta > 0:
@@ -1401,7 +1474,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="Nodesailor v0.9.16", bg=ColorConfig.current.FRAME_BG,
+            title_label = tk.Label(title_bar, text="NodeSailor v0.9.17", bg=ColorConfig.current.FRAME_BG,
                                 fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
@@ -1457,26 +1530,10 @@ class NetworkMapGUI:
                                         text="Dark Mode" if ColorConfig.current == ColorConfig.Light else "Light Mode",
                                         command=self.toggle_theme, **button_style)
             self.theme_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-
-            color_editor_button = tk.Button(content_frame, text='Edit Colors',
-                                            command=lambda: self.defer_popup(self.show_color_editor), **button_style)
-            color_editor_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-
-            edit_labels_btn = tk.Button(content_frame, text='Edit VLAN Labels',
-                             command=lambda: self.defer_popup(self.edit_vlan_labels), **button_style)
-            edit_labels_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
             
-            node_list_btn = tk.Button(content_frame, text='List View (Table Editor)',
-                            command=lambda: self.defer_popup(self.open_node_list_editor), **button_style)
-            node_list_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-            
-            connection_list_btn = tk.Button(content_frame, text='Edit Connections',
-                                command=lambda: self.defer_popup(self.open_connection_list_editor), **button_style)
-            connection_list_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-
-            custom_cmd_btn = tk.Button(content_frame, text='Manage Custom Commands',
-                                     command=lambda: self.defer_popup(self.manage_custom_commands), **button_style)
-            custom_cmd_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+            config_menu_btn = tk.Button(content_frame, text='Configuration Menu',
+                                command=lambda: self.defer_popup(self.open_configuration_menu), **button_style)
+            config_menu_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             help_button = tk.Button(content_frame, text='Help', command=self.show_help, **button_style)
             help_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
@@ -1514,6 +1571,49 @@ class NetworkMapGUI:
             self.legend_window = None
         self.root.focus_force()  # Stronger focus restoration
         self.root.lift()  # Bring window to the foreground
+        
+    def open_configuration_menu(self):
+        """Open a configuration menu window with options for editing colors, VLAN labels, connections, and custom commands."""
+        if hasattr(self, 'config_menu_window') and self.config_menu_window and self.config_menu_window.winfo_exists():
+            self.config_menu_window.lift()
+            return
+            
+        def close_config_menu():
+            try:
+                self.config_menu_window.grab_release()
+            except:
+                pass
+            self.config_menu_window.destroy()
+            self.config_menu_window = None
+            
+        self.config_menu_window, content = self.create_popup("Configuration Menu", 300, 450, on_close=close_config_menu, grab=False)
+        
+        # Button styles
+        button_style = {
+            'font': self.custom_font,
+            'bg': ColorConfig.current.BUTTON_BG,
+            'fg': ColorConfig.current.BUTTON_TEXT,
+            'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG,
+            'activeforeground': ColorConfig.current.BUTTON_ACTIVE_TEXT,
+            'relief': tk.FLAT,
+            'padx': 5,
+            'pady': 2
+        }
+        
+        # Configuration buttons
+        color_editor_button = tk.Button(content, text='Edit Colors',
+                                      command=lambda: [close_config_menu(),self.defer_popup(self.show_color_editor)], **button_style)
+        color_editor_button.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
+      
+        custom_cmd_btn = tk.Button(content, text='Manage Custom Commands',
+                                 command=lambda: [close_config_menu(),self.defer_popup(self.manage_custom_commands)], **button_style)
+        custom_cmd_btn.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
+        
+        # Close button
+        close_btn = tk.Button(content, text='Close', command=close_config_menu, **button_style)
+        close_btn.pack(side=tk.TOP, fill=tk.X, padx=20, pady=20)
+        
+        self.fix_window_geometry(self.config_menu_window, 300, 350)
 
     def save_legend_state(self):
         state = {}
@@ -1651,7 +1751,7 @@ class NetworkMapGUI:
         win.focus_force()
 
         label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
-        entry_args = {'bg': 'white', 'fg': 'black'}
+        entry_args = {'bg': ColorConfig.current.ENTRY_FOCUS_BG, 'fg': ColorConfig.current.ENTRY_TEXT, 'insertbackground': ColorConfig.current.ENTRY_TEXT}
 
         # Node Name
         name_entry = tk.Entry(content, **entry_args)
@@ -1689,6 +1789,9 @@ class NetworkMapGUI:
         
 
         def save_node():
+            if self.mode != "Configuration":
+                messagebox.showinfo('Save Node', 'Switch to Configuration mode to save or update nodes.')
+                return
             name = name_entry.get()
             vlan_ips = {vlan: VLAN_entries[vlan].get() for vlan in VLAN_entries}
             remote = remote_entry.get()
@@ -2141,10 +2244,24 @@ class NetworkMapGUI:
             self.node_list_editor.destroy()
             self.node_list_editor = None
 
-        win, content = self.create_popup("Node List Editor", 1375, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
+        win, content = self.create_popup("Node List Editor", 1100, 900, on_close=self.make_popup_closer("node_list_editor"), grab=False)
         self.node_list_editor = win
         win.lift(self.root)
         win.attributes("-topmost", True)
+        # Initialize global variables for column resizing
+        global resizing_column, start_x, original_width
+        resizing_column = None
+        start_x = 0
+        original_width = 0
+        
+        # --- helper: convert pixels → character columns for this font ---
+        def px_to_cols(px, min_cols=3):
+            """Return the smallest Entry ‘width’ (in characters) that will fill ≥ px."""
+            glyph_px = self.custom_font.measure("0") or 8   # average width of one glyph
+            return max(min_cols, math.ceil(px / glyph_px))  #  <-  round **up**
+
+        # Dictionary to store all Entry widgets for each column
+        self.column_entries = {}
 
         # Add refresh button at the top
         button_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
@@ -2162,11 +2279,10 @@ class NetworkMapGUI:
         container.pack(fill="both", expand=True)
 
         canvas = tk.Canvas(container, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
-        v_scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
-        h_scrollbar = tk.Scrollbar(container, orient="horizontal", command=canvas.xview)
-        canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+        theme = "Dark" if ColorConfig.current == ColorConfig.Dark else "Light"
+        v_scrollbar = ttk.Scrollbar(container, orient="vertical", style=f"{theme}Scrollbar.Vertical.TScrollbar", command=canvas.yview)
+        canvas.configure(yscrollcommand=v_scrollbar.set)
         v_scrollbar.pack(side="right", fill="y")
-        h_scrollbar.pack(side="bottom", fill="x")
         self.node_list_frame = tk.Frame(canvas, bg=ColorConfig.current.FRAME_BG)
 
         self.node_list_frame.bind(
@@ -2174,35 +2290,146 @@ class NetworkMapGUI:
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
+        # Create window with the frame inside the canvas, allowing it to expand horizontally
         inner_window = canvas.create_window((0, 0), window=self.node_list_frame, anchor="nw")
 
         def resize_canvas(event):
-            # Only force width if canvas is wider than content, else allow horizontal scrolling
+            # Always update the canvas window to match the frame's required width
+            # This ensures horizontal scrolling works properly when columns are resized
             frame_reqwidth = self.node_list_frame.winfo_reqwidth()
             canvas_width = canvas.winfo_width()
-            if canvas_width > frame_reqwidth:
-                canvas.itemconfig(inner_window, width=canvas_width)
-            else:
-                canvas.itemconfig(inner_window, width=frame_reqwidth)
+            # Set the canvas window width to the frame's required width
+            # This allows the frame to expand horizontally as needed
+            canvas.itemconfig(inner_window, width=max(frame_reqwidth, canvas_width))
         canvas.bind("<Configure>", resize_canvas)
 
         canvas.bind("<Configure>", resize_canvas)
 
         canvas.configure(yscrollcommand=v_scrollbar.set)
-        canvas.configure(xscrollcommand=h_scrollbar.set)
 
         canvas.pack(side="left", fill="both", expand=True)
         container.pack(fill="both", expand=True)
         v_scrollbar.pack(side="right", fill="y")
-        h_scrollbar.pack(side="bottom", fill="x")
 
         self.list_editor_xy_fields = {}
 
         def rebuild_editor_content():
+            # Store current column widths before destroying widgets
+            column_widths = {}
+            for col_index, (label, attr) in enumerate(fields):
+                if attr in ("x", "y"):
+                    entry_width = 2
+                elif attr in ("file_path", "web_config_url"):
+                    entry_width = 15
+                elif attr == "remote_desktop_address":
+                    entry_width = 10
+                else:
+                    entry_width = 9
+                glyph_px = self.custom_font.measure("0") or 8
+                initial_width = entry_width * glyph_px + 10
+                column_widths[col_index] = initial_width
+            
             # Only destroy the existing nodes table content
             for widget in self.node_list_frame.winfo_children():
                 if widget.grid_info()['row'] >= 3:  # Only destroy widgets in the existing nodes section
                     widget.destroy()
+            
+            # Reset column entries tracking
+            self.column_entries = {col_index: [] for col_index in range(len(fields))}
+            
+            # Update "add new node row" entries with stored column widths
+            for col_index in range(len(fields)):
+                if col_index in column_widths and column_widths[col_index] > 50:
+                    for widget in self.node_list_frame.winfo_children():
+                        grid_info = widget.grid_info()
+                        if grid_info and grid_info['row'] == 1 and grid_info['column'] == col_index:
+                            if isinstance(widget, tk.Entry):
+                                # Convert pixel width to character width
+                                char_width = max(3, int(column_widths[col_index] / 8))
+                                widget.config(width=char_width)
+                                # Add to column entries tracking
+                                if col_index in self.column_entries:
+                                    self.column_entries[col_index].append(widget)
+            
+            # ── Add “new node” row (always shown) ───────────────────────────────
+            
+            tk.Label(self.node_list_frame, text="Add new node:",
+                    font=('Helvetica', 12, 'bold'),
+                    bg=ColorConfig.current.FRAME_BG,
+                    fg=ColorConfig.current.BUTTON_TEXT) \
+            .grid(row=0, column=0, columnspan=len(fields)+1,
+                    sticky="w", pady=5)
+
+            new_node_entries = []
+            for col_index, (label, attr) in enumerate(fields):
+                # sensible default widths
+                if attr in ("x", "y"):
+                    entry_width = 4
+                elif attr in ("file_path", "web_config_url"):
+                    entry_width = 60
+                elif attr == "remote_desktop_address":
+                    entry_width = 20
+                else:
+                    entry_width = 15
+
+                # honour any saved column resize
+                if col_index in column_widths and column_widths[col_index] > 50:
+                    entry_width = max(entry_width,
+                                    px_to_cols(column_widths[col_index]))
+
+                e = tk.Entry(self.node_list_frame, width=entry_width,
+                            font=('Helvetica', 10),
+                            bg=ColorConfig.current.ROW_BG_EVEN,
+                            fg=ColorConfig.current.ENTRY_TEXT,
+                            relief='solid', borderwidth=1,
+                            highlightthickness=0)
+                e.grid(row=1, column=col_index,
+                    padx=1, pady=3, ipady=3, sticky="nsew")
+
+                self.column_entries.setdefault(col_index, []).append(e)
+                new_node_entries.append(e)
+
+            def add_new_node():
+                # Get values from entries
+                values = {fields[i][1]: entry.get() for i, entry in enumerate(new_node_entries)}
+                
+                # Set default values if not provided
+                name = values.get('name', 'NewNode')
+                try:
+                    x = float(values.get('x', '100')) if values.get('x') else 100
+                    y = float(values.get('y', '100')) if values.get('y') else 100
+                except ValueError:
+                    x, y = 100, 100  # Default values if conversion fails
+                
+                # Create new node
+                new_node = NetworkNode(self.canvas, name=name, x=x, y=y,
+                                    VLAN_100=values.get('VLAN_100', ''),
+                                    VLAN_200=values.get('VLAN_200', ''),
+                                    VLAN_300=values.get('VLAN_300', ''),
+                                    VLAN_400=values.get('VLAN_400', ''),
+                                    remote_desktop_address=values.get('remote_desktop_address', ''),
+                                    file_path=values.get('file_path', ''),
+                                    web_config_url=values.get('web_config_url', ''))
+                
+                # Add to nodes list
+                self.nodes.append(new_node)
+                self.on_node_select(new_node)
+                self.unsaved_changes = True
+                
+                # Clear entry fields
+                for entry in new_node_entries:
+                    entry.delete(0, tk.END)
+                
+                # Rebuild the editor content
+                rebuild_editor_content()
+
+            add_btn = tk.Button(self.node_list_frame, text="➕ Add",
+                                command=add_new_node,
+                                bg=ColorConfig.current.BUTTON_BG,
+                                fg=ColorConfig.current.BUTTON_TEXT,
+                                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT)
+            add_btn.grid(row=1, column=len(fields), padx=5)
 
             # Add header for existing nodes
             tk.Label(self.node_list_frame, text="Existing Nodes:", font=('Helvetica', 12, 'bold'),
@@ -2212,7 +2439,7 @@ class NetworkMapGUI:
             # Create column headers with sorting indicators
             for col_index, (label, _) in enumerate(fields):
                 header_frame = tk.Frame(self.node_list_frame, bg=ColorConfig.current.HEADER_BG, highlightbackground=ColorConfig.current.CELL_BORDER, highlightthickness=1)
-                header_frame.grid(row=4, column=col_index, padx=1, pady=0, sticky="ew")
+                header_frame.grid(row=4, column=col_index, padx=1, pady=3, ipady=3, sticky="ew")
                 
                 header_label = tk.Label(
                     header_frame,
@@ -2220,24 +2447,107 @@ class NetworkMapGUI:
                     font=('Helvetica', 10, 'bold'),
                     bg=ColorConfig.current.HEADER_BG,
                     fg=ColorConfig.current.HEADER_TEXT,
-                    padx=6, pady=6
                 )
-                header_label.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+                header_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
                 
-                # Add sorting indicator
+                # let every data cell expand horizontally
+                #self.node_list_frame.grid_columnconfigure(col_index, weight=1)
+
+                # Add column divider for resizing (always at the far right)
+                divider = tk.Frame(header_frame, width=4, bg='#666666', cursor="sb_h_double_arrow") # Increased width and changed color for better visibility
+                print(f"Divider widget type: {type(divider)}")
+                divider.pack(side=tk.RIGHT, fill=tk.Y, pady=2) # Ensure divider is at the far right
+
+                # Add sorting indicator (just left of divider if present)
                 if self.sort_column == col_index:
                     indicator = "▼" if self.sort_reverse else "▲"
                     indicator_label = tk.Label(header_frame, text=indicator, font=('Helvetica', 10, 'bold'),
-                            bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
-                    indicator_label.pack(side=tk.LEFT, padx=2)
-                
+                                              bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+                    indicator_label.pack(side=tk.RIGHT, padx=2)
+
                 # Make header clickable
                 header_frame.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
                 header_label.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
 
-            tk.Label(self.node_list_frame, text="Delete", font=('Helvetica', 10, 'bold'),
-                    bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
-                    .grid(row=4, column=len(fields), padx=5)
+                def start_resize(event, col=col_index):
+                    print(f"start_resize called with col={col}, event.x={event.x}")
+                    global resizing_column, start_x, original_width
+                    print(f"Before assignment: resizing_column={resizing_column if 'resizing_column' in globals() else 'not defined'}")
+                    resizing_column = col
+                    start_x = event.x
+                    
+                    # Find the header frame to get its original width
+                    for widget in self.node_list_frame.winfo_children():
+                        grid_info = widget.grid_info()
+                        if grid_info and grid_info['row'] == 4 and grid_info['column'] == col:
+                            original_width = widget.winfo_width()
+                            break
+                    
+                    print(f"After assignment: resizing_column={resizing_column}, start_x={start_x}, original_width={original_width}")
+                    print(f"node_list_frame type: {type(self.node_list_frame)}, widget exists: {self.node_list_frame.winfo_exists()}")
+                    
+                    # Bind to the entire window for better mouse tracking
+                    self.node_list_editor.bind("<B1-Motion>", resize_column)
+                    self.node_list_editor.bind("<ButtonRelease-1>", end_resize)
+                    print(f"Event bindings set for resize on the entire window for better tracking")
+
+                def resize_column(event):
+                    """Live column‑drag with minimal redraw/flicker."""
+                    global start_x, original_width, resizing_column
+                    if resizing_column is None:
+                        return
+
+                    # how far have we dragged?
+                    delta     = event.x - start_x
+                    new_width = max(50, original_width + delta)   # 50 px minimum
+
+                    # 1️⃣  tell the grid to widen this column
+                    self.node_list_frame.grid_columnconfigure(resizing_column,
+                                                            minsize=new_width)
+
+                    # 2️⃣  update Entry widgets (convert px → chars)
+                    def apply_to_entries():
+                        char_w = px_to_cols(new_width)
+                        for e in self.column_entries.get(resizing_column, []):
+                            if e.winfo_exists():
+                                e.config(width=char_w)
+                        
+                        # Update the canvas window to match the frame's new width
+                        # This is crucial for horizontal scrolling to work properly
+                        frame_reqwidth = self.node_list_frame.winfo_reqwidth()
+                        canvas.itemconfig(inner_window, width=frame_reqwidth)
+                        canvas.configure(scrollregion=canvas.bbox("all"))
+
+                    # throttle heavy work so it runs once per idle cycle,
+                    # not on every single <Motion> event
+                    if getattr(self, "_resize_job", None):
+                        self.node_list_frame.after_cancel(self._resize_job)
+                    self._resize_job = self.node_list_frame.after_idle(apply_to_entries)
+                    ensure_editor_can_fit()
+
+                def end_resize(event):
+                    global resizing_column
+                    print(f"end_resize: Resizing ended for column {resizing_column}")
+                    
+                    # Unbind the motion and release events
+                    if resizing_column is not None:
+                        self.node_list_editor.unbind("<B1-Motion>")
+                        self.node_list_editor.unbind("<ButtonRelease-1>")
+                    
+                    resizing_column = None
+                    print(f"Resize ended, resizing_column set to None")
+
+                print(f"Binding <ButtonPress-1> to divider for column {col_index}")
+                divider.bind("<ButtonPress-1>", lambda event, col=col_index: print(f"Lambda for column {col} triggered") or start_resize(event, col))
+
+            # Add delete button     
+            header_label = tk.Label(
+                self.node_list_frame, text="Delete",
+                font=('Helvetica', 10, 'bold'),
+                bg=ColorConfig.current.HEADER_BG, fg=ColorConfig.current.HEADER_TEXT,
+                padx=8, pady=4, borderwidth=1, relief='solid')
+            header_label.grid(row=4, column=len(fields), padx=1, pady=1, sticky="nsew")
+            self.node_list_frame.grid_columnconfigure(len(fields), weight=0, minsize=80)
 
             # Use the current sort order
             if self.sort_column is not None:
@@ -2258,14 +2568,17 @@ class NetworkMapGUI:
                     value = getattr(node, attr)
                     # Set column widths
                     if attr in ("x", "y"):
-                        entry_width = 8
-                        # Format to 2 decimal places if possible
+                        entry_width = 4
+                        # Format to 0 decimal places if possible
                         try:
-                            value_str = "{:.2f}".format(float(value))
+                            value_str = "{:.0f}".format(float(value))
                         except (ValueError, TypeError):
                             value_str = str(value)
                     elif attr in ("file_path", "web_config_url"):
-                        entry_width = 30
+                        entry_width = 60
+                        value_str = str(value)
+                    elif attr == "remote_desktop_address":
+                        entry_width = 20
                         value_str = str(value)
                     else:
                         entry_width = 15
@@ -2273,17 +2586,21 @@ class NetworkMapGUI:
                     # Alternating row background
                     row_bg = ColorConfig.current.ROW_BG_EVEN if (row_index % 2 == 0) else ColorConfig.current.ROW_BG_ODD
                     entry = tk.Entry(
-                        self.node_list_frame,
-                        width=entry_width,
-                        font=('Helvetica', 10),
-                        bg=row_bg,
-                        fg=ColorConfig.current.ENTRY_TEXT,
-                        relief='solid',
-                        borderwidth=1,
-                        highlightthickness=0
+                            self.node_list_frame,
+                            font=('Helvetica', 10),
+                            bg=row_bg,
+                            fg=ColorConfig.current.ENTRY_TEXT,
+                            relief='solid', borderwidth=1, highlightthickness=0,
+                            width=entry_width
                     )
+                    entry.grid(row=row_index, column=col_index,
+                            padx=1, pady=3, ipady=3, sticky="nsew")
                     entry.insert(0, value_str)
                     entry.grid(row=row_index, column=col_index, padx=1, pady=3, ipady=3)
+                    
+                    # Add entry to column tracking
+                    if col_index in self.column_entries:
+                        self.column_entries[col_index].append(entry)
                     # Focus highlight
                     def on_focus_in(event, e=entry):
                         e.config(bg=ColorConfig.current.ENTRY_FOCUS_BG)
@@ -2357,17 +2674,47 @@ class NetworkMapGUI:
                         rebuild_editor_content()
                     return delete
 
-                btn = tk.Button(self.node_list_frame, text="🗑", fg="red", command=delete_node_callback())
-                btn.grid(row=row_index, column=len(fields), padx=5)
+                def ensure_editor_can_fit():
+                    self.node_list_editor.update_idletasks()          # sizes are now real
+                    need_px  = self.node_list_frame.winfo_reqwidth() + 20   # + margin
+                    have_px  = self.node_list_editor.winfo_width()
+                    if need_px > have_px:                             # grow only – never shrink
+                        h_px = self.node_list_editor.winfo_height()
+                        x, y = self.node_list_editor.winfo_x(), self.node_list_editor.winfo_y()
+                        self.node_list_editor.geometry(f"{need_px}x{h_px}+{x}+{y}")
+
+                # ── add delete button ──   
+                del_btn = tk.Button(
+                    self.node_list_frame,
+                    text="🗑",
+                    fg="red",
+                    bg=row_bg,
+                    borderwidth=1,
+                    relief='solid',
+                    command=delete_node_callback(node)
+                )
+                del_btn.grid(row=row_index, column=len(fields), padx=1, pady=1, sticky="nsew")
+                
+            # ── set the grid’s minsize once so Refresh doesn’t grow columns ──
+            for col_index, px in column_widths.items():
+                self.node_list_frame.grid_columnconfigure(col_index, minsize=px)
+
+                # keep Entry widgets aligned with the header
+                char_w = px_to_cols(px)
+                for e in self.column_entries.get(col_index, []):
+                    if e.winfo_exists():
+                        e.config(width=char_w)
+
+            ensure_editor_can_fit()
 
         # Initialize the fields list
         fields = [
             ("Name", "name"),
-            ("VLAN 100", "VLAN_100"),
-            ("VLAN 200", "VLAN_200"),
-            ("VLAN 300", "VLAN_300"),
-            ("VLAN 400", "VLAN_400"),
-            ("Remote Desktop", "remote_desktop_address"),
+            (self.vlan_label_names["VLAN_100"], "VLAN_100"),
+            (self.vlan_label_names["VLAN_200"], "VLAN_200"),
+            (self.vlan_label_names["VLAN_300"], "VLAN_300"),
+            (self.vlan_label_names["VLAN_400"], "VLAN_400"),
+            ("RDP Address", "remote_desktop_address"),
             ("File Path", "file_path"),
             ("Web URL", "web_config_url"),
             ("X", "x"),
@@ -2396,34 +2743,10 @@ class NetworkMapGUI:
             # Sort all nodes
             self.nodes = sorted(self.nodes, key=get_sort_key, reverse=self.sort_reverse)
             rebuild_editor_content()
-
-        # Add "Add new node" row
-        tk.Label(self.node_list_frame, text="Add new node:", font=('Helvetica', 12, 'bold'),
-                bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
-                .grid(row=0, column=0, columnspan=len(fields)+1, sticky="w", pady=5)
-
-        # Create entry fields for new node
-        new_node_entries = []
-        for col_index, (label, attr) in enumerate(fields):
-            # Set column widths and formatting
-            if attr in ("x", "y"):
-                entry_width = 8
-            elif attr in ("file_path", "web_config_url"):
-                entry_width = 30
-            else:
-                entry_width = 15
-            row_bg = ColorConfig.current.ROW_BG_EVEN
-            entry = tk.Entry(
-                self.node_list_frame,
-                width=entry_width,
-                font=('Helvetica', 10),
-                bg=row_bg,
-                fg=ColorConfig.current.ENTRY_TEXT,
-                relief='solid',
-                borderwidth=1,
-                highlightthickness=0
-            )
-            entry.grid(row=1, column=col_index, padx=1, pady=3, ipady=3)
+           
+            # Add entry to column tracking
+            if col_index in self.column_entries:
+                self.column_entries[col_index].append(entry)
             # Focus highlight
             def on_focus_in(event, e=entry):
                 e.config(bg=ColorConfig.current.ENTRY_FOCUS_BG)
@@ -2486,7 +2809,7 @@ class NetworkMapGUI:
         # Initial build of the editor content
         rebuild_editor_content()
 
-        self.fix_window_geometry(self.node_list_editor, 1100, 900)
+        self.fix_window_geometry(self.node_list_editor, 1600, 900)
 
     def open_connection_list_editor(self):
         if self.legend_window and self.legend_window.winfo_exists():
@@ -2522,13 +2845,10 @@ class NetworkMapGUI:
         container.pack(fill="both", expand=True)
 
         canvas = tk.Canvas(container, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
-        v_scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
-        h_scrollbar = tk.Scrollbar(container, orient="horizontal", command=canvas.xview)
-
-        canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
-
+        theme = "Dark" if ColorConfig.current == ColorConfig.Dark else "Light"
+        v_scrollbar = ttk.Scrollbar(container, orient="vertical", style=f"{theme}Scrollbar.Vertical.TScrollbar", command=canvas.yview)
+        canvas.configure(yscrollcommand=v_scrollbar.set)
         v_scrollbar.pack(side="right", fill="y")
-        h_scrollbar.pack(side="bottom", fill="x")
         canvas.pack(side="left", fill="both", expand=True)
 
         self.connection_list_frame = tk.Frame(canvas, bg=ColorConfig.current.FRAME_BG)
@@ -2541,16 +2861,22 @@ class NetworkMapGUI:
         self.connection_list_frame.bind("<Configure>", resize_canvas)
         canvas.bind("<Configure>", resize_canvas)
 
-
         def rebuild_editor_content():
             for widget in self.connection_list_frame.winfo_children():
                 widget.destroy()
 
             headers = ["From", "To", "Label", "Info", "Delete"]
             for i, h in enumerate(headers):
-                tk.Label(self.connection_list_frame, text=h, font=('Helvetica', 10, 'bold'),
-                        bg=ColorConfig.current.FRAME_BG,
-                        fg=ColorConfig.current.BUTTON_TEXT).grid(row=0, column=i, padx=5, pady=2)
+                header_label = tk.Label(
+                    self.connection_list_frame,
+                    text=h,
+                    font=('Helvetica', 10, 'bold'),
+                    bg=ColorConfig.current.HEADER_BG,
+                    fg=ColorConfig.current.HEADER_TEXT,
+                    padx=8, pady=4, borderwidth=1, relief='solid',
+                )
+                header_label.grid(row=0, column=i, padx=1, pady=1, sticky="nsew")
+                self.connection_list_frame.grid_columnconfigure(i, weight=1, minsize=80)
 
             connections = set()
             for node in self.nodes:
@@ -2559,20 +2885,21 @@ class NetworkMapGUI:
                         connections.add(conn)
 
             for row_index, conn in enumerate(connections, start=1):
+                row_bg = ColorConfig.current.ROW_BG_EVEN if row_index % 2 == 0 else ColorConfig.current.ROW_BG_ODD
                 tk.Label(self.connection_list_frame, text=conn.node1.name,
-                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
-                    .grid(row=row_index, column=0, padx=5)
+                        bg=row_bg, fg=ColorConfig.current.BUTTON_TEXT, padx=8, pady=4, borderwidth=1, relief='solid').grid(row=row_index, column=0, padx=1, pady=1, sticky="nsew")
                 tk.Label(self.connection_list_frame, text=conn.node2.name,
-                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)\
-                    .grid(row=row_index, column=1, padx=5)
+                        bg=row_bg, fg=ColorConfig.current.BUTTON_TEXT, padx=8, pady=4, borderwidth=1, relief='solid').grid(row=row_index, column=1, padx=1, pady=1, sticky="nsew")
 
-                label_entry = tk.Entry(self.connection_list_frame, width=30)
+                label_entry = tk.Entry(self.connection_list_frame, width=30, bg=row_bg, fg=ColorConfig.current.ENTRY_TEXT,
+                                      insertbackground=ColorConfig.current.ENTRY_TEXT, borderwidth=1, relief='solid')
                 label_entry.insert(0, conn.label or "")
-                label_entry.grid(row=row_index, column=2, padx=5)
+                label_entry.grid(row=row_index, column=2, padx=1, pady=1, sticky="nsew")
 
-                info_entry = tk.Entry(self.connection_list_frame, width=50)
+                info_entry = tk.Entry(self.connection_list_frame, width=50, bg=row_bg, fg=ColorConfig.current.ENTRY_TEXT,
+                                     insertbackground=ColorConfig.current.ENTRY_TEXT, borderwidth=1, relief='solid')
                 info_entry.insert(0, conn.connectioninfo or "")
-                info_entry.grid(row=row_index, column=3, padx=5)
+                info_entry.grid(row=row_index, column=3, padx=1, pady=1, sticky="nsew")
 
                 def make_update_callback(c=conn, le=label_entry, ie=info_entry):
                     def update_fields(event=None):
@@ -2596,14 +2923,15 @@ class NetworkMapGUI:
                     self.unsaved_changes = True
                     rebuild_editor_content()
 
-                tk.Button(self.connection_list_frame, text="🗑", fg="red", command=lambda c=conn: delete_conn(c))\
-                    .grid(row=row_index, column=4, padx=5)
+                tk.Button(self.connection_list_frame, text="🗑", fg="red", bg=row_bg, borderwidth=1, relief='solid', command=lambda c=conn: delete_conn(c)).grid(row=row_index, column=4, padx=1, pady=1, sticky="nsew")
 
+        # Call the function immediately after it is defined
         rebuild_editor_content()
-        self.fix_window_geometry(self.connection_list_editor, 1200, 700)
-
+    
     def update_ui_colors(self):
         """Update all UI colors when the theme changes."""
+        # Update scrollbar styles (re-apply for current theme)
+        self._setup_scrollbar_styles()
         # Root window
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
 
@@ -2642,11 +2970,21 @@ class NetworkMapGUI:
         if hasattr(self, 'theme_button') and self.theme_button.winfo_exists():
             self.theme_button.config(text="Dark Mode" if ColorConfig.current == ColorConfig.Light else "Light Mode", **button_style)
         
-        for cb in self.buttons_frame.winfo_children()[5:9]:  # Adjusted indices since theme_button is removed
-            cb.config(
-                    bg=ColorConfig.current.FRAME_BG, 
+        # Update all buttons in the buttons frame
+        for widget in self.buttons_frame.winfo_children():
+            if isinstance(widget, tk.Checkbutton):
+                # For Checkbutton widgets, include selectcolor
+                widget.config(
+                    bg=ColorConfig.current.FRAME_BG,
                     fg=ColorConfig.current.BUTTON_TEXT,
-                    selectcolor=ColorConfig.current.FRAME_BG, 
+                    selectcolor=ColorConfig.current.FRAME_BG,
+                    activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                    activeforeground=ColorConfig.current.BUTTON_TEXT)
+            else:
+                # For other widget types (like Button), skip the selectcolor option
+                widget.config(
+                    bg=ColorConfig.current.BUTTON_BG,
+                    fg=ColorConfig.current.BUTTON_TEXT,
                     activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
                     activeforeground=ColorConfig.current.BUTTON_TEXT)
         self.canvas.config(bg=ColorConfig.current.FRAME_BG)
@@ -2682,10 +3020,7 @@ class NetworkMapGUI:
             self.theme_button.config(text="Dark Mode" if ColorConfig.current == ColorConfig.Light else "Light Mode")
 
         # VLAN checkboxes
-        for cb in self.buttons_frame.winfo_children()[6:10]:
-            cb.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
-                    selectcolor=ColorConfig.current.FRAME_BG, activebackground=ColorConfig.current.BUTTON_BG,
-                    activeforeground=ColorConfig.current.BUTTON_TEXT)
+        # VLAN checkboxes are already updated in the loop above
 
         # Canvas
         self.canvas.config(bg=ColorConfig.current.FRAME_BG)
@@ -2876,10 +3211,14 @@ class NetworkMapGUI:
             self.custom_cmd_window.lift()
             return
 
-        win, content = self.create_popup("Manage Custom Commands", 600, 550, on_close=self.make_popup_closer("custom_cmd_window"), grab=False)
+        win, content = self.create_popup("Manage Custom Commands", 400, 500, on_close=self.make_popup_closer("custom_cmd_window"), grab=False)
         self.custom_cmd_window = win
 
-        listbox = tk.Listbox(content, width=50, height=10)
+        listbox = tk.Listbox(content, width=50, height=10,
+                             bg=ColorConfig.current.ROW_BG_EVEN,
+                             fg=ColorConfig.current.ENTRY_TEXT,
+                             selectbackground=ColorConfig.current.ENTRY_FOCUS_BG,
+                             selectforeground=ColorConfig.current.BUTTON_TEXT)
         listbox.pack(pady=10, padx=10)
 
         for name in self.custom_commands.keys():
@@ -2889,7 +3228,7 @@ class NetworkMapGUI:
         frame.pack(pady=5, padx=10, fill=tk.X)
 
         label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
-        entry_args = {'bg': 'white', 'fg': 'black'}
+        entry_args = {'bg': ColorConfig.current.ENTRY_FOCUS_BG, 'fg': ColorConfig.current.ENTRY_TEXT, 'insertbackground': ColorConfig.current.ENTRY_TEXT}
 
         tk.Label(frame, text="Command Name:", **label_args).grid(row=0, column=0, sticky='w')
         name_entry = tk.Entry(frame, width=40, **entry_args)
