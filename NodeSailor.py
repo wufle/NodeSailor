@@ -375,10 +375,22 @@ class NetworkNode:
         self.canvas.coords(self.shape, self.x - width/2 - pad, self.y - height/2 - pad, 
                            self.x + width/2 + pad, self.y + height/2 + pad)
 
+    # Class variable to track the globally open context menu
+    open_context_menu = None
+
     def show_context_menu(self, event):
+        # Ensure only one context menu is open at a time across all nodes
+        if NetworkNode.open_context_menu is not None:
+            try:
+                NetworkNode.open_context_menu.destroy()
+            except Exception:
+                pass
+            NetworkNode.open_context_menu = None
+
         context_menu = tk.Toplevel(self.canvas)
         context_menu.wm_overrideredirect(True)  # Removes OS borders and title bar
         context_menu.wm_geometry(f"+{event.x_root}+{event.y_root}")
+        NetworkNode.open_context_menu = context_menu
 
         # Frame for menu items (no border from OS)
         menu_frame = tk.Frame(context_menu, bg=ColorConfig.current.BUTTON_BG)
@@ -406,6 +418,8 @@ class NetworkNode:
                 context_menu.destroy()
             except tk.TclError:
                 pass  # Ignore if window is already destroyed
+            # Reset the class-level reference
+            NetworkNode.open_context_menu = None
 
         for text, command in options:
             btn = tk.Button(menu_frame, text=text, command=lambda c=command: [c(), destroy_menu()],
