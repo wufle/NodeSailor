@@ -91,7 +91,7 @@ class ColorConfig:
         ENTRY_TEXT = '#222222'
 
     class Dark:
-        NODE_DEFAULT = '#4B5EAA'
+        NODE_DEFAULT = '#28376c'
         NODE_GREYED_OUT = '#4B5563'
         NODE_HIGHLIGHT = '#D97706'
         NODE_HOST = '#72741f'
@@ -102,7 +102,7 @@ class ColorConfig:
         FRAME_BG = "#0c0f14" #MAIN BACKBROUND
         INFO_NOTE_BG = '#111827'
         INFO_TEXT = '#8f8f8f'
-        BUTTON_BG = '#4B5EAA'
+        BUTTON_BG = '#1e2540'
         BUTTON_TEXT = '#c7c7c7'
         BUTTON_ACTIVE_BG = '#111827' #button when pressed
         BUTTON_ACTIVE_TEXT = 'black'  #button text when pressed
