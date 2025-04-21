@@ -778,11 +778,33 @@ class NetworkMapGUI:
         fg=lambda: ColorConfig.current.INFO_TEXT)
 
         self.mode_button = tk.Button(self.buttons_frame, text='Configuration', command=self.toggle_mode, **button_style)
-        self.mode_button.pack(side=tk.LEFT, padx=(5, 100), pady=5)        
+        self.mode_button.pack(side=tk.LEFT, padx=5, pady=5)
         
         ToolTip(self.mode_button, "Toggle Operator/Configuration mode", self,
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
         fg=lambda: ColorConfig.current.INFO_TEXT)
+        
+        # Create list view editor and edit connections buttons
+        self.list_view_editor_button = tk.Button(self.buttons_frame, text='List View Editor',
+                                               command=self.open_node_list_editor, **button_style)
+        self.list_view_editor_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        ToolTip(self.list_view_editor_button, "Open the list view editor", self,
+        bg=lambda: ColorConfig.current.INFO_NOTE_BG,
+        fg=lambda: ColorConfig.current.INFO_TEXT)
+        
+        self.edit_connections_button = tk.Button(self.buttons_frame, text='Edit Connections',
+                                               command=self.open_connection_list_editor, **button_style)
+        self.edit_connections_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        ToolTip(self.edit_connections_button, "Edit connections between nodes", self,
+        bg=lambda: ColorConfig.current.INFO_NOTE_BG,
+        fg=lambda: ColorConfig.current.INFO_TEXT)
+        
+        # Hide these buttons initially if starting in Operator mode
+        if self.mode == "Operator":
+            self.list_view_editor_button.pack_forget()
+            self.edit_connections_button.pack_forget()
 
         whoamI_button = tk.Button(self.buttons_frame, text='Who am I?', command=self.highlight_matching_nodes, **button_style)
         whoamI_button.pack(side=tk.LEFT, padx=5, pady=5)
@@ -1310,6 +1332,10 @@ class NetworkMapGUI:
             self.canvas.bind('<Shift-Double-1>', self.create_sticky_note)
             self.canvas.bind('<Button-2>', self.create_connection)
             
+            # Show configuration mode buttons
+            self.list_view_editor_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.mode_button)
+            self.edit_connections_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.list_view_editor_button)
+            
         else:
             self.mode = "Operator"
             self.mode_button.config(text='Operator Mode', bg=ColorConfig.current.BUTTON_BG)
@@ -1318,6 +1344,10 @@ class NetworkMapGUI:
             self.canvas.unbind('<B1-Motion>')
             self.canvas.unbind('<Shift-Double-1>')
             self.canvas.unbind('<Button-2>')
+            
+            # Hide configuration mode buttons
+            self.list_view_editor_button.pack_forget()
+            self.edit_connections_button.pack_forget()
   
     def zoom_with_mouse(self, event):
         if event.num == 4 or event.delta > 0:
@@ -1490,14 +1520,6 @@ class NetworkMapGUI:
                                         text="Dark Mode" if ColorConfig.current == ColorConfig.Light else "Light Mode",
                                         command=self.toggle_theme, **button_style)
             self.theme_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-
-            color_editor_button = tk.Button(content_frame, text='Edit Colors',
-                                            command=lambda: self.defer_popup(self.show_color_editor), **button_style)
-            color_editor_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-
-            edit_labels_btn = tk.Button(content_frame, text='Edit VLAN Labels',
-                             command=lambda: self.defer_popup(self.edit_vlan_labels), **button_style)
-            edit_labels_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
             
             node_list_btn = tk.Button(content_frame, text='List View (Table Editor)',
                             command=lambda: self.defer_popup(self.open_node_list_editor), **button_style)
@@ -1507,12 +1529,15 @@ class NetworkMapGUI:
                                 command=lambda: self.defer_popup(self.open_connection_list_editor), **button_style)
             connection_list_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
-            custom_cmd_btn = tk.Button(content_frame, text='Manage Custom Commands',
-                                     command=lambda: self.defer_popup(self.manage_custom_commands), **button_style)
-            custom_cmd_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+            config_menu_btn = tk.Button(content_frame, text='Configuration Menu',
+                                command=lambda: self.defer_popup(self.open_configuration_menu), **button_style)
+            config_menu_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             help_button = tk.Button(content_frame, text='Help', command=self.show_help, **button_style)
             help_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+
+            close_btn = tk.Button(content_frame, text='Close', command=self.close_legend, **button_style)
+            close_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             close_btn = tk.Button(content_frame, text='Close', command=self.close_legend, **button_style)
             close_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
@@ -1547,6 +1572,57 @@ class NetworkMapGUI:
             self.legend_window = None
         self.root.focus_force()  # Stronger focus restoration
         self.root.lift()  # Bring window to the foreground
+        
+    def open_configuration_menu(self):
+        """Open a configuration menu window with options for editing colors, VLAN labels, connections, and custom commands."""
+        if hasattr(self, 'config_menu_window') and self.config_menu_window and self.config_menu_window.winfo_exists():
+            self.config_menu_window.lift()
+            return
+            
+        def close_config_menu():
+            try:
+                self.config_menu_window.grab_release()
+            except:
+                pass
+            self.config_menu_window.destroy()
+            self.config_menu_window = None
+            
+        self.config_menu_window, content = self.create_popup("Configuration Menu", 300, 450, on_close=close_config_menu, grab=False)
+        
+        # Button styles
+        button_style = {
+            'font': self.custom_font,
+            'bg': ColorConfig.current.BUTTON_BG,
+            'fg': ColorConfig.current.BUTTON_TEXT,
+            'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG,
+            'activeforeground': ColorConfig.current.BUTTON_ACTIVE_TEXT,
+            'relief': tk.FLAT,
+            'padx': 5,
+            'pady': 2
+        }
+        
+        # Configuration buttons
+        color_editor_button = tk.Button(content, text='Edit Colors',
+                                      command=lambda: [close_config_menu(), self.show_color_editor()], **button_style)
+        color_editor_button.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
+        
+        edit_labels_btn = tk.Button(content, text='Edit VLAN Labels',
+                                  command=lambda: [close_config_menu(), self.edit_vlan_labels()], **button_style)
+        edit_labels_btn.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
+        
+        connection_list_btn = tk.Button(content, text='Edit Connections',
+                                      command=lambda: [close_config_menu(), self.open_connection_list_editor()], **button_style)
+        connection_list_btn.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
+        
+        custom_cmd_btn = tk.Button(content, text='Manage Custom Commands',
+                                 command=lambda: [close_config_menu(), self.manage_custom_commands()], **button_style)
+        custom_cmd_btn.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
+        
+        # Close button
+        close_btn = tk.Button(content, text='Close', command=close_config_menu, **button_style)
+        close_btn.pack(side=tk.TOP, fill=tk.X, padx=20, pady=20)
+        
+        self.fix_window_geometry(self.config_menu_window, 300, 350)
 
     def save_legend_state(self):
         state = {}
@@ -2903,11 +2979,21 @@ class NetworkMapGUI:
         if hasattr(self, 'theme_button') and self.theme_button.winfo_exists():
             self.theme_button.config(text="Dark Mode" if ColorConfig.current == ColorConfig.Light else "Light Mode", **button_style)
         
-        for cb in self.buttons_frame.winfo_children()[5:9]:  # Adjusted indices since theme_button is removed
-            cb.config(
-                    bg=ColorConfig.current.FRAME_BG, 
+        # Update all buttons in the buttons frame
+        for widget in self.buttons_frame.winfo_children():
+            if isinstance(widget, tk.Checkbutton):
+                # For Checkbutton widgets, include selectcolor
+                widget.config(
+                    bg=ColorConfig.current.FRAME_BG,
                     fg=ColorConfig.current.BUTTON_TEXT,
-                    selectcolor=ColorConfig.current.FRAME_BG, 
+                    selectcolor=ColorConfig.current.FRAME_BG,
+                    activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                    activeforeground=ColorConfig.current.BUTTON_TEXT)
+            else:
+                # For other widget types (like Button), skip the selectcolor option
+                widget.config(
+                    bg=ColorConfig.current.BUTTON_BG,
+                    fg=ColorConfig.current.BUTTON_TEXT,
                     activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
                     activeforeground=ColorConfig.current.BUTTON_TEXT)
         self.canvas.config(bg=ColorConfig.current.FRAME_BG)
@@ -2943,10 +3029,7 @@ class NetworkMapGUI:
             self.theme_button.config(text="Dark Mode" if ColorConfig.current == ColorConfig.Light else "Light Mode")
 
         # VLAN checkboxes
-        for cb in self.buttons_frame.winfo_children()[6:10]:
-            cb.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
-                    selectcolor=ColorConfig.current.FRAME_BG, activebackground=ColorConfig.current.BUTTON_BG,
-                    activeforeground=ColorConfig.current.BUTTON_TEXT)
+        # VLAN checkboxes are already updated in the loop above
 
         # Canvas
         self.canvas.config(bg=ColorConfig.current.FRAME_BG)
