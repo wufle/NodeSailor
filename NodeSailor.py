@@ -86,7 +86,7 @@ class ColorConfig:
         ROW_BG_ODD = '#e6f0fa'
         HEADER_BG = '#dbeafe'
         HEADER_TEXT = '#1e293b'
-        ENTRY_FOCUS_BG = '#fffbe6'
+        ENTRY_FOCUS_BG = '#f9f9f9'
         CELL_BORDER = '#b6b6b6'
         ENTRY_TEXT = '#222222'
 
@@ -1684,7 +1684,7 @@ class NetworkMapGUI:
         win.focus_force()
 
         label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
-        entry_args = {'bg': 'white', 'fg': 'black'}
+        entry_args = {'bg': ColorConfig.current.ENTRY_FOCUS_BG, 'fg': ColorConfig.current.ENTRY_TEXT, 'insertbackground': ColorConfig.current.ENTRY_TEXT}
 
         # Node Name
         name_entry = tk.Entry(content, **entry_args)
