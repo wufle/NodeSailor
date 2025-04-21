@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox
 from tkinter import simpledialog, messagebox, font, filedialog, colorchooser, ttk
 import subprocess
 from threading import Thread
@@ -1721,6 +1722,9 @@ class NetworkMapGUI:
         
 
         def save_node():
+            if self.mode != "Configuration":
+                messagebox.showinfo('Save Node', 'Switch to Configuration mode to save or update nodes.')
+                return
             name = name_entry.get()
             vlan_ips = {vlan: VLAN_entries[vlan].get() for vlan in VLAN_entries}
             remote = remote_entry.get()
