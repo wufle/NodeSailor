@@ -1154,7 +1154,7 @@ class NetworkMapGUI:
                     fg=ColorConfig.current.BUTTON_TEXT,
                     font=('Helvetica', 10))\
                 .grid(row=i, column=0, padx=10, pady=5, sticky="e")
-            entry = tk.Entry(content)
+            entry = tk.Entry(content, bg=ColorConfig.current.ENTRY_FOCUS_BG, fg=ColorConfig.current.ENTRY_TEXT, insertbackground=ColorConfig.current.ENTRY_TEXT)
             entry.insert(0, self.vlan_label_names[vlan])
             entry.grid(row=i, column=1, padx=10, pady=5)
             entries[vlan] = entry
