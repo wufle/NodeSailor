@@ -979,7 +979,6 @@ class NetworkMapGUI:
         self.legend_window.geometry(f"+{x}+{y}")
 
     def start_resize(self, event):
-        print(f"start_resize: Column {self.resizing_column} resizing started at x={event.x}, y={event.y}")
         self.start_x = event.x_root
         self.start_y = event.y_root
         self.initial_width = self.root.winfo_width()
@@ -1705,8 +1704,6 @@ class NetworkMapGUI:
         remote_entry = None
         file_entry = None
         web_entry = None
-
-        # Removed print_focus_state and debug prints
 
         def close_node_editor():
             if USE_GRAB:
@@ -2455,7 +2452,6 @@ class NetworkMapGUI:
 
                 # Add column divider for resizing (always at the far right)
                 divider = tk.Frame(header_frame, width=4, bg='#666666', cursor="sb_h_double_arrow") # Increased width and changed color for better visibility
-                print(f"Divider widget type: {type(divider)}")
                 divider.pack(side=tk.RIGHT, fill=tk.Y, pady=2) # Ensure divider is at the far right
 
                 # Add sorting indicator (just left of divider if present)
@@ -2470,9 +2466,7 @@ class NetworkMapGUI:
                 header_label.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
 
                 def start_resize(event, col=col_index):
-                    print(f"start_resize called with col={col}, event.x={event.x}")
                     global resizing_column, start_x, original_width
-                    print(f"Before assignment: resizing_column={resizing_column if 'resizing_column' in globals() else 'not defined'}")
                     resizing_column = col
                     start_x = event.x
                     
@@ -2483,13 +2477,9 @@ class NetworkMapGUI:
                             original_width = widget.winfo_width()
                             break
                     
-                    print(f"After assignment: resizing_column={resizing_column}, start_x={start_x}, original_width={original_width}")
-                    print(f"node_list_frame type: {type(self.node_list_frame)}, widget exists: {self.node_list_frame.winfo_exists()}")
-                    
                     # Bind to the entire window for better mouse tracking
                     self.node_list_editor.bind("<B1-Motion>", resize_column)
                     self.node_list_editor.bind("<ButtonRelease-1>", end_resize)
-                    print(f"Event bindings set for resize on the entire window for better tracking")
 
                 def resize_column(event):
                     """Live column‑drag with minimal redraw/flicker."""
@@ -2527,7 +2517,6 @@ class NetworkMapGUI:
 
                 def end_resize(event):
                     global resizing_column
-                    print(f"end_resize: Resizing ended for column {resizing_column}")
                     
                     # Unbind the motion and release events
                     if resizing_column is not None:
@@ -2535,10 +2524,8 @@ class NetworkMapGUI:
                         self.node_list_editor.unbind("<ButtonRelease-1>")
                     
                     resizing_column = None
-                    print(f"Resize ended, resizing_column set to None")
 
-                print(f"Binding <ButtonPress-1> to divider for column {col_index}")
-                divider.bind("<ButtonPress-1>", lambda event, col=col_index: print(f"Lambda for column {col} triggered") or start_resize(event, col))
+                divider.bind("<ButtonPress-1>", lambda event, col=col_index: start_resize(event, col))
 
             # Add delete button     
             header_label = tk.Label(
