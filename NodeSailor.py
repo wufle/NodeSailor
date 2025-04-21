@@ -785,19 +785,27 @@ class NetworkMapGUI:
         fg=lambda: ColorConfig.current.INFO_TEXT)
         
         # Create list view editor and edit connections buttons
-        self.list_view_editor_button = tk.Button(self.buttons_frame, text='List View Editor',
-                                               command=self.open_node_list_editor, **button_style)
+        self.list_view_editor_button = tk.Button(self.buttons_frame, text='List View',
+                                               command=lambda: self.defer_popup(self.open_node_list_editor), **button_style)
         self.list_view_editor_button.pack(side=tk.LEFT, padx=5, pady=5)
         
-        ToolTip(self.list_view_editor_button, "Open the list view editor", self,
+        ToolTip(self.list_view_editor_button, "Open a window that presents the nodes in a table format for quick editing", self,
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
         fg=lambda: ColorConfig.current.INFO_TEXT)
         
         self.edit_connections_button = tk.Button(self.buttons_frame, text='Edit Connections',
-                                               command=self.open_connection_list_editor, **button_style)
+                                               command=lambda: self.defer_popup(self.open_connection_list_editor), **button_style)
         self.edit_connections_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+        ToolTip(self.edit_connections_button, "Edit connections between nodes in a list format", self,
+        bg=lambda: ColorConfig.current.INFO_NOTE_BG,
+        fg=lambda: ColorConfig.current.INFO_TEXT)
         
-        ToolTip(self.edit_connections_button, "Edit connections between nodes", self,
+        self.edit_VLAN_button = tk.Button(self.buttons_frame, text='Edit VLAN Labels',
+                                               command=lambda: self.defer_popup(self.edit_vlan_labels), **button_style)
+        self.edit_VLAN_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+        ToolTip(self.edit_VLAN_button, "Edit the VLAN labels", self,
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
         fg=lambda: ColorConfig.current.INFO_TEXT)
         
@@ -1335,6 +1343,7 @@ class NetworkMapGUI:
             # Show configuration mode buttons
             self.list_view_editor_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.mode_button)
             self.edit_connections_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.list_view_editor_button)
+            self.edit_VLAN_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.edit_connections_button)
             
         else:
             self.mode = "Operator"
@@ -1348,6 +1357,7 @@ class NetworkMapGUI:
             # Hide configuration mode buttons
             self.list_view_editor_button.pack_forget()
             self.edit_connections_button.pack_forget()
+            self.edit_VLAN_button.pack_forget()
   
     def zoom_with_mouse(self, event):
         if event.num == 4 or event.delta > 0:
@@ -1521,23 +1531,12 @@ class NetworkMapGUI:
                                         command=self.toggle_theme, **button_style)
             self.theme_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
             
-            node_list_btn = tk.Button(content_frame, text='List View (Table Editor)',
-                            command=lambda: self.defer_popup(self.open_node_list_editor), **button_style)
-            node_list_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-            
-            connection_list_btn = tk.Button(content_frame, text='Edit Connections',
-                                command=lambda: self.defer_popup(self.open_connection_list_editor), **button_style)
-            connection_list_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-
             config_menu_btn = tk.Button(content_frame, text='Configuration Menu',
                                 command=lambda: self.defer_popup(self.open_configuration_menu), **button_style)
             config_menu_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             help_button = tk.Button(content_frame, text='Help', command=self.show_help, **button_style)
             help_button.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-
-            close_btn = tk.Button(content_frame, text='Close', command=self.close_legend, **button_style)
-            close_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
             close_btn = tk.Button(content_frame, text='Close', command=self.close_legend, **button_style)
             close_btn.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
@@ -1603,19 +1602,11 @@ class NetworkMapGUI:
         
         # Configuration buttons
         color_editor_button = tk.Button(content, text='Edit Colors',
-                                      command=lambda: [close_config_menu(), self.show_color_editor()], **button_style)
+                                      command=lambda: [close_config_menu(),self.defer_popup(self.show_color_editor)], **button_style)
         color_editor_button.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
-        
-        edit_labels_btn = tk.Button(content, text='Edit VLAN Labels',
-                                  command=lambda: [close_config_menu(), self.edit_vlan_labels()], **button_style)
-        edit_labels_btn.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
-        
-        connection_list_btn = tk.Button(content, text='Edit Connections',
-                                      command=lambda: [close_config_menu(), self.open_connection_list_editor()], **button_style)
-        connection_list_btn.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
-        
+      
         custom_cmd_btn = tk.Button(content, text='Manage Custom Commands',
-                                 command=lambda: [close_config_menu(), self.manage_custom_commands()], **button_style)
+                                 command=lambda: [close_config_menu(),self.defer_popup(self.manage_custom_commands)], **button_style)
         custom_cmd_btn.pack(side=tk.TOP, fill=tk.X, padx=20, pady=10)
         
         # Close button
