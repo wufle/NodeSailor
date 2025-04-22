@@ -61,10 +61,6 @@ class ToolTip:
             self.tip_window.destroy()
             self.tip_window = None
 
-
-
-from colors import ColorConfig
-
 class StickyNote:
     def __init__(self, canvas, text, x, y, gui=None,
                  font=('Helvetica', '12'), bg=ColorConfig.current.INFO_NOTE_BG):
@@ -1224,7 +1220,7 @@ class NetworkMapGUI:
         text_area.pack(fill=tk.BOTH, expand=True)
 
         help_lines = [
-            ("NodeSailor v0.9.17- Help\n", "title"),
+            ("NodeSailor v0.9.18- Help\n", "title"),
             ("\nOverview:\n", "header"),
             ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, RDP and more with the implementation of custom commands.\n", "text"),
             
@@ -1417,7 +1413,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="NodeSailor v0.9.17", bg=ColorConfig.current.FRAME_BG,
+            title_label = tk.Label(title_bar, text="NodeSailor v0.9.18", bg=ColorConfig.current.FRAME_BG,
                                 fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
