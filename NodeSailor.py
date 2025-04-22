@@ -12,11 +12,13 @@ import webbrowser
 import ctypes
 import math
 
+# Classes
 from colors import ColorConfig
 from notes import StickyNote
-
+from connections import ConnectionLine
 from tooltip import ToolTip
-
+from nodes import NetworkNode
+ 
 def get_ip_addresses():
     ip_addresses = []
     hostname = socket.gethostname()
