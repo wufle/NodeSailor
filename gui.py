@@ -8,6 +8,7 @@ import json
 import logging
 import math
 import os
+from utils import get_ip_addresses
 from colors import ColorConfig
 from tooltip import ToolTip
 from nodes import NetworkNode

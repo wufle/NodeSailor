@@ -19,17 +19,8 @@ from connections import ConnectionLine
 from tooltip import ToolTip
 from nodes import NetworkNode
 from gui import NetworkMapGUI
+from utils import get_ip_addresses
  
-def get_ip_addresses():
-    ip_addresses = []
-    hostname = socket.gethostname()
-    try:
-        ip_address = socket.gethostbyname(hostname)
-        ip_addresses.append(ip_address)
-    except socket.gaierror:
-        pass
-    return ip_addresses
-
 if __name__ == "__main__":
     root = tk.Tk()
     root.resizable(True, True)
