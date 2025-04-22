@@ -48,7 +48,7 @@ class NetworkNode:
         self.adjust_node_size()
         for line in self.connections:
             line.update_position()
-        gui = getattr(self.canvas, "gui", None)
+        gui = self.canvas.gui
         if gui and hasattr(gui, "list_editor_xy_fields"):
             xy_fields = gui.list_editor_xy_fields.get(self)
             if xy_fields:
@@ -84,6 +84,7 @@ class NetworkNode:
          
     def on_click(self, event):
         # Set the selected node in the GUI
+        gui = self.canvas.gui
         gui.on_node_select(self)
         self.canvas.selected_object_type = self.type
         self.canvas.selected_object = self
@@ -109,6 +110,7 @@ class NetworkNode:
                 else:
                     color = ColorConfig.current.NODE_PING_FAILURE
                 self.canvas.itemconfig(self.shape, fill=color)
+                gui = self.canvas.gui
                 self.canvas.after(0, lambda: gui.update_vlan_colors(self, results))
 
         def ping_all_vlans():
@@ -135,6 +137,8 @@ class NetworkNode:
     open_context_menu = None
 
     def show_context_menu(self, event):
+        gui = self.canvas.gui
+        
         # Ensure only one context menu is open at a time across all nodes
         if NetworkNode.open_context_menu is not None:
             try:
@@ -192,6 +196,7 @@ class NetworkNode:
         context_menu.bind("<Escape>", lambda e: destroy_menu())
 
     def edit_node_info(self):
+        gui = self.canvas.gui
         gui.open_node_window(node=self)
 
     def open_remote_desktop(self):
@@ -224,8 +229,10 @@ class NetworkNode:
             return
         webbrowser.open(self.web_config_url, new=2)  # Open URL in a new tab, if exists
         pass
-     
+      
     def delete_node(self):
+        gui = self.canvas.gui
+        
         if self.connections:
             result = messagebox.askyesno(
                 "Delete Node",
@@ -237,6 +244,8 @@ class NetworkNode:
         gui.remove_node(self)
 
     def execute_custom_command(self, command_template):
+        gui = self.canvas.gui
+        
         context = {
             'name': self.name,
             'ip': '',  # First valid IP will be assigned below

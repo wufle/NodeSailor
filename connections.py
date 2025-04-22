@@ -1,4 +1,3 @@
-
 class ConnectionLine:
     def __init__(self, canvas, node1, node2, label='', connectioninfo=None):
         self.canvas = canvas
