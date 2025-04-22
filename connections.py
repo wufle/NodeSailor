@@ -1,3 +1,6 @@
+import tkinter as tk
+from colors import ColorConfig
+
 class ConnectionLine:
     def __init__(self, canvas, node1, node2, label='', connectioninfo=None):
         self.canvas = canvas
@@ -16,9 +19,9 @@ class ConnectionLine:
         self.canvas.coords(self.line, self.node1.x, self.node1.y, self.node2.x, self.node2.y)
         if self.label_id:
             self.update_label()  # Update label position
-            
+             
     def update_label(self):
-        
+         
         if self.label_id:
             self.canvas.delete(self.label_id)
             if hasattr(self, 'label_bg') and self.label_bg:
@@ -76,7 +79,7 @@ class ConnectionLine:
                 self.canvas.wait_window(dialog)
 
             self.canvas.tag_bind(self.label_id, "<Button-3>", edit_connectioninfo)
-    
+     
         # Recreate a background similar to StickyNote
         bbox = self.canvas.bbox(self.label_id)
         if bbox:
