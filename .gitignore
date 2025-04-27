@@ -13,3 +13,4 @@ _internal/custom_commands.json
 example network test.json
 .roomodes
 __pycache__/
+__pycache__/gui.cpython-312.pyc

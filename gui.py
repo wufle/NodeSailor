@@ -1773,7 +1773,7 @@ class NetworkMapGUI:
             .grid(row=0, column=0, columnspan=len(fields)+1,
                     sticky="w", pady=5)
 
-            new_node_entries = []
+            self.new_node_entries = []
             for col_index, (label, attr) in enumerate(fields):
                 # sensible default widths
                 if attr in ("x", "y"):
@@ -1800,7 +1800,7 @@ class NetworkMapGUI:
                     padx=1, pady=3, ipady=3, sticky="nsew")
 
                 self.column_entries.setdefault(col_index, []).append(e)
-                new_node_entries.append(e)
+                self.new_node_entries.append(e)
 
                 # Add entry to column tracking
                 self.column_entries.setdefault(col_index, []).append(e)
@@ -1822,7 +1822,7 @@ class NetworkMapGUI:
 
             def add_new_node():
                 # Get values from entries
-                values = {fields[i][1]: entry.get() for i, entry in enumerate(new_node_entries)}
+                values = {fields[i][1]: entry.get() for i, entry in enumerate(self.new_node_entries)}
                 
                 # Set default values if not provided
                 name = values.get('name', 'NewNode')
@@ -1848,7 +1848,7 @@ class NetworkMapGUI:
                 self.unsaved_changes = True
                 
                 # Clear entry fields
-                for entry in new_node_entries:
+                for entry in self.new_node_entries:
                     entry.delete(0, tk.END)
                 
                 # Rebuild the editor content
@@ -2168,7 +2168,7 @@ class NetworkMapGUI:
 
         def add_new_node():
             # Get values from entries
-            values = {fields[i][1]: entry.get() for i, entry in enumerate(new_node_entries)}
+            values = {fields[i][1]: entry.get() for i, entry in enumerate(self.new_node_entries)}
             
             # Set default values if not provided
             name = values.get('name', 'NewNode')
@@ -2194,7 +2194,7 @@ class NetworkMapGUI:
             self.unsaved_changes = True
             
             # Clear entry fields
-            for entry in new_node_entries:
+            for entry in self.new_node_entries:
                 entry.delete(0, tk.END)
             
             # Rebuild the editor content
