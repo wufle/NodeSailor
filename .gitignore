@@ -12,4 +12,4 @@ test.bat
 _internal/custom_commands.json
 example network test.json
 .roomodes
-__pycache__/colors.cpython-312.pyc
+__pycache__/
