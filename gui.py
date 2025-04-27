@@ -1802,6 +1802,24 @@ class NetworkMapGUI:
                 self.column_entries.setdefault(col_index, []).append(e)
                 new_node_entries.append(e)
 
+                # Add entry to column tracking
+                self.column_entries.setdefault(col_index, []).append(e)
+                # Focus highlight
+                def on_focus_in(event, e=e):
+                    e.config(bg=ColorConfig.current.ENTRY_FOCUS_BG)
+                    e.select_range(0, tk.END)
+                    return 'break'
+                def on_focus_out(event, e=e):
+                    e.config(bg=ColorConfig.current.ROW_BG_EVEN)
+                    return 'break'
+                e.bind('<FocusIn>', on_focus_in)
+                e.bind('<FocusOut>', on_focus_out)
+                e.bind('<Return>', on_focus_out)
+                e.bind('<Tab>', on_focus_out)
+                # Tooltip for truncated cells
+                if attr in ("file_path", "web_config_url"):
+                    ToolTip(e, "", self, bg="#ffffe0", fg="black")
+
             def add_new_node():
                 # Get values from entries
                 values = {fields[i][1]: entry.get() for i, entry in enumerate(new_node_entries)}
@@ -2147,25 +2165,6 @@ class NetworkMapGUI:
             self.nodes = sorted(self.nodes, key=get_sort_key, reverse=self.sort_reverse)
             rebuild_editor_content()
            
-            # Add entry to column tracking
-            if col_index in self.column_entries:
-                self.column_entries[col_index].append(entry)
-            # Focus highlight
-            def on_focus_in(event, e=entry):
-                e.config(bg=ColorConfig.current.ENTRY_FOCUS_BG)
-                e.select_range(0, tk.END)
-                return 'break'
-            def on_focus_out(event, e=entry):
-                e.config(bg=row_bg)
-                return 'break'
-            entry.bind('<FocusIn>', on_focus_in)
-            entry.bind('<FocusOut>', on_focus_out)
-            entry.bind('<Return>', on_focus_out)
-            entry.bind('<Tab>', on_focus_out)
-            # Tooltip for truncated cells
-            if attr in ("file_path", "web_config_url"):
-                ToolTip(entry, "", self, bg="#ffffe0", fg="black")
-            new_node_entries.append(entry)
 
         def add_new_node():
             # Get values from entries
