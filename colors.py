@@ -18,6 +18,11 @@ class ColorConfig:
         BUTTON_CONFIGURATION_MODE = 'light coral'
         Connections = 'dim gray'
         BORDER_COLOR = '#f7f7f7'
+        # Group rectangle colors
+        GROUP_DEFAULT = '#e6f2ff'
+        GROUP_OUTLINE = '#4d94ff'
+        GROUP_SELECTED = '#0066cc'
+        GROUP_TEXT = '#003366'
         # New for list editor readability
         ROW_BG_EVEN = '#f9f9f9'
         ROW_BG_ODD = '#e6f0fa'
@@ -46,6 +51,11 @@ class ColorConfig:
         BUTTON_CONFIGURATION_MODE = '#F87171'
         Connections = '#6a7586'
         BORDER_COLOR = '#374151' #f1 and legend window border colour
+        # Group rectangle colors
+        GROUP_DEFAULT = '#1a2942'
+        GROUP_OUTLINE = '#3a5894'
+        GROUP_SELECTED = '#5d8cd9'
+        GROUP_TEXT = '#a3c2ff'
         # New for list editor readability
         ROW_BG_EVEN = '#181e29'
         ROW_BG_ODD = '#232b3a'

@@ -20,6 +20,7 @@ from tooltip import ToolTip
 from nodes import NetworkNode
 from gui import NetworkMapGUI
 from utils import get_ip_addresses
+from groups import GroupManager, RectangleGroup
  
 if __name__ == "__main__":
     root = tk.Tk()

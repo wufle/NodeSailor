@@ -17,6 +17,8 @@ from notes import StickyNote
 from PIL import Image, ImageTk
 from node_list import open_node_list_editor
 from connection_list_editor import open_connection_list_editor
+from groups import GroupManager, RectangleGroup
+from group_editor import open_group_editor
 
 class NetworkMapGUI:
     def _setup_scrollbar_styles(self):
@@ -129,6 +131,8 @@ class NetworkMapGUI:
         self.connection_start_node = None
         self.legend_window = None
         self.unsaved_changes = False
+        self.groups_mode_active = False
+        self.group_manager = GroupManager(self)
 
         # Buttons Frame
         self.buttons_frame = tk.Frame(root)
@@ -212,10 +216,19 @@ class NetworkMapGUI:
         fg=lambda: ColorConfig.current.INFO_TEXT)
         
         self.edit_connections_button = tk.Button(self.buttons_frame, text='Edit Connections',
-                                               command=lambda: self.defer_popup(self.open_connection_list_editor), **button_style)
+                                                command=lambda: self.defer_popup(self.open_connection_list_editor), **button_style)
         self.edit_connections_button.pack(side=tk.LEFT, padx=5, pady=5)
 
         ToolTip(self.edit_connections_button, "Edit connections between nodes in a list format", self,
+        bg=lambda: ColorConfig.current.INFO_NOTE_BG,
+        fg=lambda: ColorConfig.current.INFO_TEXT)
+        
+        # Add Groups button
+        self.groups_button = tk.Button(self.buttons_frame, text='Groups',
+                                      command=self.toggle_groups_mode, **button_style)
+        self.groups_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        ToolTip(self.groups_button, "Create and edit rectangle groups to visually organize nodes", self,
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
         fg=lambda: ColorConfig.current.INFO_TEXT)
         
@@ -231,6 +244,7 @@ class NetworkMapGUI:
         if self.mode == "Operator":
             self.list_view_editor_button.pack_forget()
             self.edit_connections_button.pack_forget()
+            self.groups_button.pack_forget()
 
         whoamI_button = tk.Button(self.buttons_frame, text='Who am I?', command=self.highlight_matching_nodes, **button_style)
         whoamI_button.pack(side=tk.LEFT, padx=5, pady=5)
@@ -319,8 +333,9 @@ class NetworkMapGUI:
         root.bind('<Down>', lambda event: self.pan_canvas('down'))  # Pan down
         self.root.bind('<Control-Shift-C>', lambda event: [self.root.focus_set(), self.toggle_theme()])
         self.canvas.bind('<Double-1>', self.create_node)
-        self.canvas.bind('<B1-Motion>', self.move_node)
-        self.canvas.bind('<ButtonRelease-1>', self.deselect_node)
+        self.canvas.bind('<B1-Motion>', self.handle_mouse_drag)
+        self.canvas.bind('<ButtonRelease-1>', self.handle_mouse_release)
+        self.canvas.bind('<Button-1>', self.handle_mouse_click)
         self.canvas.bind('<Shift-Double-1>', self.create_sticky_note)
         self.canvas.bind('<MouseWheel>', self.zoom_with_mouse)
         self.canvas.pack(fill=tk.BOTH, expand=True)
@@ -1240,6 +1255,57 @@ class NetworkMapGUI:
         self.open_node_window(event=event)
         self.unsaved_changes = True
              
+    def toggle_groups_mode(self):
+        """Toggle the groups mode on/off"""
+        if self.groups_mode_active:
+            self.groups_mode_active = False
+            self.groups_button.config(relief=tk.RAISED)
+            
+            # Close the group editor if it's open
+            if hasattr(self, "group_editor_window") and self.group_editor_window and self.group_editor_window.winfo_exists():
+                self.group_editor_window.destroy()
+                self.group_editor_window = None
+                
+            # Restore normal mode bindings
+            self.canvas.bind('<B1-Motion>', self.move_node)
+        else:
+            self.groups_mode_active = True
+            self.groups_button.config(relief=tk.SUNKEN)
+            
+            # Set up bindings for groups mode
+            self.canvas.bind('<B1-Motion>', self.handle_mouse_drag)
+    
+    def handle_mouse_click(self, event):
+        """Handle mouse click events based on the current mode"""
+        if self.groups_mode_active:
+            # In groups mode, select a group if clicked on one
+            self.group_manager.select_group(event)
+        else:
+            # Normal node selection handled by the node's on_click method
+            pass
+    
+    def handle_mouse_drag(self, event):
+        """Handle mouse drag events based on the current mode"""
+        if self.groups_mode_active:
+            # In groups mode, update the rectangle being drawn
+            if not hasattr(self.group_manager, 'drawing') or not self.group_manager.drawing:
+                self.group_manager.start_drawing(event)
+            else:
+                self.group_manager.update_drawing(event)
+        else:
+            # Normal node movement
+            self.move_node(event)
+    
+    def handle_mouse_release(self, event):
+        """Handle mouse release events based on the current mode"""
+        if self.groups_mode_active:
+            # In groups mode, finish drawing the rectangle
+            if hasattr(self.group_manager, 'drawing') and self.group_manager.drawing:
+                self.group_manager.finish_drawing(event)
+        else:
+            # Normal node deselection
+            self.deselect_node(event)
+    
     def move_node(self, event):
         if not event.state & 0x001:
             canvas_x = self.canvas.canvasx(event.x)
@@ -1311,6 +1377,13 @@ class NetworkMapGUI:
         sticky_bgs = self.canvas.find_withtag("sticky_bg")
         for bg in sticky_bgs:
             self.canvas.delete(bg)
+            
+        # Clear all groups
+        for group in self.group_manager.groups:
+            self.canvas.delete(group.rectangle)
+            self.canvas.delete(group.text)
+        self.group_manager.groups.clear()
+        self.group_manager.selected_group = None
             
     def clear_node_status(self):
         # Set the node color of all nodes to NODE_DEFAULT.
@@ -1416,7 +1489,8 @@ class NetworkMapGUI:
             'nodes': [],
             'connections': [],
             'vlan_labels': self.vlan_label_names,
-            'stickynotes': []
+            'stickynotes': [],
+            'groups': []
         }
 
         # Gather node data
@@ -1463,6 +1537,11 @@ class NetworkMapGUI:
                     'x': x1,
                     'y': y1
                 })
+                
+        # Gather group data
+        for group in self.group_manager.groups:
+            group_data = group.to_dict()
+            state['groups'].append(group_data)
 
         # Prompt user for a file location and save the JSON file
         file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
@@ -1528,7 +1607,16 @@ class NetworkMapGUI:
             for sn in state.get('stickynotes', []):
                 note = StickyNote(self.canvas, sn['text'], sn['x'], sn['y'])
                 self.stickynotes.append(note)
-
+                
+            # Load groups
+            self.group_manager.groups = []
+            for group_data in state.get('groups', []):
+                group = RectangleGroup.from_dict(self.canvas, group_data)
+                self.group_manager.groups.append(group)
+                
+            # Make sure groups are behind nodes and connections
+            self.group_manager.send_all_to_back()
+                
             # Make sure nodes appear over connection lines
             for node in self.nodes:
                 node.raise_node()
@@ -1578,7 +1666,15 @@ class NetworkMapGUI:
                     label = conn_data.get('label', '')  # Get the label if it exists
                     tooltip = conn_data.get('connectioninfo', None)
                     ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip)
-
+                
+                # Load groups
+                self.group_manager.groups = []
+                for group_data in state.get('groups', []):
+                    group = RectangleGroup.from_dict(self.canvas, group_data)
+                    self.group_manager.groups.append(group)
+                
+                # Make sure groups are behind nodes and connections
+                self.group_manager.send_all_to_back()
                 
                 # Raise all nodes after creating connections to ensure they appear on top
                 for node in self.nodes:
@@ -1896,6 +1992,11 @@ class NetworkMapGUI:
         self.center_window_on_screen(window)
         window.transient(self.root)
         window.lift()
+        
+    def open_group_editor(self, group=None):
+        """Open the group editor window"""
+        from group_editor import open_group_editor
+        open_group_editor(self, group)
 
     def save_colors(self):
         colors = {
