@@ -89,20 +89,24 @@ def open_node_list_editor(gui):
     gui.list_editor_xy_fields = {}
 
     def rebuild_editor_content():
-        # Store current column widths before destroying widgets
-        column_widths = {}
+        # Use persistent column widths if available, else initialize
+        if not hasattr(gui, "column_widths") or not isinstance(gui.column_widths, dict):
+            gui.column_widths = {}
+        column_widths = gui.column_widths
         for col_index, (label, attr) in enumerate(fields):
-            if attr in ("x", "y"):
-                entry_width = 2
-            elif attr in ("file_path", "web_config_url"):
-                entry_width = 15
-            elif attr == "remote_desktop_address":
-                entry_width = 10
-            else:
-                entry_width = 9
-            glyph_px = gui.custom_font.measure("0") or 8
-            initial_width = entry_width * glyph_px + 10
-            column_widths[col_index] = initial_width
+            if col_index not in column_widths:
+                if attr in ("x", "y"):
+                    entry_width = 2
+                elif attr in ("file_path", "web_config_url"):
+                    entry_width = 15
+                elif attr == "remote_desktop_address":
+                    entry_width = 10
+                else:
+                    entry_width = 9
+                glyph_px = gui.custom_font.measure("0") or 8
+                initial_width = entry_width * glyph_px + 10
+                column_widths[col_index] = initial_width
+        gui.column_widths = column_widths
 
         # Only destroy the existing nodes table content
         for widget in gui.node_list_frame.winfo_children():
@@ -258,9 +262,9 @@ def open_node_list_editor(gui):
             header_label.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
 
             def start_resize(event, col=col_index):
-                global resizing_column, start_x, original_width
+                global resizing_column, start_x_root, original_width
                 resizing_column = col
-                start_x = event.x
+                start_x_root = event.x_root
 
                 # Find the header frame to get its original width
                 for widget in gui.node_list_frame.winfo_children():
@@ -275,32 +279,26 @@ def open_node_list_editor(gui):
 
             def resize_column(event):
                 """Live column‑drag with minimal redraw/flicker."""
-                global start_x, original_width, resizing_column
+                global resizing_column, start_x_root, original_width
                 if resizing_column is None:
                     return
 
-                # how far have we dragged?
-                delta     = event.x - start_x
-                new_width = max(50, original_width + delta)   # 50 px minimum
+                dx = event.x_root - start_x_root
+                new_width = max(40, original_width + dx)
+                gui.column_widths[resizing_column] = new_width
 
-                # 1️⃣  tell the grid to widen this column
-                gui.node_list_frame.grid_columnconfigure(resizing_column,
-                                                    minsize=new_width)
+                # Only update the relevant column's width in real time
+                gui.node_list_frame.grid_columnconfigure(resizing_column, minsize=new_width)
 
-                # 2️⃣  update Entry widgets (convert px → chars)
                 def apply_to_entries():
                     char_w = px_to_cols(new_width)
                     for e in gui.column_entries.get(resizing_column, []):
                         if e.winfo_exists():
                             e.config(width=char_w)
-
-                    # Update the canvas window to match the frame's new width
                     frame_reqwidth = gui.node_list_frame.winfo_reqwidth()
                     canvas.itemconfig(inner_window, width=frame_reqwidth)
                     canvas.configure(scrollregion=canvas.bbox("all"))
 
-                # throttle heavy work so it runs once per idle cycle,
-                # not on every single <Motion> event
                 if getattr(gui, "_resize_job", None):
                     gui.node_list_frame.after_cancel(gui._resize_job)
                 gui._resize_job = gui.node_list_frame.after_idle(apply_to_entries)
@@ -313,6 +311,8 @@ def open_node_list_editor(gui):
                 if resizing_column is not None:
                     gui.node_list_editor.unbind("<B1-Motion>")
                     gui.node_list_editor.unbind("<ButtonRelease-1>")
+                    # Trigger a full rebuild if needed (to reflow or persist)
+                    rebuild_editor_content()
 
                 resizing_column = None
 
