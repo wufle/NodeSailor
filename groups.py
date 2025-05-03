@@ -188,7 +188,7 @@ class GroupManager:
         # Create a temporary rectangle
         self.current_group = self.canvas.create_rectangle(
             self.start_x, self.start_y, self.start_x, self.start_y,
-            outline=ColorConfig.current.GROUP_SELECTED,
+            outline=ColorConfig.current.GROUP_OUTLINE,
             width=2, dash=(5, 5)
         )
     
@@ -240,25 +240,10 @@ class GroupManager:
         if not self.gui.groups_mode_active:
             return
             
-        # Deselect the current group
-        if self.selected_group:
-            self.canvas.itemconfig(
-                self.selected_group.rectangle,
-                width=2,
-                outline=ColorConfig.current.GROUP_OUTLINE
-            )
-            
         # Find the topmost group at the event coordinates
         for group in reversed(self.groups):
             if group.contains_point(event.x, event.y):
                 self.selected_group = group
-                self.canvas.itemconfig(
-                    group.rectangle,
-                    width=3,
-                    outline=ColorConfig.current.GROUP_SELECTED
-                )
-                
-                # If there's a group editor window open, update it
                 if hasattr(self.gui, "group_editor_window") and self.gui.group_editor_window and self.gui.group_editor_window.winfo_exists():
                     self.gui.update_group_editor(group)
                     
