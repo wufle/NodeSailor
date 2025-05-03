@@ -95,7 +95,6 @@ def open_group_editor(gui_self, group=None):
         if gui_self.group_manager.selected_group:
             gui_self.group_manager.delete_group(gui_self.group_manager.selected_group)
             gui_self.unsaved_changes = True
-            close_editor()
     
     delete_button = tk.Button(buttons_frame, text="Delete", 
                              bg=ColorConfig.current.BUTTON_BG, 
