@@ -12,5 +12,5 @@ test.bat
 _internal/custom_commands.json
 example network test.json
 .roomodes
-./__pycache__/
+__pycache__/
 *.pyc
