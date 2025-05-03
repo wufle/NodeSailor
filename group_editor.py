@@ -25,7 +25,7 @@ def open_group_editor(gui_self, group=None):
     
     # Create the popup window
     win, content = gui_self.create_popup(
-        "Group Editor", 1000, 700,
+        "Group Editor", 300, 360,
         on_close=close_editor,
         grab=False
     )
@@ -106,8 +106,22 @@ def open_group_editor(gui_self, group=None):
     preset_var = tk.StringVar()
     preset_var.set(color_presets[0]["id"])
 
+    # Ensure UI always reflects the current value of preset_var
+    def on_preset_var_change(*args):
+        # This callback is triggered on any change to preset_var
+        # Tkinter Radiobuttons automatically update, but this ensures any additional UI sync if needed
+        win.update_idletasks()  # Force UI update to keep radio selection in sync
+
+    preset_var.trace_add("write", on_preset_var_change)
+
+    def is_valid_preset_id(preset_id):
+        return any(p["id"] == preset_id for p in color_presets)
+
     def select_preset(preset_id):
-        preset_var.set(preset_id)
+        if is_valid_preset_id(preset_id):
+            preset_var.set(preset_id)
+        else:
+            preset_var.set(color_presets[0]["id"])
 
     # Preset selection UI
     presets_frame = tk.LabelFrame(editor_frame, text="Color Presets", bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
@@ -116,11 +130,15 @@ def open_group_editor(gui_self, group=None):
     for preset in color_presets:
         row = tk.Frame(presets_frame, bg=ColorConfig.current.FRAME_BG)
         row.pack(fill=tk.X, pady=2)
+        # Determine correct select color and active background for current color scheme
+        if ColorConfig.current is getattr(ColorConfig, "Dark", None):
+            radio_color = preset["dark_bg"]
+        else:
+            radio_color = preset["light_bg"]
         rb = tk.Radiobutton(
             row, variable=preset_var, value=preset["id"],
             bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
-            selectcolor=preset["light_bg"], activebackground=preset["light_bg"],
-            command=lambda pid=preset["id"]: select_preset(pid)
+            selectcolor=radio_color, activebackground=radio_color
         )
         rb.pack(side=tk.LEFT, padx=5)
         # Visual preview
@@ -142,11 +160,18 @@ def open_group_editor(gui_self, group=None):
         if gui_self.group_manager.selected_group:
             group = gui_self.group_manager.selected_group
             selected_preset_id = preset_var.get()
+            # Ensure selected_preset_id is valid
+            if not is_valid_preset_id(selected_preset_id):
+                selected_preset_id = color_presets[0]["id"]
+                preset_var.set(selected_preset_id)
             group.update_properties(
                 name=name_entry.get(),
                 color_preset_id=selected_preset_id
             )
             gui_self.unsaved_changes = True
+            # After saving, ensure preset_var is still valid
+            if not is_valid_preset_id(preset_var.get()):
+                preset_var.set(color_presets[0]["id"])
     
     save_button = tk.Button(buttons_frame, text="Save", 
                            bg=ColorConfig.current.BUTTON_BG, 
@@ -170,7 +195,7 @@ def open_group_editor(gui_self, group=None):
         name_entry.delete(0, tk.END)
         name_entry.insert(0, group.name)
         # Set preset selection if available
-        if hasattr(group, "color_preset_id") and group.color_preset_id:
+        if hasattr(group, "color_preset_id") and group.color_preset_id and is_valid_preset_id(group.color_preset_id):
             preset_var.set(group.color_preset_id)
         else:
             preset_var.set(color_presets[0]["id"])
@@ -181,10 +206,12 @@ def open_group_editor(gui_self, group=None):
         if group and win.winfo_exists():
             name_entry.delete(0, tk.END)
             name_entry.insert(0, group.name)
+            # Always update the radio button selection via preset_var.set
             if hasattr(group, "color_preset_id") and group.color_preset_id:
-                preset_var.set(group.color_preset_id)
-            else:
-                preset_var.set(color_presets[0]["id"])
-            win.after(100, lambda: name_entry.focus_force())  # Ensure focus when updating
+                if is_valid_preset_id(group.color_preset_id):
+                    preset_var.set(group.color_preset_id)
+                else:
+                    preset_var.set(color_presets[0]["id"])
+                win.after(100, lambda: name_entry.focus_force())  # Ensure focus when updating
     
     gui_self.update_group_editor = update_group_editor
