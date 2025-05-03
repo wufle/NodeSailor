@@ -226,7 +226,7 @@ class NetworkMapGUI:
         # Add Groups button
         self.groups_button = tk.Button(self.buttons_frame, text='Groups',
                                       command=self.toggle_groups_mode, **button_style)
-        self.groups_button.pack(side=tk.LEFT, padx=5, pady=5)
+        # self.groups_button.pack(side=tk.LEFT, padx=5, pady=5)  # Now packed conditionally in toggle_mode()
         
         ToolTip(self.groups_button, "Create and edit rectangle groups to visually organize nodes", self,
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
@@ -776,6 +776,7 @@ class NetworkMapGUI:
             self.list_view_editor_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.mode_button)
             self.edit_connections_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.list_view_editor_button)
             self.edit_VLAN_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.edit_connections_button)
+            self.groups_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.edit_connections_button)
             
         else:
             self.mode = "Operator"
@@ -790,6 +791,7 @@ class NetworkMapGUI:
             self.list_view_editor_button.pack_forget()
             self.edit_connections_button.pack_forget()
             self.edit_VLAN_button.pack_forget()
+            self.groups_button.pack_forget()
   
     def zoom_with_mouse(self, event):
         if event.num == 4 or event.delta > 0:
