@@ -105,10 +105,7 @@ class RectangleGroup:
         """Handle click events on the group"""
         gui = self.canvas.gui
         if hasattr(gui, "groups_mode_active") and gui.groups_mode_active:
-            gui.group_manager.selected_group = self
-            # Highlight the selected group
-            self.canvas.itemconfig(self.rectangle, width=3, outline=ColorConfig.current.GROUP_SELECTED)
-            
+            gui.group_manager.selected_group = self         
             # If there's a group editor window open, update it
             if hasattr(gui, "group_editor_window") and gui.group_editor_window and gui.group_editor_window.winfo_exists():
                 gui.update_group_editor(self)
@@ -142,7 +139,8 @@ class RectangleGroup:
             'light_bg': self.light_bg,
             'light_border': self.light_border,
             'dark_bg': self.dark_bg,
-            'dark_border': self.dark_border
+            'dark_border': self.dark_border,
+            'color_preset_id': self.color_preset_id
         }
     
     @classmethod
@@ -159,7 +157,8 @@ class RectangleGroup:
             data.get('light_bg'),
             data.get('light_border'),
             data.get('dark_bg'),
-            data.get('dark_border')
+            data.get('dark_border'),
+            data.get('color_preset_id')
         )
 
 class GroupManager:
