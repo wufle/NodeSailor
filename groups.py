@@ -1,9 +1,11 @@
 import tkinter as tk
 from colors import ColorConfig
 
+from colors import ColorConfig, get_group_colors
+
 class RectangleGroup:
     def __init__(self, canvas, x1, y1, x2, y2, name="Group", color=None,
-                 light_bg=None, light_border=None, dark_bg=None, dark_border=None):
+                 light_bg=None, light_border=None, dark_bg=None, dark_border=None, color_preset_id=None):
         self.canvas = canvas
         self.x1 = min(x1, x2)
         self.y1 = min(y1, y2)
@@ -15,22 +17,26 @@ class RectangleGroup:
         self.light_border = light_border or ColorConfig.current.GROUP_OUTLINE
         self.dark_bg = dark_bg or "#222222"
         self.dark_border = dark_border or "#888888"
-        
-        # Create the rectangle with lower z-index to be behind nodes and connections
-        # Select background and border color based on current color scheme
-        if ColorConfig.current == ColorConfig.Light:
-            fill_color = self.light_bg
-            outline_color = self.light_border
+        self.color_preset_id = color_preset_id  # New attribute for preset selection
+
+        # Use color preset if available
+        if self.color_preset_id:
+            color_scheme = "dark" if ColorConfig.current == ColorConfig.Dark else "light"
+            fill_color, outline_color = get_group_colors(self.color_preset_id, color_scheme)
         else:
-            fill_color = self.dark_bg
-            outline_color = self.dark_border
+            if ColorConfig.current == ColorConfig.Light:
+                fill_color = self.light_bg
+                outline_color = self.light_border
+            else:
+                fill_color = self.dark_bg
+                outline_color = self.dark_border
 
         self.rectangle = canvas.create_rectangle(
             self.x1, self.y1, self.x2, self.y2,
             fill=fill_color, outline=outline_color,
             width=2, stipple="gray50", tags="group"
         )
-        
+
         # Create the text label for the group
         self.text = canvas.create_text(
             self.x1 + 10, self.y1 + 10,  # Position text in top-left corner with padding
@@ -40,10 +46,10 @@ class RectangleGroup:
             font=("Helvetica", 10, "bold"),
             tags="group_text"
         )
-        
+
         # Ensure the group is drawn behind all nodes and connections
         self.send_to_back()
-        
+
         # Bind events for selection and context menu
         self.canvas.tag_bind(self.rectangle, '<Button-1>', self.on_click)
         self.canvas.tag_bind(self.text, '<Button-1>', self.on_click)
@@ -59,7 +65,7 @@ class RectangleGroup:
         self.canvas.coords(self.text, self.x1 + 10, self.y1 + 10)
         
     def update_properties(self, name=None, color=None,
-                          light_bg=None, light_border=None, dark_bg=None, dark_border=None):
+                          light_bg=None, light_border=None, dark_bg=None, dark_border=None, color_preset_id=None):
         """Update the properties of the rectangle group"""
         if name is not None:
             self.name = name
@@ -74,14 +80,20 @@ class RectangleGroup:
             self.dark_bg = dark_bg
         if dark_border is not None:
             self.dark_border = dark_border
+        if color_preset_id is not None:
+            self.color_preset_id = color_preset_id
 
-        # Update fill and outline based on current color scheme
-        if ColorConfig.current == ColorConfig.Light:
-            fill_color = self.light_bg
-            outline_color = self.light_border
+        # Use color preset if available
+        if self.color_preset_id:
+            color_scheme = "dark" if ColorConfig.current == ColorConfig.Dark else "light"
+            fill_color, outline_color = get_group_colors(self.color_preset_id, color_scheme)
         else:
-            fill_color = self.dark_bg
-            outline_color = self.dark_border
+            if ColorConfig.current == ColorConfig.Light:
+                fill_color = self.light_bg
+                outline_color = self.light_border
+            else:
+                fill_color = self.dark_bg
+                outline_color = self.dark_border
         self.canvas.itemconfig(self.rectangle, fill=fill_color, outline=outline_color)
     
     def send_to_back(self):

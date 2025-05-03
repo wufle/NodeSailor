@@ -67,3 +67,66 @@ class ColorConfig:
 
     # Default to Dark mode
     current = Dark
+
+# Centralized group color presets
+COLOR_PRESETS = [
+    {
+        "id": "preset1",
+        "name": "Classic Blue",
+        "light_bg": "#e3f0ff",
+        "light_border": "#3a7bd5",
+        "dark_bg": "#22304a",
+        "dark_border": "#3a7bd5"
+    },
+    {
+        "id": "preset2",
+        "name": "Sunset",
+        "light_bg": "#ffe5d0",
+        "light_border": "#ff7f50",
+        "dark_bg": "#4a2c23",
+        "dark_border": "#ff7f50"
+    },
+    {
+        "id": "preset3",
+        "name": "Mint",
+        "light_bg": "#e0fff4",
+        "light_border": "#2ecc71",
+        "dark_bg": "#204034",
+        "dark_border": "#2ecc71"
+    },
+    {
+        "id": "preset4",
+        "name": "Lavender",
+        "light_bg": "#f3e8ff",
+        "light_border": "#a259e6",
+        "dark_bg": "#2d234a",
+        "dark_border": "#a259e6"
+    },
+    {
+        "id": "preset5",
+        "name": "Slate",
+        "light_bg": "#f0f4f8",
+        "light_border": "#607d8b",
+        "dark_bg": "#232b32",
+        "dark_border": "#607d8b"
+    },
+    {
+        "id": "preset6",
+        "name": "Contrast",
+        "light_bg": "#ffffff",
+        "light_border": "#000000",
+        "dark_bg": "#000000",
+        "dark_border": "#ffffff"
+    }
+]
+
+def get_group_colors(color_preset_id, color_scheme):
+    """
+    Returns (bg, border) for the given preset and color scheme.
+    color_scheme: "light" or "dark"
+    """
+    preset = next((p for p in COLOR_PRESETS if p["id"] == color_preset_id), COLOR_PRESETS[0])
+    if color_scheme == "dark":
+        return preset["dark_bg"], preset["dark_border"]
+    else:
+        return preset["light_bg"], preset["light_border"]

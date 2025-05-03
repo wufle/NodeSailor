@@ -25,7 +25,7 @@ def open_group_editor(gui_self, group=None):
     
     # Create the popup window
     win, content = gui_self.create_popup(
-        "Group Editor", 400, 300,
+        "Group Editor", 1000, 700,
         on_close=close_editor,
         grab=False
     )
@@ -51,40 +51,88 @@ def open_group_editor(gui_self, group=None):
     # Explicitly set focus after a short delay to ensure the window is fully rendered
     win.after(100, lambda: name_entry.focus_force())
     
-    # Group colors (four pickers)
-    color_labels = [
-        ("Light BG", "light_bg"),
-        ("Light Border", "light_border"),
-        ("Dark BG", "dark_bg"),
-        ("Dark Border", "dark_border"),
+    # Preset color sets
+    color_presets = [
+        {
+            "id": "preset1",
+            "name": "Classic Blue",
+            "light_bg": "#e3f0ff",
+            "light_border": "#3a7bd5",
+            "dark_bg": "#22304a",
+            "dark_border": "#3a7bd5"
+        },
+        {
+            "id": "preset2",
+            "name": "Sunset",
+            "light_bg": "#ffe5d0",
+            "light_border": "#ff7f50",
+            "dark_bg": "#4a2c23",
+            "dark_border": "#ff7f50"
+        },
+        {
+            "id": "preset3",
+            "name": "Mint",
+            "light_bg": "#e0fff4",
+            "light_border": "#2ecc71",
+            "dark_bg": "#204034",
+            "dark_border": "#2ecc71"
+        },
+        {
+            "id": "preset4",
+            "name": "Lavender",
+            "light_bg": "#f3e8ff",
+            "light_border": "#a259e6",
+            "dark_bg": "#2d234a",
+            "dark_border": "#a259e6"
+        },
+        {
+            "id": "preset5",
+            "name": "Slate",
+            "light_bg": "#f0f4f8",
+            "light_border": "#607d8b",
+            "dark_bg": "#232b32",
+            "dark_border": "#607d8b"
+        },
+        {
+            "id": "preset6",
+            "name": "Contrast",
+            "light_bg": "#ffffff",
+            "light_border": "#000000",
+            "dark_bg": "#000000",
+            "dark_border": "#ffffff"
+        }
     ]
-    color_defaults = {
-        "light_bg": ColorConfig.current.GROUP_DEFAULT if hasattr(ColorConfig.current, "GROUP_DEFAULT") else "#ffffff",
-        "light_border": ColorConfig.current.GROUP_OUTLINE if hasattr(ColorConfig.current, "GROUP_OUTLINE") else "#000000",
-        "dark_bg": "#222222",
-        "dark_border": "#888888",
-    }
-    color_frames = {}
-    color_previews = {}
 
-    for label, key in color_labels:
-        frame = tk.Frame(editor_frame, bg=ColorConfig.current.FRAME_BG)
-        frame.pack(fill=tk.X, pady=2)
-        tk.Label(frame, text=f"{label}:", bg=ColorConfig.current.FRAME_BG,
-                 fg=ColorConfig.current.BUTTON_TEXT).pack(side=tk.LEFT, padx=5)
-        preview = tk.Frame(frame, width=30, height=20, bg=color_defaults[key])
-        preview.pack(side=tk.LEFT, padx=5)
-        def make_choose_color(preview_ref):
-            return lambda: (
-                (color := colorchooser.askcolor(color=preview_ref["bg"])[1]) and preview_ref.config(bg=color)
-            )
-        btn = tk.Button(frame, text="Choose Color",
-                        bg=ColorConfig.current.BUTTON_BG,
-                        fg=ColorConfig.current.BUTTON_TEXT,
-                        command=make_choose_color(preview))
-        btn.pack(side=tk.LEFT, padx=5)
-        color_frames[key] = frame
-        color_previews[key] = preview
+    preset_var = tk.StringVar()
+    preset_var.set(color_presets[0]["id"])
+
+    def select_preset(preset_id):
+        preset_var.set(preset_id)
+
+    # Preset selection UI
+    presets_frame = tk.LabelFrame(editor_frame, text="Color Presets", bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+    presets_frame.pack(fill=tk.X, pady=8)
+
+    for preset in color_presets:
+        row = tk.Frame(presets_frame, bg=ColorConfig.current.FRAME_BG)
+        row.pack(fill=tk.X, pady=2)
+        rb = tk.Radiobutton(
+            row, variable=preset_var, value=preset["id"],
+            bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
+            selectcolor=preset["light_bg"], activebackground=preset["light_bg"],
+            command=lambda pid=preset["id"]: select_preset(pid)
+        )
+        rb.pack(side=tk.LEFT, padx=5)
+        # Visual preview
+        preview = tk.Frame(row, width=30, height=20, bg=preset["light_bg"], bd=2, relief=tk.SOLID)
+        preview.pack(side=tk.LEFT, padx=2)
+        border_preview = tk.Frame(row, width=30, height=20, bg=preset["light_border"], bd=2, relief=tk.SOLID)
+        border_preview.pack(side=tk.LEFT, padx=2)
+        dark_preview = tk.Frame(row, width=30, height=20, bg=preset["dark_bg"], bd=2, relief=tk.SOLID)
+        dark_preview.pack(side=tk.LEFT, padx=2)
+        dark_border_preview = tk.Frame(row, width=30, height=20, bg=preset["dark_border"], bd=2, relief=tk.SOLID)
+        dark_border_preview.pack(side=tk.LEFT, padx=2)
+        tk.Label(row, text=preset["name"], bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT).pack(side=tk.LEFT, padx=8)
     
     # Buttons frame
     buttons_frame = tk.Frame(editor_frame, bg=ColorConfig.current.FRAME_BG)
@@ -93,12 +141,10 @@ def open_group_editor(gui_self, group=None):
     def save_group():
         if gui_self.group_manager.selected_group:
             group = gui_self.group_manager.selected_group
+            selected_preset_id = preset_var.get()
             group.update_properties(
                 name=name_entry.get(),
-                light_bg=color_previews["light_bg"]["bg"],
-                light_border=color_previews["light_border"]["bg"],
-                dark_bg=color_previews["dark_bg"]["bg"],
-                dark_border=color_previews["dark_border"]["bg"],
+                color_preset_id=selected_preset_id
             )
             gui_self.unsaved_changes = True
     
@@ -123,11 +169,11 @@ def open_group_editor(gui_self, group=None):
     if group:
         name_entry.delete(0, tk.END)
         name_entry.insert(0, group.name)
-        # Populate color pickers
-        color_previews["light_bg"].config(bg=getattr(group, "light_bg", color_defaults["light_bg"]))
-        color_previews["light_border"].config(bg=getattr(group, "light_border", color_defaults["light_border"]))
-        color_previews["dark_bg"].config(bg=getattr(group, "dark_bg", color_defaults["dark_bg"]))
-        color_previews["dark_border"].config(bg=getattr(group, "dark_border", color_defaults["dark_border"]))
+        # Set preset selection if available
+        if hasattr(group, "color_preset_id") and group.color_preset_id:
+            preset_var.set(group.color_preset_id)
+        else:
+            preset_var.set(color_presets[0]["id"])
         win.after(100, lambda: name_entry.focus_force())  # Ensure focus after populating
     
     # Add method to update the editor with a group
@@ -135,10 +181,10 @@ def open_group_editor(gui_self, group=None):
         if group and win.winfo_exists():
             name_entry.delete(0, tk.END)
             name_entry.insert(0, group.name)
-            color_previews["light_bg"].config(bg=getattr(group, "light_bg", color_defaults["light_bg"]))
-            color_previews["light_border"].config(bg=getattr(group, "light_border", color_defaults["light_border"]))
-            color_previews["dark_bg"].config(bg=getattr(group, "dark_bg", color_defaults["dark_bg"]))
-            color_previews["dark_border"].config(bg=getattr(group, "dark_border", color_defaults["dark_border"]))
+            if hasattr(group, "color_preset_id") and group.color_preset_id:
+                preset_var.set(group.color_preset_id)
+            else:
+                preset_var.set(color_presets[0]["id"])
             win.after(100, lambda: name_entry.focus_force())  # Ensure focus when updating
     
     gui_self.update_group_editor = update_group_editor
