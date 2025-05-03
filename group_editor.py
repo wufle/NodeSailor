@@ -51,26 +51,40 @@ def open_group_editor(gui_self, group=None):
     # Explicitly set focus after a short delay to ensure the window is fully rendered
     win.after(100, lambda: name_entry.focus_force())
     
-    # Group color
-    color_frame = tk.Frame(editor_frame, bg=ColorConfig.current.FRAME_BG)
-    color_frame.pack(fill=tk.X, pady=5)
-    
-    tk.Label(color_frame, text="Group Color:", bg=ColorConfig.current.FRAME_BG, 
-             fg=ColorConfig.current.BUTTON_TEXT).pack(side=tk.LEFT, padx=5)
-    
-    color_preview = tk.Frame(color_frame, width=30, height=20, bg=ColorConfig.current.GROUP_DEFAULT)
-    color_preview.pack(side=tk.LEFT, padx=5)
-    
-    def choose_color():
-        color = colorchooser.askcolor(color=color_preview["bg"])[1]
-        if color:
-            color_preview.config(bg=color)
-    
-    color_button = tk.Button(color_frame, text="Choose Color", 
-                            bg=ColorConfig.current.BUTTON_BG, 
-                            fg=ColorConfig.current.BUTTON_TEXT,
-                            command=choose_color)
-    color_button.pack(side=tk.LEFT, padx=5)
+    # Group colors (four pickers)
+    color_labels = [
+        ("Light BG", "light_bg"),
+        ("Light Border", "light_border"),
+        ("Dark BG", "dark_bg"),
+        ("Dark Border", "dark_border"),
+    ]
+    color_defaults = {
+        "light_bg": ColorConfig.current.GROUP_DEFAULT if hasattr(ColorConfig.current, "GROUP_DEFAULT") else "#ffffff",
+        "light_border": ColorConfig.current.GROUP_OUTLINE if hasattr(ColorConfig.current, "GROUP_OUTLINE") else "#000000",
+        "dark_bg": "#222222",
+        "dark_border": "#888888",
+    }
+    color_frames = {}
+    color_previews = {}
+
+    for label, key in color_labels:
+        frame = tk.Frame(editor_frame, bg=ColorConfig.current.FRAME_BG)
+        frame.pack(fill=tk.X, pady=2)
+        tk.Label(frame, text=f"{label}:", bg=ColorConfig.current.FRAME_BG,
+                 fg=ColorConfig.current.BUTTON_TEXT).pack(side=tk.LEFT, padx=5)
+        preview = tk.Frame(frame, width=30, height=20, bg=color_defaults[key])
+        preview.pack(side=tk.LEFT, padx=5)
+        def make_choose_color(preview_ref):
+            return lambda: (
+                (color := colorchooser.askcolor(color=preview_ref["bg"])[1]) and preview_ref.config(bg=color)
+            )
+        btn = tk.Button(frame, text="Choose Color",
+                        bg=ColorConfig.current.BUTTON_BG,
+                        fg=ColorConfig.current.BUTTON_TEXT,
+                        command=make_choose_color(preview))
+        btn.pack(side=tk.LEFT, padx=5)
+        color_frames[key] = frame
+        color_previews[key] = preview
     
     # Buttons frame
     buttons_frame = tk.Frame(editor_frame, bg=ColorConfig.current.FRAME_BG)
@@ -81,7 +95,10 @@ def open_group_editor(gui_self, group=None):
             group = gui_self.group_manager.selected_group
             group.update_properties(
                 name=name_entry.get(),
-                color=color_preview["bg"]
+                light_bg=color_previews["light_bg"]["bg"],
+                light_border=color_previews["light_border"]["bg"],
+                dark_bg=color_previews["dark_bg"]["bg"],
+                dark_border=color_previews["dark_border"]["bg"],
             )
             gui_self.unsaved_changes = True
     
@@ -106,7 +123,11 @@ def open_group_editor(gui_self, group=None):
     if group:
         name_entry.delete(0, tk.END)
         name_entry.insert(0, group.name)
-        color_preview.config(bg=group.color)
+        # Populate color pickers
+        color_previews["light_bg"].config(bg=getattr(group, "light_bg", color_defaults["light_bg"]))
+        color_previews["light_border"].config(bg=getattr(group, "light_border", color_defaults["light_border"]))
+        color_previews["dark_bg"].config(bg=getattr(group, "dark_bg", color_defaults["dark_bg"]))
+        color_previews["dark_border"].config(bg=getattr(group, "dark_border", color_defaults["dark_border"]))
         win.after(100, lambda: name_entry.focus_force())  # Ensure focus after populating
     
     # Add method to update the editor with a group
@@ -114,7 +135,10 @@ def open_group_editor(gui_self, group=None):
         if group and win.winfo_exists():
             name_entry.delete(0, tk.END)
             name_entry.insert(0, group.name)
-            color_preview.config(bg=group.color)
+            color_previews["light_bg"].config(bg=getattr(group, "light_bg", color_defaults["light_bg"]))
+            color_previews["light_border"].config(bg=getattr(group, "light_border", color_defaults["light_border"]))
+            color_previews["dark_bg"].config(bg=getattr(group, "dark_bg", color_defaults["dark_bg"]))
+            color_previews["dark_border"].config(bg=getattr(group, "dark_border", color_defaults["dark_border"]))
             win.after(100, lambda: name_entry.focus_force())  # Ensure focus when updating
     
     gui_self.update_group_editor = update_group_editor

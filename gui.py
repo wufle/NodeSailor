@@ -1723,6 +1723,10 @@ class NetworkMapGUI:
             if hasattr(self, 'theme_button') and self.theme_button.winfo_exists():
                 self.theme_button.config(text="Dark Mode")
         self.update_ui_colors()
+        # Redraw all groups to reflect the new color scheme
+        if hasattr(self, "group_manager") and hasattr(self.group_manager, "groups"):
+            for group in self.group_manager.groups:
+                group.update_properties()
 
     def start_move(self, event):
         """Capture the initial mouse position for dragging."""

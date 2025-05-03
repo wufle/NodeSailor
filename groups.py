@@ -2,7 +2,8 @@ import tkinter as tk
 from colors import ColorConfig
 
 class RectangleGroup:
-    def __init__(self, canvas, x1, y1, x2, y2, name="Group", color=None):
+    def __init__(self, canvas, x1, y1, x2, y2, name="Group", color=None,
+                 light_bg=None, light_border=None, dark_bg=None, dark_border=None):
         self.canvas = canvas
         self.x1 = min(x1, x2)
         self.y1 = min(y1, y2)
@@ -10,11 +11,23 @@ class RectangleGroup:
         self.y2 = max(y1, y2)
         self.name = name
         self.color = color or ColorConfig.current.GROUP_DEFAULT
+        self.light_bg = light_bg or ColorConfig.current.GROUP_DEFAULT
+        self.light_border = light_border or ColorConfig.current.GROUP_OUTLINE
+        self.dark_bg = dark_bg or "#222222"
+        self.dark_border = dark_border or "#888888"
         
         # Create the rectangle with lower z-index to be behind nodes and connections
+        # Select background and border color based on current color scheme
+        if ColorConfig.current == ColorConfig.Light:
+            fill_color = self.light_bg
+            outline_color = self.light_border
+        else:
+            fill_color = self.dark_bg
+            outline_color = self.dark_border
+
         self.rectangle = canvas.create_rectangle(
             self.x1, self.y1, self.x2, self.y2,
-            fill=self.color, outline=ColorConfig.current.GROUP_OUTLINE,
+            fill=fill_color, outline=outline_color,
             width=2, stipple="gray50", tags="group"
         )
         
@@ -45,15 +58,31 @@ class RectangleGroup:
         self.canvas.coords(self.rectangle, self.x1, self.y1, self.x2, self.y2)
         self.canvas.coords(self.text, self.x1 + 10, self.y1 + 10)
         
-    def update_properties(self, name=None, color=None):
+    def update_properties(self, name=None, color=None,
+                          light_bg=None, light_border=None, dark_bg=None, dark_border=None):
         """Update the properties of the rectangle group"""
         if name is not None:
             self.name = name
             self.canvas.itemconfig(self.text, text=name)
-            
         if color is not None:
             self.color = color
-            self.canvas.itemconfig(self.rectangle, fill=color)
+        if light_bg is not None:
+            self.light_bg = light_bg
+        if light_border is not None:
+            self.light_border = light_border
+        if dark_bg is not None:
+            self.dark_bg = dark_bg
+        if dark_border is not None:
+            self.dark_border = dark_border
+
+        # Update fill and outline based on current color scheme
+        if ColorConfig.current == ColorConfig.Light:
+            fill_color = self.light_bg
+            outline_color = self.light_border
+        else:
+            fill_color = self.dark_bg
+            outline_color = self.dark_border
+        self.canvas.itemconfig(self.rectangle, fill=fill_color, outline=outline_color)
     
     def send_to_back(self):
         """Ensure the group is drawn behind all nodes and connections"""
@@ -97,7 +126,11 @@ class RectangleGroup:
             'x2': self.x2,
             'y2': self.y2,
             'name': self.name,
-            'color': self.color
+            'color': self.color,
+            'light_bg': self.light_bg,
+            'light_border': self.light_border,
+            'dark_bg': self.dark_bg,
+            'dark_border': self.dark_border
         }
     
     @classmethod
@@ -109,8 +142,12 @@ class RectangleGroup:
             data['y1'],
             data['x2'],
             data['y2'],
-            data['name'],
-            data['color']
+            data.get('name', "Group"),
+            data.get('color'),
+            data.get('light_bg'),
+            data.get('light_border'),
+            data.get('dark_bg'),
+            data.get('dark_border')
         )
 
 class GroupManager:
