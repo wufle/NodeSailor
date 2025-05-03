@@ -4,23 +4,29 @@ from tkinter import colorchooser
 def open_group_editor(gui_self, group=None):
     ColorConfig = gui_self.ColorConfig if hasattr(gui_self, "ColorConfig") else __import__("colors").ColorConfig
     
+    # Close any existing group editor window to ensure a clean state
+    if getattr(gui_self, 'group_editor_window', None) and gui_self.group_editor_window.winfo_exists():
+        gui_self.group_editor_window.destroy()
+        gui_self.group_editor_window = None
+    
+    # Close the legend window if it exists
     if getattr(gui_self, 'legend_window', None) and gui_self.legend_window.winfo_exists():
         gui_self.legend_window.destroy()
         gui_self.legend_window = None
     
-    if getattr(gui_self, 'group_editor_window', None) and gui_self.group_editor_window.winfo_exists():
-        gui_self.group_editor_window.lift()
-        if group:
-            gui_self.update_group_editor(group)
-        return
-    
     def close_editor():
+        try:
+            gui_self.group_editor_window.grab_release()
+        except:
+            pass
         gui_self.group_editor_window.destroy()
         gui_self.group_editor_window = None
+        gui_self.root.focus_force()  # Restore focus to the main window
     
+    # Create the popup window
     win, content = gui_self.create_popup(
         "Group Editor", 400, 300,
-        on_close=gui_self.make_popup_closer("group_editor_window"),
+        on_close=close_editor,
         grab=False
     )
     gui_self.group_editor_window = win
@@ -41,6 +47,9 @@ def open_group_editor(gui_self, group=None):
     name_entry = tk.Entry(name_frame, bg=ColorConfig.current.BUTTON_BG, 
                          fg=ColorConfig.current.BUTTON_TEXT, width=30)
     name_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+    
+    # Explicitly set focus after a short delay to ensure the window is fully rendered
+    win.after(100, lambda: name_entry.focus_force())
     
     # Group color
     color_frame = tk.Frame(editor_frame, bg=ColorConfig.current.FRAME_BG)
@@ -99,6 +108,7 @@ def open_group_editor(gui_self, group=None):
         name_entry.delete(0, tk.END)
         name_entry.insert(0, group.name)
         color_preview.config(bg=group.color)
+        win.after(100, lambda: name_entry.focus_force())  # Ensure focus after populating
     
     # Add method to update the editor with a group
     def update_group_editor(group):
@@ -106,5 +116,6 @@ def open_group_editor(gui_self, group=None):
             name_entry.delete(0, tk.END)
             name_entry.insert(0, group.name)
             color_preview.config(bg=group.color)
+            win.after(100, lambda: name_entry.focus_force())  # Ensure focus when updating
     
     gui_self.update_group_editor = update_group_editor

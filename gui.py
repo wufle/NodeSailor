@@ -792,6 +792,7 @@ class NetworkMapGUI:
             self.edit_connections_button.pack_forget()
             self.edit_VLAN_button.pack_forget()
             self.groups_button.pack_forget()
+            self.make_popup_closer("group_editor_window")()
   
     def zoom_with_mouse(self, event):
         if event.num == 4 or event.delta > 0:
@@ -1258,25 +1259,17 @@ class NetworkMapGUI:
         self.unsaved_changes = True
              
     def toggle_groups_mode(self):
-        """Toggle the groups mode on/off"""
         if self.groups_mode_active:
             self.groups_mode_active = False
             self.groups_button.config(relief=tk.RAISED)
-            
-            # Close the group editor if it's open
-            if hasattr(self, "group_editor_window") and self.group_editor_window and self.group_editor_window.winfo_exists():
-                self.group_editor_window.destroy()
-                self.group_editor_window = None
-                
-            # Restore normal mode bindings
+            self.make_popup_closer("group_editor_window")()  # Close editor
             self.canvas.bind('<B1-Motion>', self.move_node)
         else:
             self.groups_mode_active = True
             self.groups_button.config(relief=tk.SUNKEN)
-            
-            # Set up bindings for groups mode
+            self.open_group_editor()  # Open editor
             self.canvas.bind('<B1-Motion>', self.handle_mouse_drag)
-    
+
     def handle_mouse_click(self, event):
         """Handle mouse click events based on the current mode"""
         if self.groups_mode_active:
