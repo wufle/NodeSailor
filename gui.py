@@ -326,12 +326,6 @@ class NetworkMapGUI:
         self._pan_start_x = None
         self._pan_start_y = None
 
-        self.root.bind_all('<F1>', self.show_help)
-        root.bind('<Left>', lambda event: self.pan_canvas('left'))  # Pan left
-        root.bind('<Right>', lambda event: self.pan_canvas('right'))  # Pan right
-        root.bind('<Up>', lambda event: self.pan_canvas('up'))  # Pan up
-        root.bind('<Down>', lambda event: self.pan_canvas('down'))  # Pan down
-        self.root.bind('<Control-Shift-C>', lambda event: [self.root.focus_set(), self.toggle_theme()])
         self.canvas.bind('<Double-1>', self.create_node)
         self.canvas.bind('<B1-Motion>', self.handle_mouse_drag)
         self.canvas.bind('<ButtonRelease-1>', self.handle_mouse_release)
@@ -343,8 +337,10 @@ class NetworkMapGUI:
         self.canvas.bind('<Shift-Button-2>', self.remove_connection)
         self.canvas.bind('<ButtonPress-3>', self.start_pan)
         self.canvas.bind('<B3-Motion>', self.do_pan)
-        self.root.bind('<Control-s>', self.keyboard_save)
-        self.root.bind('<Control-l>', self.keyboard_load)
+
+        #keyboard shortcuts
+        self.bind_all_shortcuts()
+
         self.zoom_level = 1.0
         self.root.focus_set()
 
@@ -399,6 +395,25 @@ class NetworkMapGUI:
         self.help_button.config(relief=tk.SUNKEN if self.show_tooltips else tk.RAISED)
         if self.show_tooltips:
             self.show_help()
+
+    def bind_all_shortcuts(self):
+        """Bind all global keyboard shortcuts."""
+        self.root.bind('<Left>', lambda event: self.pan_canvas('left'))  # Pan left
+        self.root.bind('<Right>', lambda event: self.pan_canvas('right'))  # Pan right
+        self.root.bind('<Up>', lambda event: self.pan_canvas('up'))  # Pan up
+        self.root.bind('<Down>', lambda event: self.pan_canvas('down'))  # Pan down
+        self.root.bind_all('<F1>', self.show_help)
+        self.root.bind('<Control-Shift-C>', lambda event: [self.root.focus_set(), self.toggle_theme()])
+        self.root.bind('<Control-s>', self.keyboard_save)
+        self.root.bind('<Control-l>', self.keyboard_load)
+
+    def regain_focus(self):
+        """Force the main window to regain focus after a subwindow is closed."""
+        try:
+            self.root.focus_force()
+            self.root.bind_all_shortcuts()
+        except Exception:
+            pass
 
     def start_move_legend(self, event):
         self.legend_window._x = event.x
@@ -594,18 +609,23 @@ class NetworkMapGUI:
         self.fix_window_geometry(self.color_editor_window, 500, 900)
 
     def edit_vlan_labels(self):
-        if hasattr(self, 'vlan_label_editor') and self.vlan_label_editor and self.vlan_label_editor.winfo_exists():
-            self.vlan_label_editor.lift()
-            return
+        # Destroy any existing VLAN editor window before opening a new one
+        if getattr(self, 'vlan_label_editor', None) and self.vlan_label_editor.winfo_exists():
+            self.vlan_label_editor.destroy()
+            self.vlan_label_editor = None
 
-        if self.legend_window and self.legend_window.winfo_exists():
+        # Withdraw the legend window if it exists
+        if getattr(self, 'legend_window', None) and self.legend_window.winfo_exists():
             self.legend_window.withdraw()
 
         def close_vlan_editor():
-            try: self.vlan_label_editor.grab_release()
-            except: pass
+            try:
+                self.vlan_label_editor.grab_release()
+            except:
+                pass
             self.vlan_label_editor.destroy()
             self.vlan_label_editor = None
+            self.regain_focus()  # Restore focus to the main window
 
         self.vlan_label_editor, content = self.create_popup("Edit VLAN Labels", 170, 230, on_close=close_vlan_editor, grab=False)
 

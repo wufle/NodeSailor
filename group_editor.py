@@ -21,7 +21,7 @@ def open_group_editor(gui_self, group=None):
             pass
         gui_self.group_editor_window.destroy()
         gui_self.group_editor_window = None
-        gui_self.root.focus_force()  # Restore focus to the main window
+        gui_self.regain_focus()  # Regain focus to the main window
     
     # Create the popup window
     win, content = gui_self.create_popup(

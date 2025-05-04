@@ -22,10 +22,7 @@ def open_connection_list_editor(gui_self):
         except Exception:
             pass
         gui_self.connection_list_editor = None
-        try:
-            gui_self.root.focus_force()
-        except Exception:
-            pass
+        gui_self.regain_focus()
         try:
             gui_self.root.lift()
         except Exception:
