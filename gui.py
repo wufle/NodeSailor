@@ -716,35 +716,44 @@ class NetworkMapGUI:
             ("NodeSailor v0.9.18- Help\n", "title"),
             ("\nOverview:\n", "header"),
             ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, RDP and more with the implementation of custom commands.\n", "text"),
-            
+
             ("\nUser Modes:\n", "header"),
             ("- Operator: Monitor and interact with the network.\n"
-            "- Configuration: Build and edit the network layout.\n", "text"),
+             "- Configuration: Build and edit the network layout.\n", "text"),
 
             ("\nOperator Mode:\n", "header"),
             ("- Left Click on Node: Ping the node (Green = all assigned IP addresses connected, Yellow = partial connection, Red = no connection).\n"
-            "- Right Click on Node: Open context menu.\n"
-            "- Right Click and Drag: Pan the canvas.\n"
-            "- Scroll Wheel: Zoom in and out.\n"
-            "- Who am I?: Highlight then node matching your machine's IP.\n"
-            "- Ping All: Ping every node.\n"
-            "- Clear Status: Reset node status.\n", "text"),
+             "- Right Click on Node: Open context menu.\n"
+             "- Right Click and Drag: Pan the canvas.\n"
+             "- Scroll Wheel: Zoom in and out.\n"
+             "- Who am I?: Highlight the node matching your machine's IP.\n"
+             "- Ping All: Ping every node.\n"
+             "- Clear Status: Reset node status.\n", "text"),
 
             ("\nConfiguration Mode:\n", "header"),
             ("- Double Left Click: Create a new node.\n"
-            "- Shift + Double Left Click: Add a sticky note.\n"
-            "- Middle Click: Create a connection line between two nodes.\n"
-            "- Shift + Middle Click: Remove connection line.\n"
-            "- Left Click + Drag: Move nodes or notes.\n"
-            "- Right Click: Open context menu.\n", "text"),
+             "- Shift + Double Left Click: Add a sticky note.\n"
+             "- Middle Click: Create a connection line between two nodes.\n"
+             "- Shift + Middle Click: Remove connection line.\n"
+             "- Left Click + Drag: Move nodes or notes.\n"
+             "- Right Click: Open context menu.\n", "text"),
+
+            ("\nGroups:\n", "header"),
+            ("Groups allow you to visually organize nodes into labeled rectangles. Use the Groups button to create, edit, or remove groups. Drag nodes into a group to include them. Groups can be renamed and repositioned for clarity.\n", "text"),
+
+            ("\nNode List Editor:\n", "header"),
+            ("The Node List Editor presents all nodes in a table for quick editing. Use it to add, remove, or modify node properties such as name, IP address, and description. Access via the List View button.\n", "text"),
+
+            ("\nConnections Editor:\n", "header"),
+            ("The Connections Editor displays all connections in a list format. Use it to add, remove, or edit connections between nodes efficiently. Access via the Edit Connections button.\n", "text"),
 
             ("\nVLAN Checkboxes:\n", "header"),
             ("- Toggle visibility of VLAN nodes.\n", "text"),
 
             ("\nCustom Commands:\n", "header"),
             ("- Access through 'Start Menu > Manage Custom Commands'.\n"
-            "- Use placeholders like {ip}, {name}, {file}, {web}.\n"
-            "- Example: ping {ip} -t\n", "text"),
+             "- Use placeholders like {ip}, {name}, {file}, {web}.\n"
+             "- Example: ping {ip} -t\n", "text"),
 
             ("\nKeyboard Shortcuts:\n", "header"),
             ("- Ctrl-Shift-C Change color theme.\n", "text"),
