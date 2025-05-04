@@ -13,8 +13,20 @@ def open_connection_list_editor(gui_self):
         return
 
     def close_editor():
-        gui_self.connection_list_editor.destroy()
+        try:
+            gui_self.connection_list_editor.grab_release()
+        except Exception:
+            pass
+        try:
+            gui_self.connection_list_editor.destroy()
+        except Exception:
+            pass
         gui_self.connection_list_editor = None
+        gui_self.regain_focus()
+        try:
+            gui_self.root.lift()
+        except Exception:
+            pass
 
     win, content = gui_self.create_popup(
         "Connection List Editor", 800, 700,

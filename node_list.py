@@ -16,10 +16,15 @@ def open_node_list_editor(gui):
         return
 
     def close_editor():
+        try:
+            gui.node_list_editor.grab_release()
+        except Exception:
+            pass
         gui.node_list_editor.destroy()
         gui.node_list_editor = None
+        gui.regain_focus()
 
-    win, content = gui.create_popup("Node List Editor", 1100, 900, on_close=gui.make_popup_closer("node_list_editor"), grab=False)
+    win, content = gui.create_popup("Node List Editor", 1100, 900, on_close=close_editor, grab=False)
     gui.node_list_editor = win
     win.lift(gui.root)
     win.attributes("-topmost", True)
@@ -525,5 +530,8 @@ def open_node_list_editor(gui):
     # Add button to create new node
     # Initial build of the editor content
     rebuild_editor_content()
+    # Focus the first "add new node" entry after a short delay, if present
+    if getattr(gui, "new_node_entries", None) and gui.new_node_entries:
+        win.after(100, lambda: gui.new_node_entries[0].focus_set())
 
     gui.fix_window_geometry(gui.node_list_editor, 1600, 900)

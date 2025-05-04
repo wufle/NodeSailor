@@ -326,12 +326,6 @@ class NetworkMapGUI:
         self._pan_start_x = None
         self._pan_start_y = None
 
-        self.root.bind_all('<F1>', self.show_help)
-        root.bind('<Left>', lambda event: self.pan_canvas('left'))  # Pan left
-        root.bind('<Right>', lambda event: self.pan_canvas('right'))  # Pan right
-        root.bind('<Up>', lambda event: self.pan_canvas('up'))  # Pan up
-        root.bind('<Down>', lambda event: self.pan_canvas('down'))  # Pan down
-        self.root.bind('<Control-Shift-C>', lambda event: [self.root.focus_set(), self.toggle_theme()])
         self.canvas.bind('<Double-1>', self.create_node)
         self.canvas.bind('<B1-Motion>', self.handle_mouse_drag)
         self.canvas.bind('<ButtonRelease-1>', self.handle_mouse_release)
@@ -343,8 +337,10 @@ class NetworkMapGUI:
         self.canvas.bind('<Shift-Button-2>', self.remove_connection)
         self.canvas.bind('<ButtonPress-3>', self.start_pan)
         self.canvas.bind('<B3-Motion>', self.do_pan)
-        self.root.bind('<Control-s>', self.keyboard_save)
-        self.root.bind('<Control-l>', self.keyboard_load)
+
+        #keyboard shortcuts
+        self.bind_all_shortcuts()
+
         self.zoom_level = 1.0
         self.root.focus_set()
 
@@ -399,6 +395,25 @@ class NetworkMapGUI:
         self.help_button.config(relief=tk.SUNKEN if self.show_tooltips else tk.RAISED)
         if self.show_tooltips:
             self.show_help()
+
+    def bind_all_shortcuts(self):
+        """Bind all global keyboard shortcuts."""
+        self.root.bind('<Left>', lambda event: self.pan_canvas('left'))  # Pan left
+        self.root.bind('<Right>', lambda event: self.pan_canvas('right'))  # Pan right
+        self.root.bind('<Up>', lambda event: self.pan_canvas('up'))  # Pan up
+        self.root.bind('<Down>', lambda event: self.pan_canvas('down'))  # Pan down
+        self.root.bind_all('<F1>', self.show_help)
+        self.root.bind('<Control-Shift-C>', lambda event: [self.root.focus_set(), self.toggle_theme()])
+        self.root.bind('<Control-s>', self.keyboard_save)
+        self.root.bind('<Control-l>', self.keyboard_load)
+
+    def regain_focus(self):
+        """Force the main window to regain focus after a subwindow is closed."""
+        try:
+            self.root.focus_force()
+            self.root.bind_all_shortcuts()
+        except Exception:
+            pass
 
     def start_move_legend(self, event):
         self.legend_window._x = event.x
@@ -522,6 +537,7 @@ class NetworkMapGUI:
             except: pass
             self.color_editor_window.destroy()
             self.color_editor_window = None
+            self.regain_focus()
 
         self.color_editor_window, content = self.create_popup("Color Scheme Editor", 500, 900, on_close=on_close, grab=False)
 
@@ -594,18 +610,23 @@ class NetworkMapGUI:
         self.fix_window_geometry(self.color_editor_window, 500, 900)
 
     def edit_vlan_labels(self):
-        if hasattr(self, 'vlan_label_editor') and self.vlan_label_editor and self.vlan_label_editor.winfo_exists():
-            self.vlan_label_editor.lift()
-            return
+        # Destroy any existing VLAN editor window before opening a new one
+        if getattr(self, 'vlan_label_editor', None) and self.vlan_label_editor.winfo_exists():
+            self.vlan_label_editor.destroy()
+            self.vlan_label_editor = None
 
-        if self.legend_window and self.legend_window.winfo_exists():
+        # Withdraw the legend window if it exists
+        if getattr(self, 'legend_window', None) and self.legend_window.winfo_exists():
             self.legend_window.withdraw()
 
         def close_vlan_editor():
-            try: self.vlan_label_editor.grab_release()
-            except: pass
+            try:
+                self.vlan_label_editor.grab_release()
+            except:
+                pass
             self.vlan_label_editor.destroy()
             self.vlan_label_editor = None
+            self.regain_focus()  # Restore focus to the main window
 
         self.vlan_label_editor, content = self.create_popup("Edit VLAN Labels", 170, 230, on_close=close_vlan_editor, grab=False)
 
@@ -713,38 +734,47 @@ class NetworkMapGUI:
         text_area.pack(fill=tk.BOTH, expand=True)
 
         help_lines = [
-            ("NodeSailor v0.9.18- Help\n", "title"),
+            ("NodeSailor v0.9.19- Help\n", "title"),
             ("\nOverview:\n", "header"),
             ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, RDP and more with the implementation of custom commands.\n", "text"),
-            
+
             ("\nUser Modes:\n", "header"),
             ("- Operator: Monitor and interact with the network.\n"
-            "- Configuration: Build and edit the network layout.\n", "text"),
+             "- Configuration: Build and edit the network layout.\n", "text"),
 
             ("\nOperator Mode:\n", "header"),
             ("- Left Click on Node: Ping the node (Green = all assigned IP addresses connected, Yellow = partial connection, Red = no connection).\n"
-            "- Right Click on Node: Open context menu.\n"
-            "- Right Click and Drag: Pan the canvas.\n"
-            "- Scroll Wheel: Zoom in and out.\n"
-            "- Who am I?: Highlight then node matching your machine's IP.\n"
-            "- Ping All: Ping every node.\n"
-            "- Clear Status: Reset node status.\n", "text"),
+             "- Right Click on Node: Open context menu.\n"
+             "- Right Click and Drag: Pan the canvas.\n"
+             "- Scroll Wheel: Zoom in and out.\n"
+             "- Who am I?: Highlight the node matching your machine's IP.\n"
+             "- Ping All: Ping every node.\n"
+             "- Clear Status: Reset node status.\n", "text"),
 
             ("\nConfiguration Mode:\n", "header"),
             ("- Double Left Click: Create a new node.\n"
-            "- Shift + Double Left Click: Add a sticky note.\n"
-            "- Middle Click: Create a connection line between two nodes.\n"
-            "- Shift + Middle Click: Remove connection line.\n"
-            "- Left Click + Drag: Move nodes or notes.\n"
-            "- Right Click: Open context menu.\n", "text"),
+             "- Shift + Double Left Click: Add a sticky note.\n"
+             "- Middle Click: Create a connection line between two nodes.\n"
+             "- Shift + Middle Click: Remove connection line.\n"
+             "- Left Click + Drag: Move nodes or notes.\n"
+             "- Right Click: Open context menu.\n", "text"),
+
+            ("\nGroups:\n", "header"),
+            ("Groups allow you to visually organize nodes into labeled rectangles. Use the Groups button to create, edit, or remove groups. Drag nodes into a group to include them. Groups can be renamed and repositioned for clarity.\n", "text"),
+
+            ("\nNode List Editor:\n", "header"),
+            ("The Node List Editor presents all nodes in a table for quick editing. Use it to add, remove, or modify node properties such as name, IP address, and description. Access via the List View button.\n", "text"),
+
+            ("\nConnections Editor:\n", "header"),
+            ("The Connections Editor displays all connections in a list format. Use it to add, remove, or edit connections between nodes efficiently. Access via the Edit Connections button.\n", "text"),
 
             ("\nVLAN Checkboxes:\n", "header"),
             ("- Toggle visibility of VLAN nodes.\n", "text"),
 
             ("\nCustom Commands:\n", "header"),
             ("- Access through 'Start Menu > Manage Custom Commands'.\n"
-            "- Use placeholders like {ip}, {name}, {file}, {web}.\n"
-            "- Example: ping {ip} -t\n", "text"),
+             "- Use placeholders like {ip}, {name}, {file}, {web}.\n"
+             "- Example: ping {ip} -t\n", "text"),
 
             ("\nKeyboard Shortcuts:\n", "header"),
             ("- Ctrl-Shift-C Change color theme.\n", "text"),
@@ -909,7 +939,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="NodeSailor v0.9.18", bg=ColorConfig.current.FRAME_BG,
+            title_label = tk.Label(title_bar, text="NodeSailor v0.9.19", bg=ColorConfig.current.FRAME_BG,
                                 fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
@@ -1020,6 +1050,7 @@ class NetworkMapGUI:
                 pass
             self.config_menu_window.destroy()
             self.config_menu_window = None
+            self.regain_focus()
             
         self.config_menu_window, content = self.create_popup("Configuration Menu", 300, 450, on_close=close_config_menu, grab=False)
         
@@ -1964,6 +1995,15 @@ class NetworkMapGUI:
         content = tk.Frame(wrapper, bg=ColorConfig.current.FRAME_BG)
         content.pack(fill=tk.BOTH, expand=True)
 
+        # --- BEGIN: Global Shortcut Bindings for Popups ---
+        def bind_global_shortcuts(window):
+            # F1 Help
+            window.bind('<F1>', self.show_help)
+            # Ctrl+Shift+C Color Mode
+            window.bind('<Control-Shift-C>', lambda event: [self.root.focus_set(), self.toggle_theme()])
+        bind_global_shortcuts(win)
+        # --- END: Global Shortcut Bindings for Popups ---
+
         def apply_geometry():
             # Explicitly set window size first
             win.geometry(f"{width}x{height}")
@@ -1982,6 +2022,7 @@ class NetworkMapGUI:
             if win and win.winfo_exists():
                 win.destroy()
             setattr(self, attr, None)
+            self.regain_focus()
         return closer
 
     #Fixes window geopetry issues for vlan, list view, edit connections and manage custom commands windows         
