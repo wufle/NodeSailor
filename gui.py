@@ -537,6 +537,7 @@ class NetworkMapGUI:
             except: pass
             self.color_editor_window.destroy()
             self.color_editor_window = None
+            self.regain_focus()
 
         self.color_editor_window, content = self.create_popup("Color Scheme Editor", 500, 900, on_close=on_close, grab=False)
 
@@ -733,7 +734,7 @@ class NetworkMapGUI:
         text_area.pack(fill=tk.BOTH, expand=True)
 
         help_lines = [
-            ("NodeSailor v0.9.18- Help\n", "title"),
+            ("NodeSailor v0.9.19- Help\n", "title"),
             ("\nOverview:\n", "header"),
             ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, RDP and more with the implementation of custom commands.\n", "text"),
 
@@ -938,7 +939,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="NodeSailor v0.9.18", bg=ColorConfig.current.FRAME_BG,
+            title_label = tk.Label(title_bar, text="NodeSailor v0.9.19", bg=ColorConfig.current.FRAME_BG,
                                 fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
@@ -1049,6 +1050,7 @@ class NetworkMapGUI:
                 pass
             self.config_menu_window.destroy()
             self.config_menu_window = None
+            self.regain_focus()
             
         self.config_menu_window, content = self.create_popup("Configuration Menu", 300, 450, on_close=close_config_menu, grab=False)
         
@@ -2020,6 +2022,7 @@ class NetworkMapGUI:
             if win and win.winfo_exists():
                 win.destroy()
             setattr(self, attr, None)
+            self.regain_focus()
         return closer
 
     #Fixes window geopetry issues for vlan, list view, edit connections and manage custom commands windows         
