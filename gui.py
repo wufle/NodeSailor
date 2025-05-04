@@ -1973,6 +1973,15 @@ class NetworkMapGUI:
         content = tk.Frame(wrapper, bg=ColorConfig.current.FRAME_BG)
         content.pack(fill=tk.BOTH, expand=True)
 
+        # --- BEGIN: Global Shortcut Bindings for Popups ---
+        def bind_global_shortcuts(window):
+            # F1 Help
+            window.bind('<F1>', self.show_help)
+            # Ctrl+Shift+C Color Mode
+            window.bind('<Control-Shift-C>', lambda event: [self.root.focus_set(), self.toggle_theme()])
+        bind_global_shortcuts(win)
+        # --- END: Global Shortcut Bindings for Popups ---
+
         def apply_geometry():
             # Explicitly set window size first
             win.geometry(f"{width}x{height}")
