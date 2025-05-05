@@ -181,8 +181,8 @@ class GroupManager:
         if not self.gui.groups_mode_active:
             return
             
-        self.start_x = event.x
-        self.start_y = event.y
+        self.start_x = self.canvas.canvasx(event.x)
+        self.start_y = self.canvas.canvasy(event.y)
         self.drawing = True
         
         # Create a temporary rectangle
@@ -200,7 +200,7 @@ class GroupManager:
         self.canvas.coords(
             self.current_group,
             self.start_x, self.start_y,
-            event.x, event.y
+            self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
         )
     
     def finish_drawing(self, event):
@@ -211,7 +211,7 @@ class GroupManager:
         self.drawing = False
         
         # Only create a group if the rectangle has some size
-        if abs(event.x - self.start_x) > 10 and abs(event.y - self.start_y) > 10:
+        if abs(self.canvas.canvasx(event.x) - self.start_x) > 10 and abs(self.canvas.canvasy(event.y) - self.start_y) > 10:
             # Delete the temporary rectangle
             self.canvas.delete(self.current_group)
             
@@ -219,7 +219,7 @@ class GroupManager:
             group = RectangleGroup(
                 self.canvas,
                 self.start_x, self.start_y,
-                event.x, event.y,
+                self.canvas.canvasx(event.x), self.canvas.canvasy(event.y),
                 f"Group {len(self.groups) + 1}",
                 ColorConfig.current.GROUP_DEFAULT
             )
@@ -242,7 +242,7 @@ class GroupManager:
             
         # Find the topmost group at the event coordinates
         for group in reversed(self.groups):
-            if group.contains_point(event.x, event.y):
+            if group.contains_point(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)):
                 self.selected_group = group
                 if hasattr(self.gui, "group_editor_window") and self.gui.group_editor_window and self.gui.group_editor_window.winfo_exists():
                     self.gui.update_group_editor(group)

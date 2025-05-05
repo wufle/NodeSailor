@@ -845,6 +845,14 @@ class NetworkMapGUI:
             node.y = (node.y - y) * factor + y
             node.update_position(node.x, node.y)
 
+        # Update stored group rectangle coordinates
+        for group in self.group_manager.groups:
+            group_x1 = (group.x1 - x) * factor + x
+            group_y1 = (group.y1 - y) * factor + y
+            group_x2 = (group.x2 - x) * factor + x
+            group_y2 = (group.y2 - y) * factor + y
+            group.update_position(group_x1, group_y1, group_x2, group_y2)
+
         self.zoom_level *= factor
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         self.update_zoom_label()
