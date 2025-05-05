@@ -1292,12 +1292,25 @@ class NetworkMapGUI:
     def toggle_groups_mode(self):
         if self.groups_mode_active:
             self.groups_mode_active = False
-            self.groups_button.config(relief=tk.RAISED)
+            self.groups_button.config(relief=tk.RAISED, text="Groups")
+            self.canvas.config(cursor="")
+            # Remove banner if present
+            if hasattr(self, "groups_banner") and self.groups_banner:
+                self.canvas.delete(self.groups_banner)
+                self.groups_banner = None
             self.make_popup_closer("group_editor_window")()  # Close editor
             self.canvas.bind('<B1-Motion>', self.move_node)
         else:
             self.groups_mode_active = True
-            self.groups_button.config(relief=tk.SUNKEN)
+            self.groups_button.config(relief=tk.SUNKEN, text="Groups (Active)")
+            self.canvas.config(cursor="crosshair")
+            # Show banner
+            self.groups_banner = self.canvas.create_text(
+                self.canvas.winfo_width() // 2, 20,
+                text="Groups Mode Active: Click and Drag to create a group. Click a group to edit.",
+                fill="#ff9900", font=("Helvetica", 12, "bold"),
+                tags="groups_banner"
+            )
             self.open_group_editor()  # Open editor
             self.canvas.bind('<B1-Motion>', self.handle_mouse_drag)
 
