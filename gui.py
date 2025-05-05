@@ -1809,6 +1809,12 @@ class NetworkMapGUI:
         """Update all UI colors when the theme changes."""
         # Update scrollbar styles (re-apply for current theme)
         self._setup_scrollbar_styles()
+        # Update groups mode banner label color
+        if hasattr(self, "groups_banner_label"):
+            self.groups_banner_label.config(
+                bg=ColorConfig.current.FRAME_BG,
+                fg="#ff9900"
+            )
         # Root window
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
 
