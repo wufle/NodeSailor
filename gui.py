@@ -137,7 +137,18 @@ class NetworkMapGUI:
         # Buttons Frame
         self.buttons_frame = tk.Frame(root)
         self.buttons_frame.pack(side=tk.TOP, fill=tk.X)
-        self.buttons_frame.config(bg=ColorConfig.current.FRAME_BG)      
+        self.buttons_frame.config(bg=ColorConfig.current.FRAME_BG)
+
+        # Groups mode banner label (persistent, hidden by default)
+        self.groups_banner_label = tk.Label(
+            self.root,
+            text="Groups Mode Active",
+            font=("Helvetica", 12, "bold"),
+            fg="#ff9900",
+            bg=ColorConfig.current.FRAME_BG
+        )
+        self.groups_banner_label.pack(side=tk.TOP, fill=tk.X)
+        self.groups_banner_label.pack_forget()
      
         # Update button styles
         button_style = {
@@ -1302,23 +1313,19 @@ class NetworkMapGUI:
             self.groups_mode_active = False
             self.groups_button.config(relief=tk.RAISED, text="Groups")
             self.canvas.config(cursor="")
-            # Remove banner if present
-            if hasattr(self, "groups_banner") and self.groups_banner:
-                self.canvas.delete(self.groups_banner)
-                self.groups_banner = None
+            # Hide banner label
+            self.groups_banner_label.pack_forget()
             self.make_popup_closer("group_editor_window")()  # Close editor
             self.canvas.bind('<B1-Motion>', self.move_node)
         else:
             self.groups_mode_active = True
             self.groups_button.config(relief=tk.SUNKEN, text="Groups (Active)")
             self.canvas.config(cursor="crosshair")
-            # Show banner
-            self.groups_banner = self.canvas.create_text(
-                self.canvas.winfo_width() // 2, 20,
-                text="Groups Mode Active: Click and Drag to create a group. Click a group to edit.",
-                fill="#ff9900", font=("Helvetica", 12, "bold"),
-                tags="groups_banner"
+            # Show banner label
+            self.groups_banner_label.config(
+                text="Groups Mode Active: Click and Drag to create a group. Click a group to edit."
             )
+            self.groups_banner_label.pack(side=tk.TOP, fill=tk.X)
             self.open_group_editor()  # Open editor
             self.canvas.bind('<B1-Motion>', self.handle_mouse_drag)
 
