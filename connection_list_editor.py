@@ -13,6 +13,15 @@ def open_connection_list_editor(gui_self):
         return
 
     def close_editor():
+        # Save the currently focused entry if it's a label or info entry
+        try:
+            focused_widget = gui_self.connection_list_editor.focus_get()
+            # Check if the focused widget is an Entry in the connection list frame
+            if isinstance(focused_widget, tk.Entry) and focused_widget.winfo_ismapped():
+                # Force a <FocusOut> event to trigger the update callback
+                focused_widget.event_generate("<FocusOut>")
+        except Exception:
+            pass
         try:
             gui_self.connection_list_editor.grab_release()
         except Exception:
@@ -30,7 +39,7 @@ def open_connection_list_editor(gui_self):
 
     win, content = gui_self.create_popup(
         "Connection List Editor", 800, 700,
-        on_close=gui_self.make_popup_closer("connection_list_editor"),
+        on_close=close_editor,
         grab=False
     )
     gui_self.connection_list_editor = win
