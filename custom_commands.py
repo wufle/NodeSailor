@@ -20,6 +20,18 @@ def manage_custom_commands(gui_self):
     for name in gui_self.custom_commands.keys():
         listbox.insert(tk.END, name)
 
+    def on_command_select(event):
+        selection = listbox.curselection()
+        if selection:
+            name = listbox.get(selection[0])
+            cmd = gui_self.custom_commands.get(name, "")
+            name_entry.delete(0, tk.END)
+            cmd_entry.delete(0, tk.END)
+            name_entry.insert(0, name)
+            cmd_entry.insert(0, cmd)
+
+    listbox.bind("<<ListboxSelect>>", on_command_select)
+
     frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
     frame.pack(pady=5, padx=10, fill=tk.X)
 
@@ -47,15 +59,7 @@ def manage_custom_commands(gui_self):
             cmd_entry.delete(0, tk.END)
             gui_self.save_custom_commands()
 
-    def edit_command():
-        selection = listbox.curselection()
-        if selection:
-            name = listbox.get(selection[0])
-            cmd = gui_self.custom_commands[name]
-            name_entry.delete(0, tk.END)
-            cmd_entry.delete(0, tk.END)
-            name_entry.insert(0, name)
-            cmd_entry.insert(0, cmd)
+    # Removed edit_command and its logic
 
     def delete_command():
         selection = listbox.curselection()
@@ -86,7 +90,6 @@ def manage_custom_commands(gui_self):
     }
 
     tk.Button(btn_frame, text="Add", command=add_command, **btn_style).pack(side=tk.LEFT, padx=5)
-    tk.Button(btn_frame, text="Edit", command=edit_command, **btn_style).pack(side=tk.LEFT, padx=5)
     tk.Button(btn_frame, text="Delete", command=delete_command, **btn_style).pack(side=tk.LEFT, padx=5)
     tk.Button(btn_frame, text="Save", command=save_commands, **btn_style).pack(side=tk.LEFT, padx=5)
     tk.Button(btn_frame, text="Close", command=gui_self.make_popup_closer("custom_cmd_window"), **btn_style).pack(side=tk.LEFT, padx=5)
