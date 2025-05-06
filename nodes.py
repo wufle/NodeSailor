@@ -267,7 +267,14 @@ class NetworkNode:
         try:
             command = command_template.format(**context)
             if platform.system() == "Windows":
-                subprocess.Popen(f'start cmd /k "{command}"', shell=True)
+                import tempfile, os
+                with tempfile.NamedTemporaryFile('w', suffix='.bat', delete=False) as bat_file:
+                    bat_file.write('@echo off\n')
+                    bat_file.write(command)
+                    bat_file.write('\n')
+                    bat_file.write('start "" cmd /c del "%~f0" >nul 2>&1\n')
+                    bat_path = bat_file.name
+                subprocess.Popen(f'start cmd /k "{bat_path}"', shell=True)
             else:
                 subprocess.Popen(['x-terminal-emulator', '-e', command])
         except Exception as e:

@@ -26,9 +26,9 @@ def manage_custom_commands(gui_self):
             name = listbox.get(selection[0])
             cmd = gui_self.custom_commands.get(name, "")
             name_entry.delete(0, tk.END)
-            cmd_entry.delete(0, tk.END)
+            cmd_entry.delete("1.0", tk.END)
             name_entry.insert(0, name)
-            cmd_entry.insert(0, cmd)
+            cmd_entry.insert("1.0", cmd)
 
     listbox.bind("<<ListboxSelect>>", on_command_select)
 
@@ -43,7 +43,7 @@ def manage_custom_commands(gui_self):
     name_entry.grid(row=0, column=1, padx=5)
 
     tk.Label(frame, text="Command Template:", **label_args).grid(row=1, column=0, sticky='w')
-    cmd_entry = tk.Entry(frame, width=40, **entry_args)
+    cmd_entry = tk.Text(frame, width=40, height=4, **entry_args)
     cmd_entry.grid(row=1, column=1, padx=5)
 
     btn_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
@@ -51,15 +51,13 @@ def manage_custom_commands(gui_self):
 
     def add_command():
         name = name_entry.get().strip()
-        cmd = cmd_entry.get().strip()
+        cmd = cmd_entry.get("1.0", tk.END).strip()
         if name and cmd:
             gui_self.custom_commands[name] = cmd
             listbox.insert(tk.END, name)
             name_entry.delete(0, tk.END)
-            cmd_entry.delete(0, tk.END)
+            cmd_entry.delete("1.0", tk.END)
             gui_self.save_custom_commands()
-
-    # Removed edit_command and its logic
 
     def delete_command():
         selection = listbox.curselection()
@@ -71,7 +69,7 @@ def manage_custom_commands(gui_self):
 
     def save_commands():
         name = name_entry.get().strip()
-        cmd = cmd_entry.get().strip()
+        cmd = cmd_entry.get("1.0", tk.END).strip()
         if name and cmd:
             gui_self.custom_commands[name] = cmd
             # Update listbox if new
