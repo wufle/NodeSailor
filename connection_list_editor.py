@@ -2,6 +2,11 @@ import tkinter as tk
 from tkinter import ttk
 
 def open_connection_list_editor(gui_self):
+    # Add sort state if not present
+    if not hasattr(gui_self, "sort_column"):
+        gui_self.sort_column = 0
+    if not hasattr(gui_self, "sort_reverse"):
+        gui_self.sort_reverse = False
     ColorConfig = gui_self.ColorConfig if hasattr(gui_self, "ColorConfig") else __import__("colors").ColorConfig
 
     if getattr(gui_self, 'legend_window', None) and gui_self.legend_window.winfo_exists():
@@ -54,23 +59,58 @@ def open_connection_list_editor(gui_self):
             widget.destroy()
 
         headers = ["From", "To", "Label", "Info", "Delete"]
+        sortable_columns = [0, 1, 2, 3]  # "From", "To", "Label", "Info"
+
+        def sort_connections(column_index):
+            if gui_self.sort_column == column_index:
+                gui_self.sort_reverse = not gui_self.sort_reverse
+            else:
+                gui_self.sort_column = column_index
+                gui_self.sort_reverse = False
+            rebuild_editor_content()
+
         for i, h in enumerate(headers):
+            header_text = h
+            if i in sortable_columns and gui_self.sort_column == i:
+                indicator = "▼" if gui_self.sort_reverse else "▲"
+                header_text += " " + indicator
             header_label = tk.Label(
                 gui_self.connection_list_frame,
-                text=h,
+                text=header_text,
                 font=('Helvetica', 10, 'bold'),
                 bg=ColorConfig.current.HEADER_BG,
                 fg=ColorConfig.current.HEADER_TEXT,
                 padx=8, pady=4, borderwidth=1, relief='solid',
+                cursor="hand2" if i in sortable_columns else "arrow"
             )
             header_label.grid(row=0, column=i, padx=1, pady=1, sticky="nsew")
             gui_self.connection_list_frame.grid_columnconfigure(i, weight=1, minsize=80)
+            if i in sortable_columns:
+                header_label.bind("<Button-1>", lambda e, idx=i: sort_connections(idx))
 
         connections = set()
         for node in gui_self.nodes:
             for conn in node.connections:
                 if conn not in connections:
                     connections.add(conn)
+
+        # Sorting logic
+        connections = list(connections)
+        col = gui_self.sort_column
+        reverse = gui_self.sort_reverse
+        def get_sort_key(conn):
+            if col == 0:
+                return str(getattr(conn.node1, "name", "")).lower()
+            elif col == 1:
+                return str(getattr(conn.node2, "name", "")).lower()
+            elif col == 2:
+                return str(getattr(conn, "label", "") or "").lower()
+            elif col == 3:
+                return str(getattr(conn, "connectioninfo", "") or "").lower()
+            else:
+                return ""
+        if col in sortable_columns:
+            connections.sort(key=get_sort_key, reverse=reverse)
 
         for row_index, conn in enumerate(connections, start=1):
             row_bg = ColorConfig.current.ROW_BG_EVEN if row_index % 2 == 0 else ColorConfig.current.ROW_BG_ODD
