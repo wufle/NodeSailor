@@ -24,11 +24,26 @@ def manage_custom_commands(gui_self):
         selection = listbox.curselection()
         if selection:
             name = listbox.get(selection[0])
-            cmd = gui_self.custom_commands.get(name, "")
+            cmd_info = gui_self.custom_commands.get(name, "")
+            if isinstance(cmd_info, dict):
+                cmd = cmd_info.get("template", "")
+                applicable_nodes = cmd_info.get("applicable_nodes", None)
+            else:
+                cmd = cmd_info
+                applicable_nodes = None
             name_entry.delete(0, tk.END)
             cmd_entry.delete("1.0", tk.END)
             name_entry.insert(0, name)
             cmd_entry.insert("1.0", cmd)
+            if applicable_nodes is None:
+                applicability_var.set(True)
+                node_select_listbox.selection_clear(0, tk.END)
+            else:
+                applicability_var.set(False)
+                node_select_listbox.selection_clear(0, tk.END)
+                for idx, n in enumerate(node_names):
+                    if n in applicable_nodes:
+                        node_select_listbox.selection_set(idx)
 
     listbox.bind("<<ListboxSelect>>", on_command_select)
 
@@ -48,17 +63,55 @@ def manage_custom_commands(gui_self):
     
     frame.grid_columnconfigure(1, weight=1)
 
+    # Applicability controls
+    applicability_var = tk.BooleanVar(value=True)
+    applicability_chk = tk.Checkbutton(
+        frame, text="Applicable to all nodes", variable=applicability_var,
+        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, font=('Helvetica', 10),
+        selectcolor=ColorConfig.current.FRAME_BG
+    )
+    applicability_chk.grid(row=2, column=0, sticky='w', pady=(8, 0), columnspan=2)
+    
+    # Node selection listbox (hidden by default)
+    node_names = [n.name for n in getattr(gui_self, "nodes", [])]
+    node_select_label = tk.Label(frame, text="Select applicable nodes:", **label_args)
+    node_select_listbox = tk.Listbox(frame, selectmode=tk.MULTIPLE, width=40, height=6, exportselection=False,
+                                     bg=ColorConfig.current.ENTRY_FOCUS_BG, fg=ColorConfig.current.ENTRY_TEXT,
+                                     font=('Helvetica', 10))
+    for name in node_names:
+        node_select_listbox.insert(tk.END, name)
+    
+    def toggle_node_select(*_):
+        if applicability_var.get():
+            node_select_label.grid_remove()
+            node_select_listbox.grid_remove()
+        else:
+            node_select_label.grid(row=3, column=0, sticky='nw')
+            node_select_listbox.grid(row=3, column=1, padx=5, pady=5, sticky='ew')
+    
+    applicability_var.trace_add("write", toggle_node_select)
+    toggle_node_select()
+    
     btn_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
     btn_frame.pack(pady=10)
 
     def add_command():
         name = name_entry.get().strip()
         cmd = cmd_entry.get("1.0", tk.END).strip()
+        if applicability_var.get():
+            applicable_nodes = None
+        else:
+            applicable_nodes = [node_names[i] for i in node_select_listbox.curselection()]
         if name and cmd:
-            gui_self.custom_commands[name] = cmd
+            gui_self.custom_commands[name] = {
+                "template": cmd,
+                "applicable_nodes": applicable_nodes
+            }
             listbox.insert(tk.END, name)
             name_entry.delete(0, tk.END)
             cmd_entry.delete("1.0", tk.END)
+            applicability_var.set(True)
+            node_select_listbox.selection_clear(0, tk.END)
             gui_self.save_custom_commands()
 
     def delete_command():
@@ -72,8 +125,15 @@ def manage_custom_commands(gui_self):
     def save_commands():
         name = name_entry.get().strip()
         cmd = cmd_entry.get("1.0", tk.END).strip()
+        if applicability_var.get():
+            applicable_nodes = None
+        else:
+            applicable_nodes = [node_names[i] for i in node_select_listbox.curselection()]
         if name and cmd:
-            gui_self.custom_commands[name] = cmd
+            gui_self.custom_commands[name] = {
+                "template": cmd,
+                "applicable_nodes": applicable_nodes
+            }
             # Update listbox if new
             if name not in listbox.get(0, tk.END):
                 listbox.insert(tk.END, name)

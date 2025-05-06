@@ -166,7 +166,14 @@ class NetworkNode:
 
         # Add custom commands
         for name, cmd in gui.custom_commands.items():
-            options.append((name, lambda c=cmd: self.execute_custom_command(c)))
+            if isinstance(cmd, dict):
+                template = cmd.get("template", "")
+                applicable_nodes = cmd.get("applicable_nodes", None)
+                if applicable_nodes is not None and self.name not in applicable_nodes:
+                    continue
+            else:
+                template = cmd
+            options.append((name, lambda c=template: self.execute_custom_command(c)))
 
         def destroy_menu():
             try:
