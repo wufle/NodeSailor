@@ -871,28 +871,63 @@ class NetworkMapGUI:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         self.update_zoom_label()
     def zoom_in(self, event=None):
-        self.apply_zoom(1.1)
+        bbox = self.canvas.bbox("all")
+        if bbox:
+            center_x = (bbox[0] + bbox[2]) / 2
+            center_y = (bbox[1] + bbox[3]) / 2
+        else:
+            center_x = center_y = 0
+        self.apply_zoom(1.1, center_x, center_y)
         self.update_zoom_label()
 
     def zoom_out(self, event=None):
-        self.apply_zoom(0.9)
+        bbox = self.canvas.bbox("all")
+        if bbox:
+            center_x = (bbox[0] + bbox[2]) / 2
+            center_y = (bbox[1] + bbox[3]) / 2
+        else:
+            center_x = center_y = 0
+        self.apply_zoom(0.9, center_x, center_y)
         self.update_zoom_label()
 
     def reset_zoom(self, event=None):
         if self.zoom_level != 1.0:
-            self.apply_zoom(1 / self.zoom_level)
+            bbox = self.canvas.bbox("all")
+            if bbox:
+                center_x = (bbox[0] + bbox[2]) / 2
+                center_y = (bbox[1] + bbox[3]) / 2
+            else:
+                center_x = center_y = 0
+            self.apply_zoom(1 / self.zoom_level, center_x, center_y)
             self.update_zoom_label()
 
-    def apply_zoom(self, factor):
+    def apply_zoom(self, factor, center_x=None, center_y=None):
+        # Use canvas center if no center provided
+        if center_x is None or center_y is None:
+            bbox = self.canvas.bbox("all")
+            if bbox:
+                center_x = (bbox[0] + bbox[2]) / 2
+                center_y = (bbox[1] + bbox[3]) / 2
+            else:
+                center_x = center_y = 0
+
         # Scale all canvas items visually
-        self.canvas.scale("all", 0, 0, factor, factor)
+        self.canvas.scale("all", center_x, center_y, factor, factor)
         self.update_zoom_label()
-        
+
         # Update stored node coordinates
         for node in self.nodes:
-            node.x *= factor
-            node.y *= factor
+            node.x = (node.x - center_x) * factor + center_x
+            node.y = (node.y - center_y) * factor + center_y
             node.update_position(node.x, node.y)
+
+        # Update stored group rectangle coordinates
+        for group in self.group_manager.groups:
+            group_x1 = (group.x1 - center_x) * factor + center_x
+            group_y1 = (group.y1 - center_y) * factor + center_y
+            group_x2 = (group.x2 - center_x) * factor + center_x
+            group_y2 = (group.y2 - center_y) * factor + center_y
+            group.update_position(group_x1, group_y1, group_x2, group_y2)
 
         self.zoom_level *= factor
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
