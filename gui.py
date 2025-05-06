@@ -839,6 +839,16 @@ class NetworkMapGUI:
             self.make_popup_closer("group_editor_window")()
   
     def zoom_with_mouse(self, event):
+        # Hide any open connection info popups before zooming
+        for node in self.nodes:
+            for conn in getattr(node, "connections", []):
+                if hasattr(conn, "info_popup") and conn.info_popup:
+                    try:
+                        conn.info_popup.destroy()
+                    except Exception:
+                        pass
+                    conn.info_popup = None
+
         if event.num == 4 or event.delta > 0:
             factor = 1.1
         elif event.num == 5 or event.delta < 0:
@@ -902,6 +912,16 @@ class NetworkMapGUI:
             self.update_zoom_label()
 
     def apply_zoom(self, factor, center_x=None, center_y=None):
+        # Hide any open connection info popups before zooming
+        for node in self.nodes:
+            for conn in getattr(node, "connections", []):
+                if hasattr(conn, "info_popup") and conn.info_popup:
+                    try:
+                        conn.info_popup.destroy()
+                    except Exception:
+                        pass
+                    conn.info_popup = None
+
         # Use canvas center if no center provided
         if center_x is None or center_y is None:
             bbox = self.canvas.bbox("all")
