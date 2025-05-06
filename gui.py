@@ -19,8 +19,11 @@ from node_list import open_node_list_editor
 from connection_list_editor import open_connection_list_editor
 from groups import GroupManager, RectangleGroup
 from group_editor import open_group_editor
+from custom_commands import manage_custom_commands
 
 class NetworkMapGUI:
+    def manage_custom_commands(self):
+        return manage_custom_commands(self)
     def _setup_scrollbar_styles(self):
         style = ttk.Style()
         theme = "Dark" if ColorConfig.current == ColorConfig.Dark else "Light"
@@ -2103,95 +2106,3 @@ class NetworkMapGUI:
     def save_custom_commands(self):
         with open('_internal/custom_commands.json', 'w') as f:
             json.dump(self.custom_commands, f, indent=4)
-
-    def manage_custom_commands(self):
-        if getattr(self, 'custom_cmd_window', None) and self.custom_cmd_window.winfo_exists():
-            self.custom_cmd_window.lift()
-            return
-
-        win, content = self.create_popup("Manage Custom Commands", 400, 500, on_close=self.make_popup_closer("custom_cmd_window"), grab=False)
-        self.custom_cmd_window = win
-
-        listbox = tk.Listbox(content, width=50, height=10,
-                             bg=ColorConfig.current.ROW_BG_EVEN,
-                             fg=ColorConfig.current.ENTRY_TEXT,
-                             selectbackground=ColorConfig.current.ENTRY_FOCUS_BG,
-                             selectforeground=ColorConfig.current.BUTTON_TEXT)
-        listbox.pack(pady=10, padx=10)
-
-        for name in self.custom_commands.keys():
-            listbox.insert(tk.END, name)
-
-        frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
-        frame.pack(pady=5, padx=10, fill=tk.X)
-
-        label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
-        entry_args = {'bg': ColorConfig.current.ENTRY_FOCUS_BG, 'fg': ColorConfig.current.ENTRY_TEXT, 'insertbackground': ColorConfig.current.ENTRY_TEXT}
-
-        tk.Label(frame, text="Command Name:", **label_args).grid(row=0, column=0, sticky='w')
-        name_entry = tk.Entry(frame, width=40, **entry_args)
-        name_entry.grid(row=0, column=1, padx=5)
-
-        tk.Label(frame, text="Command Template:", **label_args).grid(row=1, column=0, sticky='w')
-        cmd_entry = tk.Entry(frame, width=40, **entry_args)
-        cmd_entry.grid(row=1, column=1, padx=5)
-
-        btn_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
-        btn_frame.pack(pady=10)
-
-        def add_command():
-            name = name_entry.get().strip()
-            cmd = cmd_entry.get().strip()
-            if name and cmd:
-                self.custom_commands[name] = cmd
-                listbox.insert(tk.END, name)
-                name_entry.delete(0, tk.END)
-                cmd_entry.delete(0, tk.END)
-                self.save_custom_commands()
-
-        def edit_command():
-            selection = listbox.curselection()
-            if selection:
-                name = listbox.get(selection[0])
-                cmd = self.custom_commands[name]
-                name_entry.delete(0, tk.END)
-                cmd_entry.delete(0, tk.END)
-                name_entry.insert(0, name)
-                cmd_entry.insert(0, cmd)
-
-        def delete_command():
-            selection = listbox.curselection()
-            if selection:
-                name = listbox.get(selection[0])
-                del self.custom_commands[name]
-                listbox.delete(selection[0])
-                self.save_custom_commands()
-
-        btn_style = {
-            'bg': ColorConfig.current.BUTTON_BG,
-            'fg': ColorConfig.current.BUTTON_TEXT,
-            'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG,
-            'activeforeground': ColorConfig.current.BUTTON_ACTIVE_TEXT,
-            'font': ('Helvetica', 10),
-            'padx': 5,
-            'pady': 2
-        }
-
-        tk.Button(btn_frame, text="Add", command=add_command, **btn_style).pack(side=tk.LEFT, padx=5)
-        tk.Button(btn_frame, text="Edit", command=edit_command, **btn_style).pack(side=tk.LEFT, padx=5)
-        tk.Button(btn_frame, text="Delete", command=delete_command, **btn_style).pack(side=tk.LEFT, padx=5)
-        tk.Button(btn_frame, text="Close", command=self.make_popup_closer("custom_cmd_window"), **btn_style).pack(side=tk.LEFT, padx=5)
-
-        tk.Label(content, text="""
-
-
-                 
-    Custom Commands:
-    - Use placeholders like {ip}, {name}, {file}, {web}, {rdp}, {vlan100}, etc.
-    - {ip} defaults to the first non-empty VLAN address
-    - Example: ping {ip} -t
-    """, justify=tk.LEFT, bg=ColorConfig.current.FRAME_BG,
-                fg=ColorConfig.current.INFO_TEXT, font=('Helvetica', 9),
-                wraplength=380).pack(pady=10, padx=10)
-
-        self.fix_window_geometry(self.custom_cmd_window, 600, 550)
