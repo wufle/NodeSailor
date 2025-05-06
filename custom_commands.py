@@ -7,7 +7,7 @@ def manage_custom_commands(gui_self):
         gui_self.custom_cmd_window.lift()
         return
 
-    win, content = gui_self.create_popup("Manage Custom Commands", 400, 500, on_close=gui_self.make_popup_closer("custom_cmd_window"), grab=False)
+    win, content = gui_self.create_popup("Manage Custom Commands", 900, 600, on_close=gui_self.make_popup_closer("custom_cmd_window"), grab=False)
     gui_self.custom_cmd_window = win
 
     listbox = tk.Listbox(content, width=50, height=10,
@@ -33,18 +33,20 @@ def manage_custom_commands(gui_self):
     listbox.bind("<<ListboxSelect>>", on_command_select)
 
     frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
-    frame.pack(pady=5, padx=10, fill=tk.X)
-
+    frame.pack(pady=10, padx=20, fill=tk.X)
+    
     label_args = {'bg': ColorConfig.current.FRAME_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 'font': ('Helvetica', 10)}
     entry_args = {'bg': ColorConfig.current.ENTRY_FOCUS_BG, 'fg': ColorConfig.current.ENTRY_TEXT, 'insertbackground': ColorConfig.current.ENTRY_TEXT}
-
-    tk.Label(frame, text="Command Name:", **label_args).grid(row=0, column=0, sticky='w')
-    name_entry = tk.Entry(frame, width=40, **entry_args)
-    name_entry.grid(row=0, column=1, padx=5)
-
-    tk.Label(frame, text="Command Template:", **label_args).grid(row=1, column=0, sticky='w')
-    cmd_entry = tk.Text(frame, width=40, height=4, **entry_args)
-    cmd_entry.grid(row=1, column=1, padx=5)
+    
+    tk.Label(frame, text="Command Name:", **label_args).grid(row=0, column=0, sticky='w', pady=(0, 8))
+    name_entry = tk.Entry(frame, width=40, font=('Helvetica', 10), **entry_args)
+    name_entry.grid(row=0, column=1, padx=5, pady=(0, 8), sticky='ew')
+    
+    tk.Label(frame, text="Command Template:", **label_args).grid(row=1, column=0, sticky='nw')
+    cmd_entry = tk.Text(frame, width=80, height=6, font=('Helvetica', 10), **entry_args)
+    cmd_entry.grid(row=1, column=1, padx=5, pady=5, sticky='ew')
+    
+    frame.grid_columnconfigure(1, weight=1)
 
     btn_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
     btn_frame.pack(pady=10)
