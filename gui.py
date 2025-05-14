@@ -824,7 +824,7 @@ class NetworkMapGUI:
             self.groups_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.edit_connections_button)
 
             # Show configuration guidance window
-            show_configuration_guidance(self.root)
+            show_configuration_guidance(self.root, self.center_window_on_screen, self.custom_font)
             
         else:
             self.mode = "Operator"
@@ -1680,7 +1680,7 @@ class NetworkMapGUI:
     
             # Show operator guidance window if in Operator mode
             if self.mode == "Operator":
-                show_operator_guidance(self.root)
+                show_operator_guidance(self.root, self.center_window_on_screen, self.custom_font)
 
     def load_network_state_from_path(self, file_path):
         with open(file_path, 'r') as f:
@@ -1804,7 +1804,7 @@ class NetworkMapGUI:
 
         # Show operator guidance window if in Operator mode
         if self.mode == "Operator":
-            show_operator_guidance(self.root)
+            show_operator_guidance(self.root, self.center_window_on_screen, self.custom_font)
 
     def save_last_file_path(self, file_path):
         with open('_internal/last_file_path.txt', 'w') as f:
