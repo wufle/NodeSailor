@@ -11,7 +11,7 @@ import os
 from utils import get_ip_addresses
 from colors import ColorConfig
 from tooltip import ToolTip
-from helpers import show_operator_guidance, show_configuration_guidance
+from helpers import show_operator_guidance, show_configuration_guidance, read_legend_state, write_legend_state
 from nodes import NetworkNode
 from connections import ConnectionLine
 from notes import StickyNote
@@ -1164,31 +1164,16 @@ class NetworkMapGUI:
 
     def save_legend_state(self):
         state = {}
-        try:
-            with open("_internal/legend_state.txt", "r") as f:
-                for line in f:
-                    if ':' in line:
-                        key, value = line.strip().split(':', 1)
-                        state[key] = value
-        except FileNotFoundError:
-            pass
-
-        state['HIDE_LEGEND'] = str(self.hide_legend_on_start.get())
-        
-        try:
-            with open("_internal/legend_state.txt", "w") as f:
-                for key, value in state.items():
-                    f.write(f"{key}:{value}\n")
-        except Exception as e:
-            print(f"Error writing legend state: {e}")
+        # Update only the relevant setting and preserve others
+        write_legend_state({'HIDE_LEGEND': self.hide_legend_on_start.get()})
 
     def load_legend_state(self):
         try:
             with open("_internal/legend_state.txt", "r") as f:
                 for line in f:
-                    if line.startswith("HIDE_LEGEND:"):
-                        value = line.strip().split(":", 1)[1].lower()
-                        self.hide_legend_on_start.set(value == 'true')
+                    if line.startswith("HIDE_LEGEND="):
+                        value = line.strip().split("=", 1)[1].strip().lower()
+                        self.hide_legend_on_start.set(value == '1' or value == 'true')
         except FileNotFoundError:
             pass
         
@@ -2049,23 +2034,8 @@ class NetworkMapGUI:
     def save_window_geometry(self):
         geometry = self.root.geometry()
         state = {}
-        try:
-            with open("_internal/legend_state.txt", "r") as f:
-                for line in f:
-                    if ':' in line:
-                        key, value = line.strip().split(':', 1)
-                        state[key] = value
-        except FileNotFoundError:
-            pass
-
-        state['WINDOW_GEOMETRY'] = geometry
-    
-        try:
-            with open("_internal/legend_state.txt", "w") as f:
-                for key, value in state.items():
-                    f.write(f"{key}:{value}\n")
-        except Exception as e:
-            print(f"Error saving window geometry: {e}")
+        # Update only the relevant setting and preserve others
+        write_legend_state({'WINDOW_GEOMETRY': geometry})
 
 
     def load_window_geometry(self):
