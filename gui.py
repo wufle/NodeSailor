@@ -11,6 +11,7 @@ import os
 from utils import get_ip_addresses
 from colors import ColorConfig
 from tooltip import ToolTip
+from helpers import show_operator_guidance, show_configuration_guidance
 from nodes import NetworkNode
 from connections import ConnectionLine
 from notes import StickyNote
@@ -821,6 +822,9 @@ class NetworkMapGUI:
             self.edit_connections_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.list_view_editor_button)
             self.edit_VLAN_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.edit_connections_button)
             self.groups_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.edit_connections_button)
+
+            # Show configuration guidance window
+            show_configuration_guidance(self.root)
             
         else:
             self.mode = "Operator"
@@ -1673,6 +1677,10 @@ class NetworkMapGUI:
             self.clear_current_loaded()  # Clear existing nodes and connections
             self.clear_node_status()  # Reset the status of all nodes
             self.legend_window.destroy()  # Close the legend window
+    
+            # Show operator guidance window if in Operator mode
+            if self.mode == "Operator":
+                show_operator_guidance(self.root)
 
     def load_network_state_from_path(self, file_path):
         with open(file_path, 'r') as f:
@@ -1793,6 +1801,10 @@ class NetworkMapGUI:
                     node.raise_node()
             self.save_last_file_path(file_path)  # Save the last file path
             self.legend_window.destroy()  # Close the legend window
+
+        # Show operator guidance window if in Operator mode
+        if self.mode == "Operator":
+            show_operator_guidance(self.root)
 
     def save_last_file_path(self, file_path):
         with open('_internal/last_file_path.txt', 'w') as f:
