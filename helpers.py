@@ -34,6 +34,12 @@ def _setup_draggable_titlebar(win, title_bar, title_label):
     title_label.bind("<ButtonPress-1>", start_drag)
     title_label.bind("<B1-Motion>", do_drag)
 
+def _bring_to_front(win):
+    win.lift()
+    win.focus_set()
+    win.attributes("-topmost", True)
+    win.after(10, lambda: win.attributes("-topmost", False))
+
 def show_operator_guidance(root, center_func=None, custom_font=None):
     state = read_legend_state()
     if state.get("hide_operator_guidance", False):
@@ -91,8 +97,7 @@ def show_operator_guidance(root, center_func=None, custom_font=None):
     win.bind('<Escape>', lambda e: win.destroy())
 
     win.update_idletasks()
-    win.lift()
-    win.focus_set()
+    _bring_to_front(win)
     if center_func:
         center_func(win)
 
@@ -152,7 +157,6 @@ def show_configuration_guidance(root, center_func=None, custom_font=None):
     win.bind('<Escape>', lambda e: win.destroy())
 
     win.update_idletasks()
-    win.lift()
-    win.focus_set()
+    _bring_to_front(win)
     if center_func:
         center_func(win)
