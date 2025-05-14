@@ -14,10 +14,30 @@ def read_legend_state():
                     state[k] = v == "1"
     return state
 
-def write_legend_state(state):
+def write_legend_state(update):
+    # update: dict of key(s) to update
+    state = read_legend_state()
+    state.update(update)
+    lines = []
+    written = set()
+    if os.path.exists(LEGEND_STATE_PATH):
+        with open(LEGEND_STATE_PATH, "r") as f:
+            for line in f:
+                if "=" in line:
+                    k, _ = line.strip().split("=", 1)
+                    if k in update:
+                        lines.append(f"{k}={'1' if state[k] else '0'}\n")
+                        written.add(k)
+                    else:
+                        lines.append(line)
+                else:
+                    lines.append(line)
+    # Add any new keys not already present
+    for k in update:
+        if k not in written:
+            lines.append(f"{k}={'1' if state[k] else '0'}\n")
     with open(LEGEND_STATE_PATH, "w") as f:
-        for k, v in state.items():
-            f.write(f"{k}={'1' if v else '0'}\n")
+        f.writelines(lines)
 
 def _setup_draggable_titlebar(win, title_bar, title_label):
     def start_drag(event):
@@ -76,22 +96,21 @@ def show_operator_guidance(root, center_func=None, custom_font=None):
     _setup_draggable_titlebar(win, title_bar, title_label)
 
     # Content frame
-    content = tk.Frame(outer_frame, bg=ColorConfig.current.INFO_NOTE_BG)
-    content.pack(fill=tk.BOTH, expand=True, padx=16, pady=16)
+    content = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
+    content.pack(fill=tk.BOTH, expand=True)
 
-    tk.Label(content, text="Operator Mode:", bg=ColorConfig.current.INFO_NOTE_BG,
+    tk.Label(content, text="Operator Mode:", bg=ColorConfig.current.FRAME_BG,
              fg=ColorConfig.current.INFO_TEXT, font=custom_font).pack(anchor="w", pady=(0, 4))
     tk.Label(content, text="- Left Click on Node: Ping the node (Green = all assigned IP addresses connected, Yellow = partial connection, Red = no connection).",
-             bg=ColorConfig.current.INFO_NOTE_BG, fg=ColorConfig.current.INFO_TEXT, wraplength=420, justify="left", font=custom_font).pack(anchor="w")
+             bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.INFO_TEXT, wraplength=420, justify="left", font=custom_font).pack(anchor="w")
 
     var = tk.BooleanVar(value=False)
     def on_check():
-        state["hide_operator_guidance"] = var.get()
-        write_legend_state(state)
+        write_legend_state({"hide_operator_guidance": var.get()})
     cb = tk.Checkbutton(content, text="Don't display this window again", variable=var,
                         command=on_check, bg=ColorConfig.current.FRAME_BG,
                         fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG,
-                        activebackground=ColorConfig.current.BUTTON_ACTIVE_BG, font=custom_font)
+                        activebackground=ColorConfig.current.FRAME_BG, font=custom_font)
     cb.pack(anchor="w", pady=(16, 0))
 
     win.bind('<Escape>', lambda e: win.destroy())
@@ -136,18 +155,17 @@ def show_configuration_guidance(root, center_func=None, custom_font=None):
 
     _setup_draggable_titlebar(win, title_bar, title_label)
 
-    content = tk.Frame(outer_frame, bg=ColorConfig.current.INFO_NOTE_BG)
-    content.pack(fill=tk.BOTH, expand=True, padx=16, pady=16)
+    content = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
+    content.pack(fill=tk.BOTH, expand=True)
 
-    tk.Label(content, text="Warning:", bg=ColorConfig.current.INFO_NOTE_BG,
+    tk.Label(content, text="Warning:", bg=ColorConfig.current.FRAME_BG,
              fg=ColorConfig.current.INFO_TEXT, font=custom_font).pack(anchor="w", pady=(0, 4))
     tk.Label(content, text="This mode should only be used when creating/editing a node map.",
-             bg=ColorConfig.current.INFO_NOTE_BG, fg=ColorConfig.current.INFO_TEXT, wraplength=420, justify="left", font=custom_font).pack(anchor="w")
+             bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.INFO_TEXT, wraplength=420, justify="left", font=custom_font).pack(anchor="w")
 
     var = tk.BooleanVar(value=False)
     def on_check():
-        state["hide_configuration_guidance"] = var.get()
-        write_legend_state(state)
+        write_legend_state({"hide_configuration_guidance": var.get()})
     cb = tk.Checkbutton(content, text="Don't display this window again", variable=var,
                         command=on_check, bg=ColorConfig.current.FRAME_BG,
                         fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG,
