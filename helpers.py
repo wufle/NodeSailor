@@ -130,7 +130,8 @@ def show_operator_guidance(root, center_func=None, custom_font=None):
     cb = tk.Checkbutton(content, text="Don't display this window again", variable=var,
                         command=on_check, bg=ColorConfig.current.INFO_NOTE_BG,
                         fg=ColorConfig.current.INFO_TEXT, selectcolor=ColorConfig.current.INFO_NOTE_BG,
-                        activebackground=ColorConfig.current.INFO_NOTE_BG, font=custom_font)
+                        font=("Arial", 8),
+                        activebackground=ColorConfig.current.INFO_NOTE_BG)
     cb.pack(anchor="w", pady=(16, 0))
 
     win.bind('<Escape>', lambda e: win.destroy())
@@ -158,7 +159,7 @@ def show_configuration_guidance(root, center_func=None, custom_font=None):
     title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.INFO_NOTE_BG)
     title_bar.pack(side=tk.TOP, fill=tk.X)
 
-    title_label = tk.Label(title_bar, text="Configuration Mode",
+    title_label = tk.Label(title_bar, text="Configuration Mode Guidance:",
                            bg=ColorConfig.current.INFO_NOTE_BG,
                            fg=ColorConfig.current.INFO_TEXT,
                            font=custom_font)
@@ -178,10 +179,23 @@ def show_configuration_guidance(root, center_func=None, custom_font=None):
     content = tk.Frame(outer_frame, bg=ColorConfig.current.INFO_NOTE_BG)
     content.pack(fill=tk.BOTH, expand=True)
 
-    tk.Label(content, text="Warning:", bg=ColorConfig.current.INFO_NOTE_BG,
-             fg=ColorConfig.current.INFO_TEXT, font=custom_font).pack(anchor="w", pady=(0, 4))
-    tk.Label(content, text="This mode should only be used when creating/editing a node map.",
-             bg=ColorConfig.current.INFO_NOTE_BG, fg=ColorConfig.current.INFO_TEXT, wraplength=420, justify="left", font=custom_font).pack(anchor="w")
+    guidance_lines = [
+        ("Note, this mode is meant for configuration only. Use Operator Mode for network testing."),
+        ("- Double Left Click: Create a new node."),
+        ("- Middle Click on two nodes: Create a connection line between two nodes.", "text"),
+        ("- Shift + Middle Click: Remove connection line.", "text"),
+        ("- Shift + Double Left Click: Add a sticky note.", "text"),
+        ("- Left Click + Drag: Move nodes or notes.", "text"),
+        ("- Right Click node: Open context menu.", "text"),
+    ]
+
+    for item in guidance_lines:
+        if isinstance(item, tuple):
+            text = item[0]
+        else:
+            text = item
+        tk.Label(content, text=text, bg=ColorConfig.current.INFO_NOTE_BG,
+                 fg=ColorConfig.current.INFO_TEXT, font=custom_font, justify="left", wraplength=480).pack(anchor="w", pady=(6, 0))
 
     var = tk.BooleanVar(value=False)
     def on_check():
@@ -189,7 +203,8 @@ def show_configuration_guidance(root, center_func=None, custom_font=None):
     cb = tk.Checkbutton(content, text="Don't display this window again", variable=var,
                         command=on_check, bg=ColorConfig.current.INFO_NOTE_BG,
                         fg=ColorConfig.current.INFO_TEXT, selectcolor=ColorConfig.current.INFO_NOTE_BG,
-                        activebackground=ColorConfig.current.BUTTON_ACTIVE_BG, font=custom_font)
+                        font=("Arial", 8),
+                        activebackground=ColorConfig.current.BUTTON_ACTIVE_BG)
     cb.pack(anchor="w", pady=(16, 0))
 
     win.bind('<Escape>', lambda e: win.destroy())
