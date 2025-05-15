@@ -1886,11 +1886,9 @@ class NetworkMapGUI:
 
        # Buttons frame and its buttons
         self.buttons_frame.config(bg=ColorConfig.current.FRAME_BG)
-        button_style = {'bg': ColorConfig.current.BUTTON_BG, 'fg': ColorConfig.current.BUTTON_TEXT, 
-                        'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG, 
+        button_style = {'bg': ColorConfig.current.BUTTON_BG, 'fg': ColorConfig.current.BUTTON_TEXT,
+                        'activebackground': ColorConfig.current.BUTTON_ACTIVE_BG,
                         'activeforeground': ColorConfig.current.BUTTON_ACTIVE_TEXT}
-        self.mode_button.config(bg=ColorConfig.current.BUTTON_CONFIGURATION_MODE if self.mode == "Configuration" else ColorConfig.current.BUTTON_BG, 
-                            fg=ColorConfig.current.BUTTON_TEXT)
         
         # Safely configure theme_button only if it exists
         if hasattr(self, 'theme_button') and self.theme_button.winfo_exists():
@@ -1926,6 +1924,11 @@ class NetworkMapGUI:
                     activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
                     activeforeground=ColorConfig.current.BUTTON_TEXT)
         self.canvas.config(bg=ColorConfig.current.FRAME_BG)
+        # Ensure mode button color is correct after all buttons are reset
+        self.mode_button.config(
+            bg=ColorConfig.current.BUTTON_CONFIGURATION_MODE if self.mode == "Configuration" else ColorConfig.current.BUTTON_BG,
+            fg=ColorConfig.current.BUTTON_TEXT
+        )
         self.info_panel.config(bg=ColorConfig.current.INFO_NOTE_BG)
         for child in self.info_panel.winfo_children():
             child.config(bg=ColorConfig.current.INFO_NOTE_BG, fg=ColorConfig.current.INFO_TEXT)
