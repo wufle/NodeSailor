@@ -1515,6 +1515,11 @@ class NetworkMapGUI:
 
     def create_connection(self, event):     # Draw a connection line
         if self.mode == "Configuration":
+            # Check if the connection window is already open
+            if hasattr(self, 'connection_window') and self.connection_window and self.connection_window.winfo_exists():
+                self.connection_window.lift()
+                return
+
             clicked_items = self.canvas.find_withtag("current")
             if clicked_items:
                 clicked_item_id = clicked_items[0]  # Get the first item's ID from the tuple
@@ -1524,14 +1529,27 @@ class NetworkMapGUI:
                             self.connection_start_node = node
                             return  # Return after setting the start node
                         elif self.connection_start_node != node:
-                            dialog = tk.Toplevel(self.root)
-                            dialog.title("Connection Details")
-                            tk.Label(dialog, text="Label:").grid(row=0, column=0, padx=10, pady=5)
-                            label_entry = tk.Entry(dialog, width=40)
+                            def close_connection_window():
+                                try:
+                                    self.connection_window.destroy()
+                                except Exception:
+                                    pass
+                                self.connection_window = None
+                                try:
+                                    self.root.focus_force()
+                                except Exception:
+                                    pass
+
+                            dialog, content = self.create_popup("Connection Details", 400, 180, on_close=close_connection_window, grab=True)
+                            self.connection_window = dialog
+                            label_label = tk.Label(content, text="Label:", bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.INFO_TEXT)
+                            label_label.grid(row=0, column=0, padx=10, pady=5, sticky="e")
+                            label_entry = tk.Entry(content, width=40, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.ENTRY_TEXT, insertbackground=ColorConfig.current.ENTRY_TEXT)
                             label_entry.grid(row=0, column=1, padx=10, pady=5)
 
-                            tk.Label(dialog, text="Info (on hover):").grid(row=1, column=0, padx=10, pady=5)
-                            info_entry = tk.Entry(dialog, width=40)
+                            info_label = tk.Label(content, text="Info (on hover):", bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.INFO_TEXT)
+                            info_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
+                            info_entry = tk.Entry(content, width=40, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.ENTRY_TEXT, insertbackground=ColorConfig.current.ENTRY_TEXT)
                             info_entry.grid(row=1, column=1, padx=10, pady=5)
 
                             def submit():
@@ -1541,12 +1559,22 @@ class NetworkMapGUI:
                                 self.connection_start_node = None
                                 self.raise_all_nodes()
                                 self.unsaved_changes = True
-                                dialog.destroy()
+                                close_connection_window()
 
-                            tk.Button(dialog, text="OK", command=submit).grid(row=2, column=0, columnspan=2, pady=10)
-                            dialog.transient(self.root)
-                            dialog.grab_set()
-                            self.root.wait_window(dialog)
+                            self.connection_window.protocol("WM_DELETE_WINDOW", close_connection_window)
+
+                            ok_button = tk.Button(
+                                content,
+                                text="OK",
+                                command=submit,
+                                bg=ColorConfig.current.BUTTON_BG,
+                                fg=ColorConfig.current.BUTTON_TEXT,
+                                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT
+                            )
+                            ok_button.grid(row=2, column=0, columnspan=2, pady=10)
+
+                            self.root.wait_window(self.connection_window)
                             self.connection_start_node = None
                             self.raise_all_nodes()
                             self.unsaved_changes = True
