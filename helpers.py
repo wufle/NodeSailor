@@ -75,20 +75,20 @@ def show_operator_guidance(root, center_func=None, custom_font=None):
     outer_frame.pack(fill=tk.BOTH, expand=True)
 
     # Title bar
-    title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
+    title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.INFO_NOTE_BG)
     title_bar.pack(side=tk.TOP, fill=tk.X)
 
     title_label = tk.Label(title_bar, text="Operator Mode Guidance",
-                           bg=ColorConfig.current.FRAME_BG,
-                           fg=ColorConfig.current.BUTTON_TEXT,
+                           bg=ColorConfig.current.INFO_NOTE_BG,
+                           fg=ColorConfig.current.INFO_TEXT,
                            font=custom_font)
     title_label.pack(side=tk.LEFT, padx=10)
 
     close_button = tk.Button(
         title_bar, text='X',
         command=lambda: [win.destroy(), root.focus_force(), root.lift()],
-        bg=ColorConfig.current.FRAME_BG,
-        fg=ColorConfig.current.BUTTON_TEXT,
+        bg=ColorConfig.current.INFO_NOTE_BG,
+        fg=ColorConfig.current.INFO_TEXT,
         font=custom_font
     )
     close_button.pack(side=tk.RIGHT)
@@ -96,21 +96,41 @@ def show_operator_guidance(root, center_func=None, custom_font=None):
     _setup_draggable_titlebar(win, title_bar, title_label)
 
     # Content frame
-    content = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
+    content = tk.Frame(outer_frame, bg=ColorConfig.current.INFO_NOTE_BG)
     content.pack(fill=tk.BOTH, expand=True)
 
-    tk.Label(content, text="Operator Mode:", bg=ColorConfig.current.FRAME_BG,
-             fg=ColorConfig.current.INFO_TEXT, font=custom_font).pack(anchor="w", pady=(0, 4))
-    tk.Label(content, text="- Left Click on Node: Ping the node (Green = all assigned IP addresses connected, Yellow = partial connection, Red = no connection).",
-             bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.INFO_TEXT, wraplength=420, justify="left", font=custom_font).pack(anchor="w")
+    # Guidance lines copied from gui.py help_lines
+    help_lines = [
+        ("\nOperator Mode:\n", "header"),
+        ("- Left Click on Node: Ping the node (Green = all assigned IP addresses connected, Yellow = partial connection, Red = no connection).\n"
+         "- Right Click on Node: Open context menu.\n"
+         "- Right Click and Drag: Pan the canvas.\n"
+         "- Scroll Wheel: Zoom in and out.\n"
+         "- Who am I?: Highlight the node matching your machine's IP.\n"
+         "- Ping All: Ping every node.\n"
+         "- Clear Status: Reset node status.\n", "text"),
+
+        ("- Ctrl-Shift-C Change color theme.\n", "text"),
+    ]
+
+    for line, tag in help_lines:
+        if tag == "title":
+            tk.Label(content, text=line, bg=ColorConfig.current.INFO_NOTE_BG,
+                     fg=ColorConfig.current.INFO_TEXT, font=custom_font, anchor="w", justify="left", wraplength=420).pack(anchor="w", pady=(0, 8))
+        elif tag == "header":
+            tk.Label(content, text=line, bg=ColorConfig.current.INFO_NOTE_BG,
+                     fg=ColorConfig.current.INFO_TEXT, font=custom_font, anchor="w", justify="left", wraplength=420).pack(anchor="w", pady=(8, 0))
+        else:
+            tk.Label(content, text=line, bg=ColorConfig.current.INFO_NOTE_BG,
+                     fg=ColorConfig.current.INFO_TEXT, font=custom_font, anchor="w", justify="left", wraplength=420).pack(anchor="w")
 
     var = tk.BooleanVar(value=False)
     def on_check():
         write_legend_state({"hide_operator_guidance": var.get()})
     cb = tk.Checkbutton(content, text="Don't display this window again", variable=var,
-                        command=on_check, bg=ColorConfig.current.FRAME_BG,
-                        fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG,
-                        activebackground=ColorConfig.current.FRAME_BG, font=custom_font)
+                        command=on_check, bg=ColorConfig.current.INFO_NOTE_BG,
+                        fg=ColorConfig.current.INFO_TEXT, selectcolor=ColorConfig.current.INFO_NOTE_BG,
+                        activebackground=ColorConfig.current.INFO_NOTE_BG, font=custom_font)
     cb.pack(anchor="w", pady=(16, 0))
 
     win.bind('<Escape>', lambda e: win.destroy())
@@ -135,40 +155,40 @@ def show_configuration_guidance(root, center_func=None, custom_font=None):
     outer_frame.pack(fill=tk.BOTH, expand=True)
 
     # Title bar
-    title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
+    title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.INFO_NOTE_BG)
     title_bar.pack(side=tk.TOP, fill=tk.X)
 
     title_label = tk.Label(title_bar, text="Configuration Mode",
-                           bg=ColorConfig.current.FRAME_BG,
-                           fg=ColorConfig.current.BUTTON_TEXT,
+                           bg=ColorConfig.current.INFO_NOTE_BG,
+                           fg=ColorConfig.current.INFO_TEXT,
                            font=custom_font)
     title_label.pack(side=tk.LEFT, padx=10)
 
     close_button = tk.Button(
         title_bar, text='X',
         command=lambda: [win.destroy(), root.focus_force(), root.lift()],
-        bg=ColorConfig.current.FRAME_BG,
-        fg=ColorConfig.current.BUTTON_TEXT,
+        bg=ColorConfig.current.INFO_NOTE_BG,
+        fg=ColorConfig.current.INFO_TEXT,
         font=custom_font
     )
     close_button.pack(side=tk.RIGHT)
 
     _setup_draggable_titlebar(win, title_bar, title_label)
 
-    content = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
+    content = tk.Frame(outer_frame, bg=ColorConfig.current.INFO_NOTE_BG)
     content.pack(fill=tk.BOTH, expand=True)
 
-    tk.Label(content, text="Warning:", bg=ColorConfig.current.FRAME_BG,
+    tk.Label(content, text="Warning:", bg=ColorConfig.current.INFO_NOTE_BG,
              fg=ColorConfig.current.INFO_TEXT, font=custom_font).pack(anchor="w", pady=(0, 4))
     tk.Label(content, text="This mode should only be used when creating/editing a node map.",
-             bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.INFO_TEXT, wraplength=420, justify="left", font=custom_font).pack(anchor="w")
+             bg=ColorConfig.current.INFO_NOTE_BG, fg=ColorConfig.current.INFO_TEXT, wraplength=420, justify="left", font=custom_font).pack(anchor="w")
 
     var = tk.BooleanVar(value=False)
     def on_check():
         write_legend_state({"hide_configuration_guidance": var.get()})
     cb = tk.Checkbutton(content, text="Don't display this window again", variable=var,
-                        command=on_check, bg=ColorConfig.current.FRAME_BG,
-                        fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG,
+                        command=on_check, bg=ColorConfig.current.INFO_NOTE_BG,
+                        fg=ColorConfig.current.INFO_TEXT, selectcolor=ColorConfig.current.INFO_NOTE_BG,
                         activebackground=ColorConfig.current.BUTTON_ACTIVE_BG, font=custom_font)
     cb.pack(anchor="w", pady=(16, 0))
 
