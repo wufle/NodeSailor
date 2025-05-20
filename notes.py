@@ -100,7 +100,7 @@ class StickyNote:
         for txt, cmd in options:
             btn = tk.Button(
                 menu_frame, text=txt,
-                command=lambda c=cmd: [c(), destroy_menu()],
+                command=lambda c=cmd: [destroy_menu(), self.canvas.after(10, c)],
                 bg=ColorConfig.current.BUTTON_BG,
                 fg=ColorConfig.current.BUTTON_TEXT,
                 activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
@@ -120,6 +120,8 @@ class StickyNote:
                 self.text = new_text
                 self.canvas.itemconfig(self.note, text=self.text)
                 self.adjust_note_size()
+                if hasattr(self.gui, "regain_focus"):
+                    self.gui.regain_focus()
             self.gui.show_sticky_note_popup(self.text, on_ok)
         else:
             # fallback to simpledialog if gui method is not available
