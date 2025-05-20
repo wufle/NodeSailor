@@ -2,7 +2,7 @@ import tkinter as tk
 from colors import ColorConfig
 
 class ConnectionLine:
-    def __init__(self, canvas, node1, node2, label='', connectioninfo=None):
+    def __init__(self, canvas, node1, node2, label='', connectioninfo=None, gui=None):
         self.canvas = canvas
         self.node1 = node1
         self.node2 = node2
@@ -10,6 +10,7 @@ class ConnectionLine:
         self.label = label
         self.connectioninfo = connectioninfo
         self.label_id = None
+        self.gui = gui
         if label:
             self.update_label()
         node1.connections.append(self)
@@ -56,40 +57,7 @@ class ConnectionLine:
             self.canvas.tag_bind(self.label_id, "<Enter>", show_info)
             self.canvas.tag_bind(self.label_id, "<Leave>", hide_info)
 
-            def edit_connectioninfo(event):
-                dialog = tk.Toplevel(self.canvas)
-                dialog.title("Edit Connection Details")
-                tk.Label(dialog, text="Label:").grid(row=0, column=0, padx=10, pady=5)
-                label_entry = tk.Entry(dialog, width=40)
-                label_entry.grid(row=0, column=1, padx=10, pady=5)
-
-                tk.Label(dialog, text="Info (on hover):").grid(row=1, column=0, padx=10, pady=5)
-                info_entry = tk.Entry(dialog, width=40)
-                info_entry.grid(row=1, column=1, padx=10, pady=5)
-
-                def center_window(win):
-                    win.update_idletasks()
-                    width = win.winfo_width()
-                    height = win.winfo_height()
-                    screen_width = win.winfo_screenwidth()
-                    screen_height = win.winfo_screenheight()
-                    x = (screen_width // 2) - (width // 2)
-                    y = (screen_height // 2) - (height // 2)
-                    win.geometry(f"{width}x{height}+{x}+{y}")
-
-                def submit():
-                    self.label = label_entry.get()
-                    self.connectioninfo = info_entry.get()
-                    self.update_label()
-                    dialog.destroy()
-
-                tk.Button(dialog, text="Save", command=submit).grid(row=2, column=0, columnspan=2, pady=10)
-                dialog.transient(self.root)
-                center_window(dialog)
-                dialog.grab_set()
-                self.canvas.wait_window(dialog)
-
-            self.canvas.tag_bind(self.label_id, "<Button-3>", edit_connectioninfo)
+            self.canvas.tag_bind(self.label_id, "<Button-3>", lambda event: self.gui.create_connection(event=None, edit_connection=self))
      
         # Recreate a background similar to StickyNote
         bbox = self.canvas.bbox(self.label_id)

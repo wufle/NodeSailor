@@ -1523,13 +1523,65 @@ class NetworkMapGUI:
         if sticky in self.stickynotes:
             self.stickynotes.remove(sticky)     
 
-    def create_connection(self, event):     # Draw a connection line
+    def create_connection(self, event, edit_connection=None):     # Draw or edit a connection
         if self.mode == "Configuration":
             # Check if the connection window is already open
             if hasattr(self, 'connection_window') and self.connection_window and self.connection_window.winfo_exists():
                 self.connection_window.lift()
                 return
 
+            # Editing an existing connection
+            if edit_connection is not None:
+                def close_connection_window():
+                    try:
+                        self.connection_window.destroy()
+                    except Exception:
+                        pass
+                    self.connection_window = None
+                    try:
+                        self.root.focus_force()
+                    except Exception:
+                        pass
+
+                dialog, content = self.create_popup("Connection Details", 400, 180, on_close=close_connection_window, grab=True)
+                self.center_window_absolute(dialog)
+                self.connection_window = dialog
+                label_label = tk.Label(content, text="Label:", bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.INFO_TEXT)
+                label_label.grid(row=0, column=0, padx=10, pady=5, sticky="e")
+                label_entry = tk.Entry(content, width=40, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.ENTRY_TEXT, insertbackground=ColorConfig.current.ENTRY_TEXT)
+                label_entry.grid(row=0, column=1, padx=10, pady=5)
+                label_entry.insert(0, edit_connection.label if edit_connection.label else "")
+
+                info_label = tk.Label(content, text="Info (on hover):", bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.INFO_TEXT)
+                info_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
+                info_entry = tk.Entry(content, width=40, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.ENTRY_TEXT, insertbackground=ColorConfig.current.ENTRY_TEXT)
+                info_entry.grid(row=1, column=1, padx=10, pady=5)
+                info_entry.insert(0, edit_connection.connectioninfo if edit_connection.connectioninfo else "")
+
+                def submit():
+                    edit_connection.label = label_entry.get()
+                    edit_connection.connectioninfo = info_entry.get()
+                    edit_connection.update_label()
+                    self.unsaved_changes = True
+                    close_connection_window()
+
+                self.connection_window.protocol("WM_DELETE_WINDOW", close_connection_window)
+
+                ok_button = tk.Button(
+                    content,
+                    text="OK",
+                    command=submit,
+                    bg=ColorConfig.current.BUTTON_BG,
+                    fg=ColorConfig.current.BUTTON_TEXT,
+                    activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                    activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT
+                )
+                ok_button.grid(row=2, column=0, columnspan=2, pady=10)
+
+                self.root.wait_window(self.connection_window)
+                return
+
+            # Creating a new connection (existing logic)
             clicked_items = self.canvas.find_withtag("current")
             if clicked_items:
                 clicked_item_id = clicked_items[0]  # Get the first item's ID from the tuple
@@ -1566,7 +1618,7 @@ class NetworkMapGUI:
                             def submit():
                                 label = label_entry.get()
                                 info = info_entry.get()
-                                connection = ConnectionLine(self.canvas, self.connection_start_node, node, label=label, connectioninfo=info)
+                                connection = ConnectionLine(self.canvas, self.connection_start_node, node, label=label, connectioninfo=info, gui=self)
                                 self.connection_start_node = None
                                 self.raise_all_nodes()
                                 self.unsaved_changes = True
@@ -1743,7 +1795,7 @@ class NetworkMapGUI:
                 node2 = self.nodes[conn_data['to']]
                 label = conn_data.get('label', '')
                 tooltip = conn_data.get('connectioninfo', None)
-                ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip)
+                ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip, gui=self)
 
 
             # Load sticky notes
@@ -1809,7 +1861,7 @@ class NetworkMapGUI:
                     node2 = self.nodes[conn_data['to']]
                     label = conn_data.get('label', '')  # Get the label if it exists
                     tooltip = conn_data.get('connectioninfo', None)
-                    ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip)
+                    ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip, gui=self)
                 
                 # Load groups
                 self.group_manager.groups = []
