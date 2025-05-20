@@ -57,7 +57,8 @@ class ConnectionLine:
             self.canvas.tag_bind(self.label_id, "<Enter>", show_info)
             self.canvas.tag_bind(self.label_id, "<Leave>", hide_info)
 
-            self.canvas.tag_bind(self.label_id, "<Button-3>", lambda event: self.gui.create_connection(event=None, edit_connection=self))
+        # Always allow right-click editing, regardless of connectioninfo
+        self.canvas.tag_bind(self.label_id, "<Button-3>", lambda event: self.gui.create_connection(event=None, edit_connection=self))
      
         # Recreate a background similar to StickyNote
         bbox = self.canvas.bbox(self.label_id)
