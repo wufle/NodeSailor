@@ -115,15 +115,23 @@ class StickyNote:
         context_menu.bind("<Escape>", lambda e: destroy_menu())
 
     def edit_sticky_text(self):
-        new_text = simpledialog.askstring(
-            "Edit Note",
-            "Enter new note text:",
-            initialvalue=self.text
-        )
-        if new_text is not None:
-            self.text = new_text
-            self.canvas.itemconfig(self.note, text=self.text)
-            self.adjust_note_size()
+        if self.gui and hasattr(self.gui, "show_sticky_note_popup"):
+            def on_ok(new_text):
+                self.text = new_text
+                self.canvas.itemconfig(self.note, text=self.text)
+                self.adjust_note_size()
+            self.gui.show_sticky_note_popup(self.text, on_ok)
+        else:
+            # fallback to simpledialog if gui method is not available
+            new_text = simpledialog.askstring(
+                "Edit Note",
+                "Enter new note text:",
+                initialvalue=self.text
+            )
+            if new_text is not None:
+                self.text = new_text
+                self.canvas.itemconfig(self.note, text=self.text)
+                self.adjust_note_size()
 
     def delete_sticky(self):
         # If the GUI is available, call its remove_sticky. Otherwise, just delete ourselves.
