@@ -101,16 +101,19 @@ def show_operator_guidance(root, center_func=None, custom_font=None):
 
     # Guidance lines copied from gui.py help_lines
     help_lines = [
-        ("\nOperator Mode:\n", "header"),
-        ("- Left Click on Node: Ping the node (Green = all assigned IP addresses connected, Yellow = partial connection, Red = no connection).\n"
-         "- Right Click on Node: Open context menu.\n"
-         "- Right Click and Drag: Pan the canvas.\n"
-         "- Scroll Wheel: Zoom in and out.\n"
-         "- Who am I?: Highlight the node matching your machine's IP.\n"
-         "- Ping All: Ping every node.\n"
-         "- Clear Status: Reset node status.\n", "text"),
-
-        ("- Ctrl-Shift-C Change color theme.\n", "text"),
+        ("  • Left Click on Node: Ping the node", "text"),
+        ("      - Green: all assigned IP addresses connected", "text"),
+        ("      - Yellow: partial ping response received", "text"),
+        ("      - Red: no response", "text"),
+        ("  • Right Click on Node: Open context menu", "text"),
+        ("  • Right Click and Drag: Pan the canvas", "text"),
+        ("  • Scroll Wheel: Zoom in and out", "text"),
+        ("  • Who am I?: Highlight the node matching your machine's IP", "text"),
+        ("  • Ping All: Ping every node", "text"),
+        ("  • Clear Status: Reset node status", "text"),
+        ("  • Ctrl-Shift-C: Change color theme", "text"),
+        ("", "text"),
+        ("Press 'F1' for further instructions.", "text"),
     ]
 
     for line, tag in help_lines:
@@ -180,13 +183,19 @@ def show_configuration_guidance(root, center_func=None, custom_font=None):
     content.pack(fill=tk.BOTH, expand=True)
 
     guidance_lines = [
-        ("Note, this mode is meant for configuration only. Use Operator Mode for network testing."),
-        ("- Double Left Click: Create a new node."),
-        ("- Middle Click on two nodes: Create a connection line between two nodes.", "text"),
-        ("- Shift + Middle Click: Remove connection line.", "text"),
-        ("- Shift + Double Left Click: Add a sticky note.", "text"),
-        ("- Left Click + Drag: Move nodes or notes.", "text"),
-        ("- Right Click node: Open context menu.", "text"),
+        ("Note: This mode is for configuration of the nodemap.", "text"),
+        ("Change back to Operator Mode for basic testing.", "text"),
+        ("", "text"),
+        ("Quick Guide:", "title"),
+        ("", "text"),
+        ("  • Double Left Click: Create a new node", "text"),
+        ("  • Middle Click on two nodes: Create a connection line between two nodes", "text"),
+        ("  • Shift + Middle Click: Remove connection line", "text"),
+        ("  • Shift + Double Left Click: Add a sticky note", "text"),
+        ("  • Left Click + Drag: Move nodes or notes", "text"),
+        ("  • Right Click node: Open context menu", "text"),
+        ("", "text"),
+        ("Press 'F1' for further instructions.", "text"),
     ]
 
     for item in guidance_lines:
