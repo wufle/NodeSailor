@@ -1507,12 +1507,72 @@ class NetworkMapGUI:
     
     def create_sticky_note(self, event=None):
         if self.mode == "Configuration":
-            text = simpledialog.askstring('Sticky Note', 'Enter note text:', parent=self.root)
-            if text:
-                x, y = event.x, event.y if event else (50, 50)
-                note = StickyNote(self.canvas, text, x, y, self)
-                self.stickynotes.append(note)
-                self.unsaved_changes = True
+            def on_ok():
+                text = entry.get()
+                if text.strip():
+                    x, y = (event.x, event.y) if event else (50, 50)
+                    note = StickyNote(self.canvas, text, x, y, self)
+                    self.stickynotes.append(note)
+                    self.unsaved_changes = True
+                popup.destroy()
+
+            def on_cancel():
+                popup.destroy()
+
+            popup, content = self.create_popup("Sticky Note", 320, 120, grab=True)
+            self.center_window_absolute(popup)
+
+            # Remove debug border for production
+            content.config(highlightthickness=0)
+
+            label = tk.Label(
+                content,
+                text="Enter note text:",
+                bg=ColorConfig.current.FRAME_BG,
+                fg=ColorConfig.current.BUTTON_TEXT
+            )
+            label.pack(pady=(12, 4))
+            entry = tk.Entry(
+                content,
+                width=40,
+                bg=getattr(ColorConfig.current, "ENTRY_BG", ColorConfig.current.FRAME_BG),
+                fg=ColorConfig.current.ENTRY_TEXT if hasattr(ColorConfig.current, "ENTRY_TEXT") else ColorConfig.current.BUTTON_TEXT,
+                insertbackground=ColorConfig.current.ENTRY_TEXT if hasattr(ColorConfig.current, "ENTRY_TEXT") else ColorConfig.current.BUTTON_TEXT
+            )
+            entry.pack(padx=12, pady=(0, 12))
+            entry.focus_set()
+
+            btn_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
+            btn_frame.pack(pady=(0, 8))
+            ok_btn = tk.Button(
+                btn_frame,
+                text="OK",
+                width=10,
+                command=on_ok,
+                bg=getattr(ColorConfig.current, "BUTTON_BG", "#444"),
+                fg=getattr(ColorConfig.current, "BUTTON_TEXT", "#fff"),
+                activebackground=getattr(ColorConfig.current, "BUTTON_BG", "#444"),
+                activeforeground=getattr(ColorConfig.current, "BUTTON_TEXT", "#fff")
+            )
+            ok_btn.pack(side=tk.LEFT, padx=6)
+            cancel_btn = tk.Button(
+                btn_frame,
+                text="Cancel",
+                width=10,
+                command=on_cancel,
+                bg=getattr(ColorConfig.current, "BUTTON_BG", "#444"),
+                fg=getattr(ColorConfig.current, "BUTTON_TEXT", "#fff"),
+                activebackground=getattr(ColorConfig.current, "BUTTON_BG", "#444"),
+                activeforeground=getattr(ColorConfig.current, "BUTTON_TEXT", "#fff")
+            )
+            cancel_btn.pack(side=tk.LEFT, padx=6)
+
+            # Force content to front and update
+            content.lift()
+            content.update_idletasks()
+
+            popup.bind('<Return>', lambda e: on_ok())
+            popup.bind('<Escape>', lambda e: on_cancel())
 
     def remove_sticky(self, sticky):
         # Erase sticky from the canvas
