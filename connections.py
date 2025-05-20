@@ -67,6 +67,16 @@ class ConnectionLine:
                 info_entry = tk.Entry(dialog, width=40)
                 info_entry.grid(row=1, column=1, padx=10, pady=5)
 
+                def center_window(win):
+                    win.update_idletasks()
+                    width = win.winfo_width()
+                    height = win.winfo_height()
+                    screen_width = win.winfo_screenwidth()
+                    screen_height = win.winfo_screenheight()
+                    x = (screen_width // 2) - (width // 2)
+                    y = (screen_height // 2) - (height // 2)
+                    win.geometry(f"{width}x{height}+{x}+{y}")
+
                 def submit():
                     self.label = label_entry.get()
                     self.connectioninfo = info_entry.get()
@@ -75,6 +85,7 @@ class ConnectionLine:
 
                 tk.Button(dialog, text="Save", command=submit).grid(row=2, column=0, columnspan=2, pady=10)
                 dialog.transient(self.root)
+                center_window(dialog)
                 dialog.grab_set()
                 self.canvas.wait_window(dialog)
 

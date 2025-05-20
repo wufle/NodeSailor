@@ -1196,6 +1196,16 @@ class NetworkMapGUI:
         # Set geometry
         window.geometry(f'{width}x{height}+{x}+{y}')
        
+    def center_window_absolute(self, window):
+        window.update_idletasks()
+        width = window.winfo_width()
+        height = window.winfo_height()
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+        window.geometry(f'{width}x{height}+{x}+{y}')
+
     def on_node_select(self, node):
         # Reset the previous selected node's appearance
         if self.previous_selected_node:
@@ -1541,6 +1551,7 @@ class NetworkMapGUI:
                                     pass
 
                             dialog, content = self.create_popup("Connection Details", 400, 180, on_close=close_connection_window, grab=True)
+                            self.center_window_absolute(dialog)
                             self.connection_window = dialog
                             label_label = tk.Label(content, text="Label:", bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.INFO_TEXT)
                             label_label.grid(row=0, column=0, padx=10, pady=5, sticky="e")
