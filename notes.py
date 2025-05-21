@@ -91,6 +91,9 @@ class StickyNote:
                 context_menu.destroy()
             except tk.TclError:
                 pass  # Ignore if window is already destroyed
+            # Restore focus and shortcuts to main window
+            if hasattr(self, "gui") and self.gui and hasattr(self.gui, "regain_focus"):
+                self.gui.regain_focus()
 
         options = [
             ("Edit Note Text", self.edit_sticky_text),
@@ -142,3 +145,6 @@ class StickyNote:
         else:
             self.canvas.delete(self.note)
             self.canvas.delete(self.bg_shape)
+        # Restore focus and shortcuts to main window
+        if self.gui and hasattr(self.gui, "regain_focus"):
+            self.gui.regain_focus()

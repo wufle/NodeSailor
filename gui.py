@@ -1539,7 +1539,7 @@ class NetworkMapGUI:
             insertbackground=ColorConfig.current.ENTRY_TEXT if hasattr(ColorConfig.current, "ENTRY_TEXT") else ColorConfig.current.BUTTON_TEXT
         )
         entry.pack(padx=12, pady=(0, 12))
-        entry.focus_set()
+        popup.after(100, lambda: entry.focus_force())
         if initial_text:
             entry.insert(0, initial_text)
 
@@ -1556,7 +1556,10 @@ class NetworkMapGUI:
             if getattr(self, "sticky_note_popup", None) == popup:
                 self.sticky_note_popup = None
             # Restore focus and shortcuts to main window
-            self.regain_focus()
+            try:
+                self.regain_focus()
+            except Exception:
+                pass
 
         def on_ok():
             text = entry.get()
@@ -1594,9 +1597,9 @@ class NetworkMapGUI:
 
         content.lift()
         content.update_idletasks()
+        popup.protocol("WM_DELETE_WINDOW", on_cancel)
         popup.bind('<Return>', lambda e: on_ok())
         popup.bind('<Escape>', lambda e: on_cancel())
-        popup.protocol("WM_DELETE_WINDOW", on_cancel)
 
     def create_sticky_note(self, event=None):
         if self.mode == "Configuration":
