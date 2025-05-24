@@ -278,7 +278,8 @@ class NetworkMapGUI:
         # Canvas below the buttons
         self.canvas = tk.Canvas(root, width=1500, height=800, bg=ColorConfig.current.FRAME_BG, highlightthickness=0)
         self.canvas.gui = self
-        self.canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=(5, 25))
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.zoom_frame.lift()  # Ensure zoom controls are above the canvas
         self.nodes = []
         self.stickynotes = []
         self.selected_node = None
@@ -293,7 +294,7 @@ class NetworkMapGUI:
         self.canvas.bind('<Button-1>', self.handle_mouse_click)
         self.canvas.bind('<Shift-Double-1>', self.create_sticky_note)
         self.canvas.bind('<MouseWheel>', self.zoom_with_mouse)
-        self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas.pack(fill=tk.BOTH, expand=True)  # Remove duplicate packing
         self.canvas.bind('<Button-2>', self.create_connection)
         self.canvas.bind('<Shift-Button-2>', self.remove_connection)
         self.canvas.bind('<ButtonPress-3>', self.start_pan)
