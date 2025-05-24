@@ -1,4 +1,5 @@
 import tkinter as tk
+import customtkinter as ctk 
 from tkinter import messagebox
 from tkinter import simpledialog, messagebox, font, filedialog, colorchooser, ttk
 import subprocess
@@ -12,6 +13,8 @@ import webbrowser
 import ctypes
 import math
 
+import hPyT
+
 # Classes
 from colors import ColorConfig
 from notes import StickyNote
@@ -23,7 +26,8 @@ from utils import get_ip_addresses
 from groups import GroupManager, RectangleGroup
  
 if __name__ == "__main__":
-    root = tk.Tk()
+    root = ctk.CTk()
+    hPyT.title_bar.hide(root)
     root.resizable(True, True)
     root.title("NodeSailor")
     gui = NetworkMapGUI(root)

@@ -8,6 +8,8 @@ import json
 import logging
 import math
 import os
+import sys
+import customtkinter as ctk  # Added for CTk window
 from utils import get_ip_addresses
 from colors import ColorConfig
 from tooltip import ToolTip
@@ -40,11 +42,16 @@ class NetworkMapGUI:
                         arrowcolor=ColorConfig.current.BUTTON_TEXT)
 
     def __init__(self, root):
+        # root should be created with ctk.CTk() for CustomTkinter support
         self.root = root
         self.sticky_note_popup = None
         self.load_window_geometry()  # Load saved window size and position
-        root.iconbitmap('_internal/favicon.ico')
-        self.root.overrideredirect(True)
+        # PyInstaller-compatible icon path
+        if getattr(sys, 'frozen', False):
+            icon_path = os.path.join(sys._MEIPASS, '_internal', 'favicon.ico')
+        else:
+            icon_path = '_internal/favicon.ico'
+        root.iconbitmap(icon_path)
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
         self.custom_font = font.Font(family="Helvetica", size=12)
         self.show_tooltips = False
@@ -61,16 +68,6 @@ class NetworkMapGUI:
         # Load custom commands
         self.custom_commands = self.load_custom_commands()
         
-        # Make the window appear in the taskbar (Windows only)
-        if platform.system() == "Windows":
-            hwnd = self.root.winfo_id()
-            # Get current extended style
-            style = ctypes.windll.user32.GetWindowLongW(hwnd, -20)  # GWL_EXSTYLE
-            # Remove WS_EX_TOOLWINDOW (if present) and add WS_EX_APPWINDOW
-            style &= ~0x00000080  # Remove WS_EX_TOOLWINDOW
-            style |= 0x00040000   # Add WS_EX_APPWINDOW
-            ctypes.windll.user32.SetWindowLongW(hwnd, -20, style)
-            
         # Resize Grip (bottom-right corner)
         self.resize_grip = tk.Frame(self.root, width=15, height=15, bg=ColorConfig.current.FRAME_BG, cursor='sizing')
         self.resize_grip.place(relx=1.0, rely=1.0, anchor='se', x=-2, y=-2)
@@ -79,58 +76,6 @@ class NetworkMapGUI:
         self.resize_grip.bind("<B1-Motion>", self.on_resize_grip_drag)
         self.resize_grip.bind("<ButtonRelease-1>", self.stop_resize)
 
-        # Custom Title Bar
-        self.title_bar = tk.Frame(self.root, bg=ColorConfig.current.FRAME_BG, relief='raised')
-        self.title_bar.pack(side=tk.TOP, fill=tk.X)
-
-        # Make the title bar draggable
-        self.title_bar.bind("<ButtonPress-1>", self.start_move)
-        self.title_bar.bind("<B1-Motion>", self.do_move)
-
-        # Top-left resize grip (beside title)
-        self.top_left_resize_grip = tk.Frame(self.title_bar, width=15, height=15, bg=ColorConfig.current.FRAME_BG, cursor='sizing')
-        self.top_left_resize_grip.pack(side=tk.LEFT, padx=(2, 5))
-        self.top_left_resize_grip.bind("<ButtonPress-1>", self.start_resize_top_left)
-        self.top_left_resize_grip.bind("<B1-Motion>", self.on_resize_grip_drag_top_left)
-        self.top_left_resize_grip.bind("<ButtonRelease-1>", self.stop_resize)
-
-        self.title_label = tk.Label(self.title_bar, text="NodeSailor", bg=ColorConfig.current.FRAME_BG,
-                                   fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
-        self.title_label.pack(side=tk.LEFT, padx=10)
-        # make the title label draggable
-        self.title_label.bind("<ButtonPress-1>", self.start_move)
-        self.title_label.bind("<B1-Motion>", self.do_move)
-
-        self.close_button = tk.Button(self.title_bar, text='X', command=self.on_close,
-                                     bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
-                                     font=self.custom_font)
-        self.close_button.pack(side=tk.RIGHT)
-        
-        # Maximize Button
-        self.maximize_button = tk.Button(self.title_bar, text='[]', command=self.maximize_restore,
-                                       bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
-                                       font=self.custom_font)
-        self.maximize_button.pack(side=tk.RIGHT)
-
-        # Minimize Button
-        self.minimize_button = tk.Button(self.title_bar, text='-', command=self.minimize_window,
-                                        bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
-                                        font=self.custom_font)
-        self.minimize_button.pack(side=tk.RIGHT)
-
-        self.help_button = tk.Button(self.title_bar, text='?', command=self.toggle_tooltips,
-                             bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
-                             font=self.custom_font)
-        self.help_button.pack(side=tk.RIGHT)
-       
-        self.is_maximized = False #track if maximized
-        
-        # Bind dragging events
-        self.title_bar.bind('<Button-1>', self.start_move)
-        self.title_bar.bind('<B1-Motion>', self.do_move)
-        self.title_label.bind('<Button-1>', self.start_move)
-        self.title_label.bind('<B1-Motion>', self.do_move)
-        
         self.mode = "Configuration"
         self.selected_object_type = None
         self.connection_start_node = None
@@ -408,7 +353,7 @@ class NetworkMapGUI:
 
     def toggle_tooltips(self):
         self.show_tooltips = not self.show_tooltips
-        self.help_button.config(relief=tk.SUNKEN if self.show_tooltips else tk.RAISED)
+        # self.help_button.config(relief=tk.SUNKEN if self.show_tooltips else tk.RAISED)
         if self.show_tooltips:
             self.show_help()
 
@@ -515,11 +460,11 @@ class NetworkMapGUI:
         if self.is_maximized:
             self.root.state('normal')
             self.is_maximized = False
-            self.maximize_button.config(text='[]')
+            # self.maximize_button.config(text='[]')
         else:
             self.root.state('zoomed')
             self.is_maximized = True
-            self.maximize_button.config(text='[ ]')
+            # self.maximize_button.config(text='[ ]')
 
     def start_move(self, event):
         """Capture the initial mouse position for dragging."""
@@ -750,7 +695,7 @@ class NetworkMapGUI:
         text_area.pack(fill=tk.BOTH, expand=True)
 
         help_lines = [
-            ("NodeSailor v0.9.21- Help\n", "title"),
+            ("NodeSailor v0.9.22- Help\n", "title"),
             ("\nOverview:\n", "header"),
             ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, RDP and more with the implementation of custom commands.\n", "text"),
 
@@ -1021,7 +966,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="NodeSailor v0.9.21", bg=ColorConfig.current.FRAME_BG,
+            title_label = tk.Label(title_bar, text="NodeSailor v0.9.22", bg=ColorConfig.current.FRAME_BG,
                                 fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
@@ -2061,12 +2006,14 @@ class NetworkMapGUI:
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
 
         # Title bar and its components
-        self.title_bar.config(bg=ColorConfig.current.FRAME_BG)
-        self.title_label.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
-        self.help_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
-        self.close_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
-        self.maximize_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
-        self.minimize_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+        # self.help_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+        # Guarded or removed undefined title bar button configs to prevent AttributeError
+        # if hasattr(self, "close_button"):
+        #     self.close_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+        # if hasattr(self, "maximize_button"):
+        #     self.maximize_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
+        # if hasattr(self, "minimize_button"):
+        #     self.minimize_button.config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
 
         # Resize grip
         self.resize_grip.config(bg=ColorConfig.current.FRAME_BG)
@@ -2152,7 +2099,7 @@ class NetworkMapGUI:
 
         # Canvas
         self.canvas.config(bg=ColorConfig.current.FRAME_BG)
-        self.top_left_resize_grip.config(bg=ColorConfig.current.FRAME_BG)
+        # Removed access to undefined self.top_left_resize_grip to prevent AttributeError
         # Info panel and labels
         self.info_panel.config(bg=ColorConfig.current.INFO_NOTE_BG)
         for child in self.info_panel.winfo_children():
