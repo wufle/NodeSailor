@@ -272,6 +272,17 @@ def open_group_editor(gui_self, group=None):
     
     # Add method to update the editor with a group
     def update_group_editor(group):
+        # Ensure only the selected group displays handles
+        if hasattr(gui_self, "group_manager"):
+            for g in getattr(gui_self.group_manager, "groups", []):
+                if (
+                    g is group
+                    and group
+                    and getattr(gui_self, "group_resize_mode_active", False)
+                ):
+                    g.show_handles()
+                else:
+                    g.remove_handles()
         if group and win.winfo_exists():
             name_entry.delete(0, tk.END)
             name_entry.insert(0, group.name)
