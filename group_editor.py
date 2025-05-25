@@ -155,7 +155,40 @@ def open_group_editor(gui_self, group=None):
     # Buttons frame
     buttons_frame = tk.Frame(editor_frame, bg=ColorConfig.current.FRAME_BG)
     buttons_frame.pack(fill=tk.X, pady=10)
-    
+
+    # --- Resize Mode State ---
+    if not hasattr(gui_self, "group_resize_mode_active"):
+        gui_self.group_resize_mode_active = False
+
+    # --- Resize Mode UI Update ---
+    def update_resize_mode_ui():
+        if gui_self.group_resize_mode_active:
+            resize_button["bg"] = ColorConfig.current.BUTTON_CONFIGURATION_MODE
+        else:
+            resize_button["bg"] = ColorConfig.current.BUTTON_BG
+
+    # --- Resize Mode Toggle Logic ---
+    def toggle_resize_mode():
+        gui_self.group_resize_mode_active = not gui_self.group_resize_mode_active
+        update_resize_mode_ui()
+        # When entering resize mode, disable drawing/selecting groups
+        # When exiting, restore normal behavior
+        # Optionally, change cursor or provide other visual cues
+        if gui_self.group_resize_mode_active:
+            # Optionally change cursor to indicate resize mode
+            gui_self.canvas.config(cursor="tcross")
+        else:
+            gui_self.canvas.config(cursor="")
+
+    resize_button = tk.Button(
+        buttons_frame,
+        text="Resize",
+        bg=ColorConfig.current.BUTTON_BG,
+        fg=ColorConfig.current.BUTTON_TEXT,
+        command=toggle_resize_mode
+    )
+    resize_button.pack(side=tk.LEFT, padx=5)
+
     def save_group():
         if gui_self.group_manager.selected_group:
             group = gui_self.group_manager.selected_group
@@ -172,23 +205,59 @@ def open_group_editor(gui_self, group=None):
             # After saving, ensure preset_var is still valid
             if not is_valid_preset_id(preset_var.get()):
                 preset_var.set(color_presets[0]["id"])
-    
-    save_button = tk.Button(buttons_frame, text="Save", 
-                           bg=ColorConfig.current.BUTTON_BG, 
+
+    save_button = tk.Button(buttons_frame, text="Save",
+                           bg=ColorConfig.current.BUTTON_BG,
                            fg=ColorConfig.current.BUTTON_TEXT,
                            command=save_group)
     save_button.pack(side=tk.LEFT, padx=5)
+
+    # Ensure UI reflects initial state
+    update_resize_mode_ui()
     
     def delete_group():
         if gui_self.group_manager.selected_group:
             gui_self.group_manager.delete_group(gui_self.group_manager.selected_group)
             gui_self.unsaved_changes = True
-    
-    delete_button = tk.Button(buttons_frame, text="Delete", 
-                             bg=ColorConfig.current.BUTTON_BG, 
+
+    delete_button = tk.Button(buttons_frame, text="Delete",
+                             bg=ColorConfig.current.BUTTON_BG,
                              fg=ColorConfig.current.BUTTON_TEXT,
                              command=delete_group)
     delete_button.pack(side=tk.LEFT, padx=5)
+
+    # --- Patch group manager event handlers to respect resize mode ---
+    # Only allow handle interaction when in resize mode
+    orig_start_drawing = gui_self.group_manager.start_drawing
+    orig_update_drawing = gui_self.group_manager.update_drawing
+    orig_finish_drawing = getattr(gui_self.group_manager, "finish_drawing", None)
+    orig_select_group = getattr(gui_self.group_manager, "select_group", None)
+
+    def patched_start_drawing(event):
+        if getattr(gui_self, "group_resize_mode_active", False):
+            return
+        orig_start_drawing(event)
+    def patched_update_drawing(event):
+        if getattr(gui_self, "group_resize_mode_active", False):
+            return
+        orig_update_drawing(event)
+    def patched_finish_drawing(event):
+        if getattr(gui_self, "group_resize_mode_active", False):
+            return
+        if orig_finish_drawing:
+            orig_finish_drawing(event)
+    def patched_select_group(event):
+        if getattr(gui_self, "group_resize_mode_active", False):
+            return
+        if orig_select_group:
+            orig_select_group(event)
+
+    gui_self.group_manager.start_drawing = patched_start_drawing
+    gui_self.group_manager.update_drawing = patched_update_drawing
+    if orig_finish_drawing:
+        gui_self.group_manager.finish_drawing = patched_finish_drawing
+    if orig_select_group:
+        gui_self.group_manager.select_group = patched_select_group
     
     # If a group is provided, populate the fields
     if group:

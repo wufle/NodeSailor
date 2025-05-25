@@ -4,6 +4,8 @@ from colors import ColorConfig
 from colors import ColorConfig, get_group_colors
 
 class RectangleGroup:
+    HANDLE_SIZE = 8
+
     def __init__(self, canvas, x1, y1, x2, y2, name="Group", color=None,
                  light_bg=None, light_border=None, dark_bg=None, dark_border=None, color_preset_id=None):
         self.canvas = canvas
@@ -47,22 +49,99 @@ class RectangleGroup:
             tags="group_text"
         )
 
+        # Handles: [top-left, top-right, bottom-right, bottom-left]
+        self.handles = [None, None, None, None]
+        self._active_handle = None
+        self._drag_start = None
+
         # Ensure the group is drawn behind all nodes and connections
         self.send_to_back()
 
         # Bind events for selection and context menu
         self.canvas.tag_bind(self.rectangle, '<Button-1>', self.on_click)
         self.canvas.tag_bind(self.text, '<Button-1>', self.on_click)
-        
+
+    def show_handles(self):
+        self.remove_handles()
+        coords = [
+            (self.x1, self.y1),  # top-left
+            (self.x2, self.y1),  # top-right
+            (self.x2, self.y2),  # bottom-right
+            (self.x1, self.y2),  # bottom-left
+        ]
+        self.handles = []
+        for idx, (x, y) in enumerate(coords):
+            handle = self.canvas.create_rectangle(
+                x - self.HANDLE_SIZE // 2, y - self.HANDLE_SIZE // 2,
+                x + self.HANDLE_SIZE // 2, y + self.HANDLE_SIZE // 2,
+                fill="#ffffff", outline="#000000", width=1, tags="resize_handle"
+            )
+            self.handles.append(handle)
+            self.canvas.tag_bind(handle, "<Button-1>", lambda e, i=idx: self._on_handle_press(e, i))
+            self.canvas.tag_bind(handle, "<B1-Motion>", lambda e, i=idx: self._on_handle_drag(e, i))
+            self.canvas.tag_bind(handle, "<ButtonRelease-1>", lambda e, i=idx: self._on_handle_release(e, i))
+
+    def remove_handles(self):
+        for handle in self.handles:
+            if handle is not None:
+                self.canvas.delete(handle)
+        self.handles = [None, None, None, None]
+
+    def update_handles(self):
+        if not self.handles or any(h is None for h in self.handles):
+            return
+        coords = [
+            (self.x1, self.y1),  # top-left
+            (self.x2, self.y1),  # top-right
+            (self.x2, self.y2),  # bottom-right
+            (self.x1, self.y2),  # bottom-left
+        ]
+        for handle, (x, y) in zip(self.handles, coords):
+            self.canvas.coords(
+                handle,
+                x - self.HANDLE_SIZE // 2, y - self.HANDLE_SIZE // 2,
+                x + self.HANDLE_SIZE // 2, y + self.HANDLE_SIZE // 2,
+            )
+
+    def _on_handle_press(self, event, handle_idx):
+        self._active_handle = handle_idx
+        self._drag_start = (self.x1, self.y1, self.x2, self.y2, event.x, event.y)
+
+    def _on_handle_drag(self, event, handle_idx):
+        if self._drag_start is None:
+            return
+        x1, y1, x2, y2, start_x, start_y = self._drag_start
+        dx = self.canvas.canvasx(event.x) - self.canvas.canvasx(start_x)
+        dy = self.canvas.canvasy(event.y) - self.canvas.canvasy(start_y)
+        # Update coordinates based on handle
+        if handle_idx == 0:  # top-left
+            new_x1, new_y1 = x1 + dx, y1 + dy
+            self.update_position(new_x1, new_y1, x2, y2)
+        elif handle_idx == 1:  # top-right
+            new_x2, new_y1 = x2 + dx, y1 + dy
+            self.update_position(x1, new_y1, new_x2, y2)
+        elif handle_idx == 2:  # bottom-right
+            new_x2, new_y2 = x2 + dx, y2 + dy
+            self.update_position(x1, y1, new_x2, new_y2)
+        elif handle_idx == 3:  # bottom-left
+            new_x1, new_y2 = x1 + dx, y2 + dy
+            self.update_position(new_x1, y1, x2, new_y2)
+        self.update_handles()
+
+    def _on_handle_release(self, event, handle_idx):
+        self._active_handle = None
+        self._drag_start = None
+
     def update_position(self, x1, y1, x2, y2):
         """Update the position and size of the rectangle group"""
         self.x1 = min(x1, x2)
         self.y1 = min(y1, y2)
         self.x2 = max(x1, x2)
         self.y2 = max(y1, y2)
-        
+
         self.canvas.coords(self.rectangle, self.x1, self.y1, self.x2, self.y2)
         self.canvas.coords(self.text, self.x1 + 10, self.y1 + 10)
+        self.update_handles()
         
     def update_properties(self, name=None, color=None,
                           light_bg=None, light_border=None, dark_bg=None, dark_border=None, color_preset_id=None):
@@ -239,16 +318,23 @@ class GroupManager:
         """Select a group at the given coordinates"""
         if not self.gui.groups_mode_active:
             return
-            
+
+        prev_selected = self.selected_group
+
         # Find the topmost group at the event coordinates
         for group in reversed(self.groups):
             if group.contains_point(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)):
                 self.selected_group = group
+                if prev_selected and prev_selected != group:
+                    prev_selected.remove_handles()
+                if self.selected_group:
+                    self.selected_group.show_handles()
                 if hasattr(self.gui, "group_editor_window") and self.gui.group_editor_window and self.gui.group_editor_window.winfo_exists():
                     self.gui.update_group_editor(group)
-                    
                 return
-                
+
+        if self.selected_group:
+            self.selected_group.remove_handles()
         self.selected_group = None
     
     def delete_group(self, group):
