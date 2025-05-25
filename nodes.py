@@ -97,7 +97,7 @@ class NetworkNode:
             # Check for OS and construct the command accordingly
             param = '-n' if platform.system().lower() == 'windows' else '-c'
             command = ['ping', param, '1', ip]
-            response = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            response = subprocess.run(command, creationflags=subprocess.CREATE_NO_WINDOW, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             # Analyze the output for success or failure indicators
             return 'TTL=' in response.stdout or 'ttl=' in response.stdout
 
