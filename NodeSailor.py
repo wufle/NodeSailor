@@ -12,7 +12,6 @@ import os
 import webbrowser
 import ctypes
 import math
-
 import hPyT
 
 # Classes

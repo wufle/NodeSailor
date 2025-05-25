@@ -1178,8 +1178,8 @@ class NetworkMapGUI:
             self.vlan_labels[vlan_key].config(text=vlan_value)
 
     def open_node_window(self, node=None, event=None):
-        import logging
-        logging.basicConfig(level=logging.DEBUG)
+        #import logging
+        #logging.basicConfig(level=logging.DEBUG)
         
         if hasattr(self, 'node_window') and self.node_window and self.node_window.winfo_exists():
             
