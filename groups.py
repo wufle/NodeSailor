@@ -7,7 +7,7 @@ class RectangleGroup:
     HANDLE_SIZE = 8
 
     def __init__(self, canvas, x1, y1, x2, y2, name="Group", color=None,
-                 light_bg=None, light_border=None, dark_bg=None, dark_border=None, color_preset_id=None):
+                 light_bg=None, light_border=None, dark_bg=None, dark_border=None, color_preset_id=None, color_presets=None):
         self.canvas = canvas
         self.x1 = min(x1, x2)
         self.y1 = min(y1, y2)
@@ -20,11 +20,12 @@ class RectangleGroup:
         self.dark_bg = dark_bg or "#222222"
         self.dark_border = dark_border or "#888888"
         self.color_preset_id = color_preset_id  # New attribute for preset selection
+        self.color_presets = color_presets  # Store the current color presets
 
         # Use color preset if available
         if self.color_preset_id:
             color_scheme = "dark" if ColorConfig.current == ColorConfig.Dark else "light"
-            fill_color, outline_color = get_group_colors(self.color_preset_id, color_scheme)
+            fill_color, outline_color = get_group_colors(self.color_preset_id, color_scheme, self.color_presets)
         else:
             if ColorConfig.current == ColorConfig.Light:
                 fill_color = self.light_bg
@@ -144,7 +145,7 @@ class RectangleGroup:
         self.update_handles()
         
     def update_properties(self, name=None, color=None,
-                          light_bg=None, light_border=None, dark_bg=None, dark_border=None, color_preset_id=None):
+                          light_bg=None, light_border=None, dark_bg=None, dark_border=None, color_preset_id=None, color_presets=None):
         """Update the properties of the rectangle group"""
         if name is not None:
             self.name = name
@@ -161,11 +162,13 @@ class RectangleGroup:
             self.dark_border = dark_border
         if color_preset_id is not None:
             self.color_preset_id = color_preset_id
+        if color_presets is not None:
+            self.color_presets = color_presets
 
         # Use color preset if available
         if self.color_preset_id:
             color_scheme = "dark" if ColorConfig.current == ColorConfig.Dark else "light"
-            fill_color, outline_color = get_group_colors(self.color_preset_id, color_scheme)
+            fill_color, outline_color = get_group_colors(self.color_preset_id, color_scheme, self.color_presets)
         else:
             if ColorConfig.current == ColorConfig.Light:
                 fill_color = self.light_bg

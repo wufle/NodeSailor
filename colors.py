@@ -120,12 +120,14 @@ COLOR_PRESETS = [
     }
 ]
 
-def get_group_colors(color_preset_id, color_scheme):
+def get_group_colors(color_preset_id, color_scheme, color_presets=None):
     """
     Returns (bg, border) for the given preset and color scheme.
     color_scheme: "light" or "dark"
+    color_presets: list of preset dicts (optional, defaults to COLOR_PRESETS)
     """
-    preset = next((p for p in COLOR_PRESETS if p["id"] == color_preset_id), COLOR_PRESETS[0])
+    presets = color_presets if color_presets is not None else COLOR_PRESETS
+    preset = next((p for p in presets if p["id"] == color_preset_id), presets[0])
     if color_scheme == "dark":
         return preset["dark_bg"], preset["dark_border"]
     else:

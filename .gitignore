@@ -14,3 +14,4 @@ example network test.json
 .roomodes
 __pycache__/
 *.pyc
+group_editor_config.json

@@ -1,58 +1,15 @@
 import tkinter as tk
-from tkinter import colorchooser
+from tkinter import colorchooser, simpledialog, messagebox
+import json
+import os
 
 def open_group_editor(gui_self, group=None):
     ColorConfig = gui_self.ColorConfig if hasattr(gui_self, "ColorConfig") else __import__("colors").ColorConfig
-    
-    # Close any existing group editor window to ensure a clean state
-    if getattr(gui_self, 'group_editor_window', None) and gui_self.group_editor_window.winfo_exists():
-        gui_self.group_editor_window.destroy()
-        gui_self.group_editor_window = None
-    
-    # Close the legend window if it exists
-    if getattr(gui_self, 'legend_window', None) and gui_self.legend_window.winfo_exists():
-        gui_self.legend_window.destroy()
-        gui_self.legend_window = None
-    
-    def close_editor():
-        try:
-            gui_self.group_editor_window.grab_release()
-        except:
-            pass
-        gui_self.group_editor_window.destroy()
-        gui_self.group_editor_window = None
-        gui_self.regain_focus()  # Regain focus to the main window
-    
-    # Create the popup window
-    win, content = gui_self.create_popup(
-        "Group Editor", 300, 360,
-        on_close=close_editor,
-        grab=False
-    )
-    gui_self.group_editor_window = win
-    win.lift(gui_self.root)
-    win.attributes("-topmost", True)
-    
-    # Create the editor content
-    editor_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
-    editor_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-    
-    # Group name
-    name_frame = tk.Frame(editor_frame, bg=ColorConfig.current.FRAME_BG)
-    name_frame.pack(fill=tk.X, pady=5)
-    
-    tk.Label(name_frame, text="Group Name:", bg=ColorConfig.current.FRAME_BG, 
-             fg=ColorConfig.current.BUTTON_TEXT).pack(side=tk.LEFT, padx=5)
-    
-    name_entry = tk.Entry(name_frame, bg=ColorConfig.current.BUTTON_BG, 
-                         fg=ColorConfig.current.BUTTON_TEXT, width=30)
-    name_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
-    
-    # Explicitly set focus after a short delay to ensure the window is fully rendered
-    win.after(100, lambda: name_entry.focus_force())
-    
-    # Preset color sets
-    color_presets = [
+
+    # --- Persistence Setup ---
+    CONFIG_PATH = "group_editor_config.json"
+    DEFAULT_HEIGHT = 460
+    DEFAULT_PRESETS = [
         {
             "id": "preset1",
             "name": "Classic Blue",
@@ -103,13 +60,154 @@ def open_group_editor(gui_self, group=None):
         }
     ]
 
+    def load_config():
+        if os.path.exists(CONFIG_PATH):
+            try:
+                with open(CONFIG_PATH, "r") as f:
+                    data = json.load(f)
+                    return data.get("color_presets", DEFAULT_PRESETS), data.get("window_height", DEFAULT_HEIGHT)
+            except Exception:
+                return DEFAULT_PRESETS, DEFAULT_HEIGHT
+        return DEFAULT_PRESETS, DEFAULT_HEIGHT
+
+    def save_config(presets, height):
+        try:
+            with open(CONFIG_PATH, "w") as f:
+                json.dump({"color_presets": presets, "window_height": height}, f, indent=2)
+        except Exception as e:
+            print("Failed to save group editor config:", e)
+
+    color_presets, window_height = load_config()
+
+    # --- End Persistence Setup ---
+
+    # Close any existing group editor window to ensure a clean state
+    if getattr(gui_self, 'group_editor_window', None) and gui_self.group_editor_window.winfo_exists():
+        gui_self.group_editor_window.destroy()
+        gui_self.group_editor_window = None
+
+    # Close the legend window if it exists
+    if getattr(gui_self, 'legend_window', None) and gui_self.legend_window.winfo_exists():
+        gui_self.legend_window.destroy()
+        gui_self.legend_window = None
+
+    def close_editor():
+        try:
+            gui_self.group_editor_window.grab_release()
+        except:
+            pass
+        gui_self.group_editor_window.destroy()
+        gui_self.group_editor_window = None
+        gui_self.regain_focus()  # Regain focus to the main window
+
+    # Create the popup window with persisted height
+    win, content = gui_self.create_popup(
+        "Group Editor", 300, window_height,
+        on_close=close_editor,
+        grab=False
+    )
+    gui_self.group_editor_window = win
+    win.lift(gui_self.root)
+    win.attributes("-topmost", True)
+
+    # Create the editor content
+    editor_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
+    editor_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+    # Group name
+    name_frame = tk.Frame(editor_frame, bg=ColorConfig.current.FRAME_BG)
+    name_frame.pack(fill=tk.X, pady=5)
+
+    tk.Label(name_frame, text="Group Name:", bg=ColorConfig.current.FRAME_BG,
+             fg=ColorConfig.current.BUTTON_TEXT).pack(side=tk.LEFT, padx=5)
+
+    name_entry = tk.Entry(name_frame, bg=ColorConfig.current.BUTTON_BG,
+                         fg=ColorConfig.current.BUTTON_TEXT, width=30)
+    name_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+
+    # Explicitly set focus after a short delay to ensure the window is fully rendered
+    win.after(100, lambda: name_entry.focus_force())
+
+    # --- Add New Color Set Button ---
+    def add_color_set():
+        dialog = tk.Toplevel(win)
+        dialog.title("Add New Color Set")
+        dialog.geometry("350x320")
+        dialog.transient(win)
+        dialog.grab_set()
+        dialog.resizable(False, False)
+        fields = {}
+
+        def pick_color(entry):
+            color = colorchooser.askcolor()[1]
+            if color:
+                entry.delete(0, tk.END)
+                entry.insert(0, color)
+
+        tk.Label(dialog, text="Preset Name:").pack(pady=5)
+        name_e = tk.Entry(dialog)
+        name_e.pack(pady=2)
+        fields["name"] = name_e
+
+        color_fields = [
+            ("Light BG", "light_bg"),
+            ("Light Border", "light_border"),
+            ("Dark BG", "dark_bg"),
+            ("Dark Border", "dark_border"),
+        ]
+        for label, key in color_fields:
+            frame = tk.Frame(dialog)
+            frame.pack(pady=3)
+            tk.Label(frame, text=label + ":").pack(side=tk.LEFT)
+            entry = tk.Entry(frame, width=12)
+            entry.pack(side=tk.LEFT, padx=2)
+            btn = tk.Button(frame, text="Pick", command=lambda e=entry: pick_color(e))
+            btn.pack(side=tk.LEFT)
+            fields[key] = entry
+
+        def submit():
+            name = fields["name"].get().strip()
+            if not name:
+                messagebox.showerror("Error", "Preset name required.")
+                return
+            # Generate unique id
+            preset_id = "custom_" + str(len(color_presets) + 1)
+            preset = {
+                "id": preset_id,
+                "name": name,
+                "light_bg": fields["light_bg"].get().strip() or "#ffffff",
+                "light_border": fields["light_border"].get().strip() or "#000000",
+                "dark_bg": fields["dark_bg"].get().strip() or "#000000",
+                "dark_border": fields["dark_border"].get().strip() or "#ffffff",
+            }
+            color_presets.append(preset)
+            # Increase window height by 40px per new color set
+            nonlocal window_height
+            window_height += 40
+            save_config(color_presets, window_height)
+            dialog.destroy()
+            win.destroy()
+            # Reopen editor at new height
+            open_group_editor(gui_self, group)
+
+        submit_btn = tk.Button(dialog, text="Add Color Set", command=submit)
+        submit_btn.pack(pady=12)
+        cancel_btn = tk.Button(dialog, text="Cancel", command=dialog.destroy)
+        cancel_btn.pack()
+        dialog.wait_window()
+
+    # --- End Add New Color Set Button ---
+
+    # Preset color sets (now dynamic)
     preset_var = tk.StringVar()
-    preset_var.set(color_presets[0]["id"])
+    preset_var.set(color_presets[0]["id"] if color_presets else "")
 
     # Ensure UI always reflects the current value of preset_var
     def on_preset_var_change(*args):
-        # This callback is triggered on any change to preset_var
-        # Tkinter Radiobuttons automatically update, but this ensures any additional UI sync if needed
+        # Update the group's color_preset_id and refresh rectangle colors
+        selected_preset_id = preset_var.get()
+        if group is not None and hasattr(group, "update_properties"):
+            group.update_properties(color_preset_id=selected_preset_id, color_presets=color_presets)
         win.update_idletasks()  # Force UI update to keep radio selection in sync
 
     preset_var.trace_add("write", on_preset_var_change)
@@ -151,7 +249,11 @@ def open_group_editor(gui_self, group=None):
         dark_border_preview = tk.Frame(row, width=30, height=20, bg=preset["dark_border"], bd=2, relief=tk.SOLID)
         dark_border_preview.pack(side=tk.LEFT, padx=2)
         tk.Label(row, text=preset["name"], bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT).pack(side=tk.LEFT, padx=8)
-    
+
+    # Add "New Color Set" button at the bottom
+    add_color_btn = tk.Button(presets_frame, text="New Color Set", command=add_color_set, bg=ColorConfig.current.BUTTON_BG, fg=ColorConfig.current.BUTTON_TEXT)
+    add_color_btn.pack(fill=tk.X, pady=4)
+
     # Buttons frame
     buttons_frame = tk.Frame(editor_frame, bg=ColorConfig.current.FRAME_BG)
     buttons_frame.pack(fill=tk.X, pady=10)
@@ -199,7 +301,8 @@ def open_group_editor(gui_self, group=None):
                 preset_var.set(selected_preset_id)
             group.update_properties(
                 name=name_entry.get(),
-                color_preset_id=selected_preset_id
+                color_preset_id=selected_preset_id,
+                color_presets=color_presets
             )
             gui_self.unsaved_changes = True
             # After saving, ensure preset_var is still valid
