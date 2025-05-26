@@ -359,6 +359,7 @@ class GroupManager:
     def delete_group(self, group):
         """Delete a group"""
         if group in self.groups:
+            group.remove_handles()
             self.canvas.delete(group.rectangle)
             self.canvas.delete(group.text)
             self.groups.remove(group)
