@@ -1,0 +1,668 @@
+{
+    "nodes": [
+        {
+            "name": "Classroom 1 PC 1",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 373.42501718664965,
+            "y": 5.0058300606425234,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 1 PC 2",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 207.78018048900634,
+            "y": 27.5937623375938,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 1 PC 3",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 212.48599971337163,
+            "y": 71.82846304662334,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 1 PC 4",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 271.77932194036845,
+            "y": 112.29850837616101,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 1 PC 5",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 412.01273482644115,
+            "y": 107.59268915179612,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 2 PC 1",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 213.42716355824405,
+            "y": 185.70928827625275,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 2 PC 2",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 381.51867003034715,
+            "y": 176.80349172226946,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 2 PC 3",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 192.58216744538672,
+            "y": 232.7846776733689,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 2 PC 4",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 265.5576419887842,
+            "y": 278.7692232760576,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 2 PC 5",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 435.5005279117646,
+            "y": 276.7698952063755,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 3 PC 1",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 245.56436129196294,
+            "y": 367.73932237691224,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 3 PC 2",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 116.60770079746646,
+            "y": 421.7211802583297,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 3 PC 3",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 231.5690648041877,
+            "y": 472.70404603522366,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 3 PC 4",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 395.5139665181225,
+            "y": 473.70371007006486,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 3 PC 5",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 452.49481650406295,
+            "y": 427.7191644673759,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 4 PC 1",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 301.41151321690245,
+            "y": 554.6397545722743,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 4 PC 2",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 148.47238842504484,
+            "y": 598.7698815207626,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 4 PC 3",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 146.59006073529898,
+            "y": 653.3573845233944,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 4 PC 4",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 491.0560279588063,
+            "y": 647.7104014541569,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 4 PC 5",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 319.76420819192515,
+            "y": 654.298548368268,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 1 Switch",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 360.5257252986854,
+            "y": 51.84548736713643,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 2 Switch",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 359.526061263844,
+            "y": 225.78702942948152,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 3 Switch",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 285.5509226856054,
+            "y": 425.71983639769394,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Classroom 4 Switch",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 341.4109766240037,
+            "y": 599.7110453656358,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Admin Office PC",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 947.5477850457665,
+            "y": 99.90389811727809,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Server Room Server",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 864.9595087747291,
+            "y": 534.3524450272348,
+            "remote_desktop_address": "Server",
+            "file_path": "\\\\10.0.30.2",
+            "web_config_url": ""
+        },
+        {
+            "name": "NAS",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 1003.3105939710556,
+            "y": 504.2352019912998,
+            "remote_desktop_address": "",
+            "file_path": "\\\\10.0.30.3\\share",
+            "web_config_url": ""
+        },
+        {
+            "name": "Router",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 1037.192492386482,
+            "y": 445.88304360917584,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": "http://10.0.10.1"
+        },
+        {
+            "name": "Printer",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 1039.0748200762287,
+            "y": 168.23970937164964,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "Server Switch",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 839.5480849631584,
+            "y": 444.9418797643027,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        },
+        {
+            "name": "admin switch",
+            "VLAN_100": "",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": "",
+            "x": 885.6651133619346,
+            "y": 212.47441008067906,
+            "remote_desktop_address": "",
+            "file_path": "",
+            "web_config_url": ""
+        }
+    ],
+    "connections": [
+        {
+            "from": 0,
+            "to": 20,
+            "label": "C1-1"
+        },
+        {
+            "from": 1,
+            "to": 20,
+            "label": "C1-2"
+        },
+        {
+            "from": 2,
+            "to": 20,
+            "label": "C1-3"
+        },
+        {
+            "from": 3,
+            "to": 20,
+            "label": "C1-4"
+        },
+        {
+            "from": 4,
+            "to": 20,
+            "label": "C1-5"
+        },
+        {
+            "from": 5,
+            "to": 21,
+            "label": "C2-1"
+        },
+        {
+            "from": 6,
+            "to": 21,
+            "label": "C2-2"
+        },
+        {
+            "from": 7,
+            "to": 21,
+            "label": "C2-3"
+        },
+        {
+            "from": 8,
+            "to": 21,
+            "label": "C2-4"
+        },
+        {
+            "from": 9,
+            "to": 21,
+            "label": "C2-5"
+        },
+        {
+            "from": 10,
+            "to": 22,
+            "label": "C3-1"
+        },
+        {
+            "from": 11,
+            "to": 22,
+            "label": "C3-2"
+        },
+        {
+            "from": 12,
+            "to": 22,
+            "label": "C3-3"
+        },
+        {
+            "from": 13,
+            "to": 22,
+            "label": "C3-4"
+        },
+        {
+            "from": 14,
+            "to": 22,
+            "label": "C3-5"
+        },
+        {
+            "from": 15,
+            "to": 23,
+            "label": "C4-1"
+        },
+        {
+            "from": 16,
+            "to": 23,
+            "label": "C4-2"
+        },
+        {
+            "from": 17,
+            "to": 23,
+            "label": "C4-3"
+        },
+        {
+            "from": 18,
+            "to": 23,
+            "label": "C4-4"
+        },
+        {
+            "from": 19,
+            "to": 23,
+            "label": "C4-5"
+        },
+        {
+            "from": 29,
+            "to": 20,
+            "label": "Class 1"
+        },
+        {
+            "from": 29,
+            "to": 21,
+            "label": "Class 2"
+        },
+        {
+            "from": 29,
+            "to": 22,
+            "label": "Class 3"
+        },
+        {
+            "from": 29,
+            "to": 23,
+            "label": "Class 4"
+        },
+        {
+            "from": 24,
+            "to": 30,
+            "label": "A1-1"
+        },
+        {
+            "from": 29,
+            "to": 25,
+            "label": "S1-1"
+        },
+        {
+            "from": 29,
+            "to": 26,
+            "label": "S1-2"
+        },
+        {
+            "from": 29,
+            "to": 27,
+            "label": "S1-3"
+        },
+        {
+            "from": 28,
+            "to": 30,
+            "label": "A1-2"
+        },
+        {
+            "from": 30,
+            "to": 29,
+            "label": "Admin"
+        }
+    ],
+    "vlan_labels": {
+        "VLAN_100": "VLAN_100",
+        "VLAN_200": "VLAN_200",
+        "VLAN_300": "VLAN_300",
+        "VLAN_400": "VLAN_400",
+        "VLAN_10": "Classrooms",
+        "VLAN_20": "Admin",
+        "VLAN_30": "Servers"
+    },
+    "stickynotes": [],
+    "groups": [
+        {
+            "x1": 831.4383480962855,
+            "y1": 66.09271967983051,
+            "x2": 1088.3760777466061,
+            "y2": 241.14919482620292,
+            "name": "Admin",
+            "color": "#ffe5d0",
+            "light_bg": "#ffffff",
+            "light_border": "#000000",
+            "dark_bg": "#000000",
+            "dark_border": "#ffffff",
+            "color_preset_id": "preset6"
+        },
+        {
+            "x1": 783.4389920077638,
+            "y1": 395.50006538537,
+            "x2": 1120.3756484722871,
+            "y2": 570.5565405317424,
+            "name": "Server Room",
+            "color": "#e0fff4",
+            "light_bg": "#e0fff4",
+            "light_border": "#2ecc71",
+            "dark_bg": "#204034",
+            "dark_border": "#2ecc71",
+            "color_preset_id": "preset3"
+        },
+        {
+            "x1": 78.25679520218091,
+            "y1": -27.55261663142693,
+            "x2": 503.58064228790965,
+            "y2": 141.76095319166905,
+            "name": "Class 1",
+            "color": "#1a2942",
+            "light_bg": "#e3f0ff",
+            "light_border": "#3a7bd5",
+            "dark_bg": "#22304a",
+            "dark_border": "#3a7bd5",
+            "color_preset_id": "preset1"
+        },
+        {
+            "x1": 80.29671773017003,
+            "y1": 151.96056583161453,
+            "x2": 509.70040987187724,
+            "y2": 319.2342131267211,
+            "name": "Class 2",
+            "color": "#1a2942",
+            "light_bg": "#ffe5d0",
+            "light_border": "#ff7f50",
+            "dark_bg": "#4a2c23",
+            "dark_border": "#ff7f50",
+            "color_preset_id": "preset2"
+        },
+        {
+            "x1": 34.39846085041529,
+            "y1": 339.6334384066125,
+            "x2": 531.1195964157625,
+            "y2": 507.927046965714,
+            "name": "Class 3",
+            "color": "#1a2942",
+            "light_bg": "#f3e8ff",
+            "light_border": "#a259e6",
+            "dark_bg": "#2d234a",
+            "dark_border": "#a259e6",
+            "color_preset_id": "preset4"
+        },
+        {
+            "x1": 58.8775311862845,
+            "y1": 526.2863497176154,
+            "x2": 585.1775434074742,
+            "y2": 694.579958276717,
+            "name": "Class 4",
+            "color": "#1a2942",
+            "light_bg": "#e0fff4",
+            "light_border": "#2ecc71",
+            "dark_bg": "#204034",
+            "dark_border": "#2ecc71",
+            "color_preset_id": "preset3"
+        }
+    ],
+    "group_color_presets": [
+        {
+            "id": "preset1",
+            "name": "Classic Blue",
+            "light_bg": "#e3f0ff",
+            "light_border": "#3a7bd5",
+            "dark_bg": "#22304a",
+            "dark_border": "#3a7bd5"
+        },
+        {
+            "id": "preset2",
+            "name": "Sunset",
+            "light_bg": "#ffe5d0",
+            "light_border": "#ff7f50",
+            "dark_bg": "#4a2c23",
+            "dark_border": "#ff7f50"
+        },
+        {
+            "id": "preset3",
+            "name": "Mint",
+            "light_bg": "#e0fff4",
+            "light_border": "#2ecc71",
+            "dark_bg": "#204034",
+            "dark_border": "#2ecc71"
+        },
+        {
+            "id": "preset4",
+            "name": "Lavender",
+            "light_bg": "#f3e8ff",
+            "light_border": "#a259e6",
+            "dark_bg": "#2d234a",
+            "dark_border": "#a259e6"
+        },
+        {
+            "id": "preset5",
+            "name": "Slate",
+            "light_bg": "#f0f4f8",
+            "light_border": "#607d8b",
+            "dark_bg": "#232b32",
+            "dark_border": "#607d8b"
+        },
+        {
+            "id": "preset6",
+            "name": "Contrast",
+            "light_bg": "#ffffff",
+            "light_border": "#000000",
+            "dark_bg": "#000000",
+            "dark_border": "#ffffff"
+        }
+    ]
+}
