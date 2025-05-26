@@ -22,6 +22,9 @@ class RectangleGroup:
         self.color_preset_id = color_preset_id  # New attribute for preset selection
         self.color_presets = color_presets  # Store the current color presets
 
+        # Track whether resize mode is active
+        self.resize_mode_active = False
+
         # Use color preset if available
         if self.color_preset_id:
             color_scheme = "dark" if ColorConfig.current == ColorConfig.Dark else "light"
@@ -109,6 +112,9 @@ class RectangleGroup:
         self._drag_start = (self.x1, self.y1, self.x2, self.y2, event.x, event.y)
 
     def _on_handle_drag(self, event, handle_idx):
+        # Only allow resizing if resize mode is active
+        if not getattr(self, "resize_mode_active", False):
+            return
         if self._drag_start is None:
             return
         x1, y1, x2, y2, start_x, start_y = self._drag_start
@@ -145,7 +151,7 @@ class RectangleGroup:
         self.update_handles()
         
     def update_properties(self, name=None, color=None,
-                          light_bg=None, light_border=None, dark_bg=None, dark_border=None, color_preset_id=None, color_presets=None):
+                          light_bg=None, light_border=None, dark_bg=None, dark_border=None, color_preset_id=None, color_presets=None, resize_mode_active=None):
         """Update the properties of the rectangle group"""
         if name is not None:
             self.name = name
@@ -164,6 +170,8 @@ class RectangleGroup:
             self.color_preset_id = color_preset_id
         if color_presets is not None:
             self.color_presets = color_presets
+        if resize_mode_active is not None:
+            self.resize_mode_active = resize_mode_active
 
         # Use color preset if available
         if self.color_preset_id:
@@ -331,7 +339,15 @@ class GroupManager:
                 if prev_selected and prev_selected != group:
                     prev_selected.remove_handles()
                 if self.selected_group:
-                    self.selected_group.show_handles()
+                    if (
+                        hasattr(self.gui, "group_editor_window")
+                        and self.gui.group_editor_window
+                        and self.gui.group_editor_window.winfo_exists()
+                        and getattr(self.gui, "group_resize_mode_active", False)
+                    ):
+                        self.selected_group.show_handles()
+                    else:
+                        self.selected_group.remove_handles()
                 if hasattr(self.gui, "group_editor_window") and self.gui.group_editor_window and self.gui.group_editor_window.winfo_exists():
                     self.gui.update_group_editor(group)
                 return

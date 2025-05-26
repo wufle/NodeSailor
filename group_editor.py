@@ -92,6 +92,13 @@ def open_group_editor(gui_self, group=None):
         gui_self.legend_window = None
 
     def close_editor():
+        # Ensure resize mode is disabled and all handles are hidden when closing the editor
+        gui_self.group_resize_mode_active = False
+        if hasattr(gui_self, "group_manager"):
+            for group in getattr(gui_self.group_manager, "groups", []):
+                group.update_properties(resize_mode_active=False)
+                if hasattr(group, "remove_handles"):
+                    group.remove_handles()
         try:
             gui_self.group_editor_window.grab_release()
         except:
@@ -273,6 +280,9 @@ def open_group_editor(gui_self, group=None):
     def toggle_resize_mode():
         gui_self.group_resize_mode_active = not gui_self.group_resize_mode_active
         update_resize_mode_ui()
+        # Update resize_mode_active for all RectangleGroup instances
+        for group in getattr(gui_self.group_manager, "groups", []):
+            group.update_properties(resize_mode_active=gui_self.group_resize_mode_active)
         # When entering resize mode, disable drawing/selecting groups
         # When exiting, restore normal behavior
         # Optionally, change cursor or provide other visual cues
@@ -382,6 +392,7 @@ def open_group_editor(gui_self, group=None):
                     g is group
                     and group
                     and getattr(gui_self, "group_resize_mode_active", False)
+                    and win.winfo_exists()
                 ):
                     g.show_handles()
                 else:
