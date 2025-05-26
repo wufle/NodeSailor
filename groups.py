@@ -218,23 +218,29 @@ class RectangleGroup:
         return contained_nodes
     
     def to_dict(self):
-        """Convert the group to a dictionary for saving"""
+        """Convert the group to a dictionary for saving.
+        Ensures color fields reflect the current custom color preset if assigned.
+        """
+        # Try to use the assigned color preset if available
+        preset = None
+        if self.color_preset_id and self.color_presets:
+            preset = next((p for p in self.color_presets if p.get("id") == self.color_preset_id), None)
         return {
             'x1': self.x1,
             'y1': self.y1,
             'x2': self.x2,
             'y2': self.y2,
             'name': self.name,
-            'color': self.color,
-            'light_bg': self.light_bg,
-            'light_border': self.light_border,
-            'dark_bg': self.dark_bg,
-            'dark_border': self.dark_border,
+            'color': preset["color"] if preset and "color" in preset else self.color,
+            'light_bg': preset["light_bg"] if preset and "light_bg" in preset else self.light_bg,
+            'light_border': preset["light_border"] if preset and "light_border" in preset else self.light_border,
+            'dark_bg': preset["dark_bg"] if preset and "dark_bg" in preset else self.dark_bg,
+            'dark_border': preset["dark_border"] if preset and "dark_border" in preset else self.dark_border,
             'color_preset_id': self.color_preset_id
         }
     
     @classmethod
-    def from_dict(cls, canvas, data):
+    def from_dict(cls, canvas, data, color_presets=None):
         """Create a group from a dictionary (for loading)"""
         return cls(
             canvas,
@@ -248,7 +254,8 @@ class RectangleGroup:
             data.get('light_border'),
             data.get('dark_bg'),
             data.get('dark_border'),
-            data.get('color_preset_id')
+            data.get('color_preset_id'),
+            color_presets
         )
 
 class GroupManager:

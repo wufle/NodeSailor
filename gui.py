@@ -5,6 +5,7 @@ from tkinter import colorchooser, filedialog, messagebox, simpledialog
 import ctypes
 import platform
 import json
+from group_editor import DEFAULT_PRESETS, DEFAULT_HEIGHT
 import logging
 import math
 import os
@@ -1872,7 +1873,7 @@ class NetworkMapGUI:
             # Load groups
             self.group_manager.groups = []
             for group_data in state.get('groups', []):
-                group = RectangleGroup.from_dict(self.canvas, group_data)
+                group = RectangleGroup.from_dict(self.canvas, group_data, color_presets=group_color_presets)
                 self.group_manager.groups.append(group)
                 
             # Make sure groups are behind nodes and connections
@@ -1896,6 +1897,22 @@ class NetworkMapGUI:
             with open(file_path, 'r') as f:
                 self.clear_current_loaded()  # Clear existing nodes, connections and labels
                 state = json.load(f)
+                # --- Begin group_editor_config.json sync logic ---
+                color_presets = state.get('group_color_presets')
+                window_height = state.get('group_window_height')
+                if color_presets is not None and window_height is not None:
+                    config_data = {
+                        "color_presets": color_presets,
+                        "window_height": window_height
+                    }
+                else:
+                    config_data = {
+                        "color_presets": DEFAULT_PRESETS,
+                        "window_height": DEFAULT_HEIGHT
+                    }
+                with open("group_editor_config.json", "w") as config_file:
+                    json.dump(config_data, config_file, indent=4)
+                # --- End group_editor_config.json sync logic ---
                 if 'vlan_labels' in state:
                     self.vlan_label_names.update(state['vlan_labels'])
                     for vlan, label in self.vlan_title_labels.items():
@@ -1931,7 +1948,7 @@ class NetworkMapGUI:
                 # Load groups
                 self.group_manager.groups = []
                 for group_data in state.get('groups', []):
-                    group = RectangleGroup.from_dict(self.canvas, group_data)
+                    group = RectangleGroup.from_dict(self.canvas, group_data, color_presets=color_presets)
                     self.group_manager.groups.append(group)
                 
                 # Make sure groups are behind nodes and connections

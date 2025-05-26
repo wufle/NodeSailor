@@ -3,62 +3,66 @@ from tkinter import colorchooser, simpledialog, messagebox
 import json
 import os
 
+DEFAULT_HEIGHT = 460
+DEFAULT_PRESETS = [
+    {
+        "id": "preset1",
+        "name": "Classic Blue",
+        "light_bg": "#e3f0ff",
+        "light_border": "#3a7bd5",
+        "dark_bg": "#22304a",
+        "dark_border": "#3a7bd5"
+    },
+    {
+        "id": "preset2",
+        "name": "Sunset",
+        "light_bg": "#ffe5d0",
+        "light_border": "#ff7f50",
+        "dark_bg": "#4a2c23",
+        "dark_border": "#ff7f50"
+    },
+    {
+        "id": "preset3",
+        "name": "Mint",
+        "light_bg": "#e0fff4",
+        "light_border": "#2ecc71",
+        "dark_bg": "#204034",
+        "dark_border": "#2ecc71"
+    },
+    {
+        "id": "preset4",
+        "name": "Lavender",
+        "light_bg": "#f3e8ff",
+        "light_border": "#a259e6",
+        "dark_bg": "#2d234a",
+        "dark_border": "#a259e6"
+    },
+    {
+        "id": "preset5",
+        "name": "Slate",
+        "light_bg": "#f0f4f8",
+        "light_border": "#607d8b",
+        "dark_bg": "#232b32",
+        "dark_border": "#607d8b"
+    },
+    {
+        "id": "preset6",
+        "name": "Contrast",
+        "light_bg": "#ffffff",
+        "light_border": "#000000",
+        "dark_bg": "#000000",
+        "dark_border": "#ffffff"
+    }
+]
+
+__all__ = ["DEFAULT_HEIGHT", "DEFAULT_PRESETS"]
+
+
 def open_group_editor(gui_self, group=None, color_presets=None, window_height=None):
     ColorConfig = gui_self.ColorConfig if hasattr(gui_self, "ColorConfig") else __import__("colors").ColorConfig
 
     # --- Persistence Setup ---
     CONFIG_PATH = "group_editor_config.json"
-    DEFAULT_HEIGHT = 460
-    DEFAULT_PRESETS = [
-        {
-            "id": "preset1",
-            "name": "Classic Blue",
-            "light_bg": "#e3f0ff",
-            "light_border": "#3a7bd5",
-            "dark_bg": "#22304a",
-            "dark_border": "#3a7bd5"
-        },
-        {
-            "id": "preset2",
-            "name": "Sunset",
-            "light_bg": "#ffe5d0",
-            "light_border": "#ff7f50",
-            "dark_bg": "#4a2c23",
-            "dark_border": "#ff7f50"
-        },
-        {
-            "id": "preset3",
-            "name": "Mint",
-            "light_bg": "#e0fff4",
-            "light_border": "#2ecc71",
-            "dark_bg": "#204034",
-            "dark_border": "#2ecc71"
-        },
-        {
-            "id": "preset4",
-            "name": "Lavender",
-            "light_bg": "#f3e8ff",
-            "light_border": "#a259e6",
-            "dark_bg": "#2d234a",
-            "dark_border": "#a259e6"
-        },
-        {
-            "id": "preset5",
-            "name": "Slate",
-            "light_bg": "#f0f4f8",
-            "light_border": "#607d8b",
-            "dark_bg": "#232b32",
-            "dark_border": "#607d8b"
-        },
-        {
-            "id": "preset6",
-            "name": "Contrast",
-            "light_bg": "#ffffff",
-            "light_border": "#000000",
-            "dark_bg": "#000000",
-            "dark_border": "#ffffff"
-        }
-    ]
 
     def load_config():
         if os.path.exists(CONFIG_PATH):
