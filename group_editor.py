@@ -3,7 +3,7 @@ from tkinter import colorchooser, simpledialog, messagebox
 import json
 import os
 
-def open_group_editor(gui_self, group=None):
+def open_group_editor(gui_self, group=None, color_presets=None, window_height=None):
     ColorConfig = gui_self.ColorConfig if hasattr(gui_self, "ColorConfig") else __import__("colors").ColorConfig
 
     # --- Persistence Setup ---
@@ -77,7 +77,11 @@ def open_group_editor(gui_self, group=None):
         except Exception as e:
             print("Failed to save group editor config:", e)
 
-    color_presets, window_height = load_config()
+    # Use provided values if present, else fall back to config/defaults
+    if color_presets is None or color_presets is False:
+        color_presets, _ = load_config()
+    if window_height is None or window_height is False:
+        _, window_height = load_config()
 
     # --- End Persistence Setup ---
 
@@ -215,6 +219,10 @@ def open_group_editor(gui_self, group=None):
         selected_preset_id = preset_var.get()
         if group is not None and hasattr(group, "update_properties"):
             group.update_properties(color_preset_id=selected_preset_id, color_presets=color_presets)
+            update_group_editor(group)
+            # Force canvas redraw for instant visual feedback after color change
+            if hasattr(gui_self, "canvas") and gui_self.canvas is not None:
+                gui_self.canvas.update_idletasks()
         win.update_idletasks()  # Force UI update to keep radio selection in sync
 
     preset_var.trace_add("write", on_preset_var_change)

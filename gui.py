@@ -696,7 +696,7 @@ class NetworkMapGUI:
         text_area.pack(fill=tk.BOTH, expand=True)
 
         help_lines = [
-            ("NodeSailor v0.9.22- Help\n", "title"),
+            ("NodeSailor v0.9.23- Help\n", "title"),
             ("\nOverview:\n", "header"),
             ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, RDP and more with the implementation of custom commands.\n", "text"),
 
@@ -967,7 +967,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="NodeSailor v0.9.22", bg=ColorConfig.current.FRAME_BG,
+            title_label = tk.Label(title_bar, text="NodeSailor v0.9.23", bg=ColorConfig.current.FRAME_BG,
                                 fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
@@ -1777,6 +1777,17 @@ class NetworkMapGUI:
             group_data = group.to_dict()
             state['groups'].append(group_data)
 
+        # Read group color presets and window height from group_editor_config.json
+        try:
+            with open("group_editor_config.json", "r") as config_file:
+                config_data = json.load(config_file)
+                state["group_color_presets"] = config_data.get("color_presets")
+                state["group_window_height"] = config_data.get("window_height")
+        except Exception as e:
+            # Optionally log or handle error, but do not block save
+            state["group_color_presets"] = None
+            state["group_window_height"] = None
+
         # Prompt user for a file location and save the JSON file
         file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
         if file_path:
@@ -1804,6 +1815,18 @@ class NetworkMapGUI:
         with open(file_path, 'r') as f:
             self.clear_current_loaded()  # Clears existing nodes, connections, and stickynotes
             state = json.load(f)
+
+            # Extract group editor config from state, fallback to defaults if missing/None
+            group_color_presets = state.get("group_color_presets")
+            if not group_color_presets:
+                group_color_presets = None
+            group_window_height = state.get("group_window_height")
+            if not group_window_height:
+                group_window_height = None
+
+            # Apply to group editor config immediately
+            from group_editor import open_group_editor
+            open_group_editor(self, color_presets=group_color_presets, window_height=group_window_height)
 
             # Load custom VLAN labels (if present)
             if 'vlan_labels' in state:
