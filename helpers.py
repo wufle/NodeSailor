@@ -99,33 +99,60 @@ def show_operator_guidance(root, center_func=None, custom_font=None):
     content = tk.Frame(outer_frame, bg=ColorConfig.current.INFO_NOTE_BG)
     content.pack(fill=tk.BOTH, expand=True)
 
-    # Guidance lines copied from gui.py help_lines
-    help_lines = [
-        ("  • Left Click on Node: Ping the node", "text"),
-        ("      - Green: all assigned IP addresses connected", "text"),
-        ("      - Yellow: partial ping response received", "text"),
-        ("      - Red: no response", "text"),
-        ("  • Right Click on Node: Open context menu", "text"),
-        ("  • Right Click and Drag: Pan the canvas", "text"),
-        ("  • Scroll Wheel: Zoom in and out", "text"),
-        ("  • Who am I?: Highlight the node matching your machine's IP", "text"),
-        ("  • Ping All: Ping every node", "text"),
-        ("  • Clear Status: Reset node status", "text"),
-        ("  • Ctrl-Shift-C: Change color theme", "text"),
-        ("", "text"),
-        ("Press 'F1' for further instructions.", "text"),
-    ]
+    # Screenshot viewer
+    import os
+    from PIL import Image, ImageTk
 
-    for line, tag in help_lines:
-        if tag == "title":
-            tk.Label(content, text=line, bg=ColorConfig.current.INFO_NOTE_BG,
-                     fg=ColorConfig.current.INFO_TEXT, font=custom_font, anchor="w", justify="left", wraplength=420).pack(anchor="w", pady=(0, 8))
-        elif tag == "header":
-            tk.Label(content, text=line, bg=ColorConfig.current.INFO_NOTE_BG,
-                     fg=ColorConfig.current.INFO_TEXT, font=custom_font, anchor="w", justify="left", wraplength=420).pack(anchor="w", pady=(8, 0))
-        else:
-            tk.Label(content, text=line, bg=ColorConfig.current.INFO_NOTE_BG,
-                     fg=ColorConfig.current.INFO_TEXT, font=custom_font, anchor="w", justify="left", wraplength=420).pack(anchor="w")
+    screenshots_dir = os.path.join(os.path.dirname(__file__), "_internal", "screenshots", "operator_guidance")
+    image_files = [f for f in os.listdir(screenshots_dir) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".bmp"))]
+    image_files.sort()
+    images = []
+    for fname in image_files:
+        img_path = os.path.join(screenshots_dir, fname)
+        try:
+            img = Image.open(img_path)
+            img.thumbnail((500, 400), Image.Resampling.LANCZOS)
+            images.append(img)
+        except Exception:
+            continue
+
+    img_label = tk.Label(content, bg=ColorConfig.current.INFO_NOTE_BG)
+    img_label.pack(pady=10)
+
+
+    nav_frame = tk.Frame(content, bg=ColorConfig.current.INFO_NOTE_BG)
+    nav_frame.pack(pady=(10, 0))
+
+    current_idx = [0]
+    tk_images = [None] * len(images)
+
+    def show_image(idx):
+        if not images:
+            img_label.config(text="No screenshots found.", image="", width=60, height=10)
+            return
+        if tk_images[idx] is None:
+            tk_images[idx] = ImageTk.PhotoImage(images[idx])
+        img_label.config(image=tk_images[idx], text="")
+        img_label.image = tk_images[idx]
+
+    def prev_img():
+        if images:
+            current_idx[0] = (current_idx[0] - 1) % len(images)
+            show_image(current_idx[0])
+
+    def next_img():
+        if images:
+            current_idx[0] = (current_idx[0] + 1) % len(images)
+            show_image(current_idx[0])
+
+    prev_btn = tk.Button(nav_frame, text="Previous", command=prev_img,
+                         bg=ColorConfig.current.INFO_NOTE_BG, fg=ColorConfig.current.INFO_TEXT, font=custom_font)
+    prev_btn.pack(side=tk.LEFT, padx=10)
+    next_btn = tk.Button(nav_frame, text="Next", command=next_img,
+                         bg=ColorConfig.current.INFO_NOTE_BG, fg=ColorConfig.current.INFO_TEXT, font=custom_font)
+    next_btn.pack(side=tk.LEFT, padx=10)
+
+    show_image(current_idx[0])
 
     var = tk.BooleanVar(value=False)
     def on_check():
