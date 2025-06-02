@@ -168,8 +168,8 @@ class NetworkMapGUI:
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
         fg=lambda: ColorConfig.current.INFO_TEXT)
         
-        # Create list view editor and edit connections buttons
-        self.list_view_editor_button = tk.Button(self.buttons_frame, text='List View',
+        # Create Node List editor and connections list buttons
+        self.list_view_editor_button = tk.Button(self.buttons_frame, text='Node List',
                                                command=lambda: self.defer_popup(lambda: open_node_list_editor(self)), **button_style)
         self.list_view_editor_button.pack(side=tk.LEFT, padx=5, pady=5)
         
@@ -177,7 +177,7 @@ class NetworkMapGUI:
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
         fg=lambda: ColorConfig.current.INFO_TEXT)
         
-        self.edit_connections_button = tk.Button(self.buttons_frame, text='Edit Connections',
+        self.edit_connections_button = tk.Button(self.buttons_frame, text='Connections List',
                                                 command=lambda: self.defer_popup(self.open_connection_list_editor), **button_style)
         self.edit_connections_button.pack(side=tk.LEFT, padx=5, pady=5)
 
@@ -726,10 +726,10 @@ class NetworkMapGUI:
             ("Groups allow you to visually organize nodes into labeled rectangles. Use the Groups button to create, edit, or remove groups. Drag nodes into a group to include them. Groups can be renamed and repositioned for clarity.\n", "text"),
 
             ("\nNode List Editor:\n", "header"),
-            ("The Node List Editor presents all nodes in a table for quick editing. Use it to add, remove, or modify node properties such as name, IP address, and description. Access via the List View button.\n", "text"),
+            ("The Node List Editor presents all nodes in a table for quick editing. Use it to add, remove, or modify node properties such as name, IP address, and description. Access via the Node List button.\n", "text"),
 
-            ("\nConnections Editor:\n", "header"),
-            ("The Connections Editor displays all connections in a list format. Use it to add, remove, or edit connections between nodes efficiently. Access via the Edit Connections button.\n", "text"),
+            ("\nConnections List Editor:\n", "header"),
+            ("The Connections Editor displays all connections in a list format. Use it to add, remove, or edit connections between nodes efficiently. Access via the Connections List button.\n", "text"),
 
             ("\nVLAN Checkboxes:\n", "header"),
             ("- Toggle visibility of VLAN nodes.\n", "text"),
@@ -2277,7 +2277,7 @@ class NetworkMapGUI:
             self.regain_focus()
         return closer
 
-    #Fixes window geopetry issues for vlan, list view, edit connections and manage custom commands windows         
+    #Fixes window geometry issues for vlan, Node List, Connections List and manage custom commands windows         
     def fix_window_geometry(self, window, width, height):
         window.update_idletasks()  # Make sure widget sizes are calculated
         window.geometry(f"{width}x{height}")
