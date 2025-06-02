@@ -177,7 +177,7 @@ def show_configuration_guidance(root, center_func=None, custom_font=None):
         return
 
     win = tk.Toplevel(root)
-    win.title("Configuration Mode Warning")
+    win.title("Configuration Mode Guidance")
     win.overrideredirect(True)
     win.transient(root)
 
@@ -189,7 +189,7 @@ def show_configuration_guidance(root, center_func=None, custom_font=None):
     title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.INFO_NOTE_BG)
     title_bar.pack(side=tk.TOP, fill=tk.X)
 
-    title_label = tk.Label(title_bar, text="Configuration Mode Guidance:",
+    title_label = tk.Label(title_bar, text="Configuration Mode Guidance",
                            bg=ColorConfig.current.INFO_NOTE_BG,
                            fg=ColorConfig.current.INFO_TEXT,
                            font=custom_font)
@@ -209,29 +209,58 @@ def show_configuration_guidance(root, center_func=None, custom_font=None):
     content = tk.Frame(outer_frame, bg=ColorConfig.current.INFO_NOTE_BG)
     content.pack(fill=tk.BOTH, expand=True)
 
-    guidance_lines = [
-        ("Note: This mode is for configuration of the nodemap.", "text"),
-        ("Change back to Operator Mode for basic testing.", "text"),
-        ("", "text"),
-        ("Quick Guide:", "title"),
-        ("", "text"),
-        ("  • Double Left Click: Create a new node", "text"),
-        ("  • Middle Click on two nodes: Create a connection line between two nodes", "text"),
-        ("  • Shift + Middle Click: Remove connection line", "text"),
-        ("  • Shift + Double Left Click: Add a sticky note", "text"),
-        ("  • Left Click + Drag: Move nodes or notes", "text"),
-        ("  • Right Click node: Open context menu", "text"),
-        ("", "text"),
-        ("Press 'F1' for further instructions.", "text"),
-    ]
+    import os
+    from PIL import Image, ImageTk
 
-    for item in guidance_lines:
-        if isinstance(item, tuple):
-            text = item[0]
-        else:
-            text = item
-        tk.Label(content, text=text, bg=ColorConfig.current.INFO_NOTE_BG,
-                 fg=ColorConfig.current.INFO_TEXT, font=custom_font, justify="left", wraplength=480).pack(anchor="w", pady=(6, 0))
+    screenshots_dir = os.path.join(os.path.dirname(__file__), "_internal", "screenshots", "configuration_guidance")
+    image_files = [f for f in os.listdir(screenshots_dir) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".bmp"))]
+    image_files.sort()
+    images = []
+    for fname in image_files:
+        img_path = os.path.join(screenshots_dir, fname)
+        try:
+            img = Image.open(img_path)
+            img.thumbnail((500, 400), Image.Resampling.LANCZOS)
+            images.append(img)
+        except Exception:
+            continue
+
+    img_label = tk.Label(content, bg=ColorConfig.current.INFO_NOTE_BG)
+    img_label.pack(pady=10)
+
+    nav_frame = tk.Frame(content, bg=ColorConfig.current.INFO_NOTE_BG)
+    nav_frame.pack(pady=(10, 0))
+
+    current_idx = [0]
+    tk_images = [None] * len(images)
+
+    def show_image(idx):
+        if not images:
+            img_label.config(text="No screenshots found.", image="", width=60, height=10)
+            return
+        if tk_images[idx] is None:
+            tk_images[idx] = ImageTk.PhotoImage(images[idx])
+        img_label.config(image=tk_images[idx], text="")
+        img_label.image = tk_images[idx]
+
+    def prev_img():
+        if images:
+            current_idx[0] = (current_idx[0] - 1) % len(images)
+            show_image(current_idx[0])
+
+    def next_img():
+        if images:
+            current_idx[0] = (current_idx[0] + 1) % len(images)
+            show_image(current_idx[0])
+
+    prev_btn = tk.Button(nav_frame, text="Previous", command=prev_img,
+                         bg=ColorConfig.current.INFO_NOTE_BG, fg=ColorConfig.current.INFO_TEXT, font=custom_font)
+    prev_btn.pack(side=tk.LEFT, padx=10)
+    next_btn = tk.Button(nav_frame, text="Next", command=next_img,
+                         bg=ColorConfig.current.INFO_NOTE_BG, fg=ColorConfig.current.INFO_TEXT, font=custom_font)
+    next_btn.pack(side=tk.LEFT, padx=10)
+
+    show_image(current_idx[0])
 
     var = tk.BooleanVar(value=False)
     def on_check():
