@@ -1789,6 +1789,9 @@ class NetworkMapGUI:
             state["group_color_presets"] = None
             state["group_window_height"] = None
 
+        # Add custom commands to state
+        state["custom_commands"] = self.custom_commands
+
         # Prompt user for a file location and save the JSON file
         file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
         if file_path:
@@ -1897,6 +1900,10 @@ class NetworkMapGUI:
             with open(file_path, 'r') as f:
                 self.clear_current_loaded()  # Clear existing nodes, connections and labels
                 state = json.load(f)
+                # Load custom commands if present
+                if "custom_commands" in state:
+                    self.custom_commands = state["custom_commands"]
+                    self.save_custom_commands()
                 # --- Begin group_editor_config.json sync logic ---
                 color_presets = state.get('group_color_presets')
                 window_height = state.get('group_window_height')
