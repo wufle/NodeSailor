@@ -1797,10 +1797,6 @@ class NetworkMapGUI:
             if not group_window_height:
                 group_window_height = None
 
-            # Apply to group editor config immediately
-            from group_editor import open_group_editor
-            open_group_editor(self, color_presets=group_color_presets, window_height=group_window_height)
-
             # Load custom VLAN labels (if present)
             if 'vlan_labels' in state:
                 self.vlan_label_names.update(state['vlan_labels'])
