@@ -66,6 +66,9 @@ class NetworkMapGUI:
         # Setup custom scrollbar styles for current theme
         self._setup_scrollbar_styles()
         
+        # Bind <Map> event to restore secondary windows
+        self.root.bind("<Map>", self.on_restore)
+
         # Load custom commands
         self.custom_commands = self.load_custom_commands()
 
@@ -341,6 +344,12 @@ class NetworkMapGUI:
         root.protocol("WM_DELETE_WINDOW", self.on_close)
 
         self.update_ui_colors()
+
+    def on_restore(self, event):
+        # Lift all secondary windows that are Toplevels
+        for child in self.root.winfo_children():
+            if isinstance(child, (tk.Toplevel, ctk.CTkToplevel)):
+                child.lift()
 
     def toggle_tooltips(self):
         self.show_tooltips = not self.show_tooltips
