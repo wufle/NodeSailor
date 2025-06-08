@@ -2163,20 +2163,33 @@ class NetworkMapGUI:
             self.zoom_frame.config(bg=ColorConfig.current.FRAME_BG)
 
     def _custom_askyesno(self, title, message):
-        import tkinter as tk
-        result = [None]
 
+        result = [None]
         dialog = tk.Toplevel(self.root)
         dialog.title(title)
         dialog.transient(self.root)
         dialog.grab_set()
         dialog.configure(bg=ColorConfig.current.FRAME_BG)
 
+        # Hide native titlebar and add custom titlebar
+        dialog.overrideredirect(True)
+
+        # Ensure dialog is above all other windows
+        dialog.lift()
+        dialog.attributes('-topmost', True)
+        dialog.attributes('-topmost', False)
+
+        def on_close():
+            result[0] = None
+            dialog.destroy()
+
+        self.add_custom_titlebar(dialog, title, on_close)
+
         # Center the dialog
         dialog.update_idletasks()
         x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (250 // 2)
         y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (120 // 2)
-        dialog.geometry(f"250x120+{x}+{y}")
+        dialog.geometry(f"250x138+{x}+{y}")
 
         label = tk.Label(dialog, text=message, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, wraplength=220)
         label.pack(pady=(20, 10), padx=10)
@@ -2192,6 +2205,10 @@ class NetworkMapGUI:
             result[0] = False
             dialog.destroy()
 
+        def on_cancel():
+            result[0] = None
+            dialog.destroy()
+
         yes_btn = tk.Button(
             btn_frame, text="Yes", width=8,
             bg=ColorConfig.current.BUTTON_BG,
@@ -2200,7 +2217,7 @@ class NetworkMapGUI:
             activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
             command=on_yes
         )
-        yes_btn.pack(side=tk.LEFT, padx=10)
+        yes_btn.pack(side=tk.LEFT, padx=8)
 
         no_btn = tk.Button(
             btn_frame, text="No", width=8,
@@ -2210,14 +2227,30 @@ class NetworkMapGUI:
             activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
             command=on_no
         )
-        no_btn.pack(side=tk.LEFT, padx=10)
+        no_btn.pack(side=tk.LEFT, padx=8)
+
+        cancel_btn = tk.Button(
+            btn_frame, text="Cancel", width=8,
+            bg=ColorConfig.current.BUTTON_BG,
+            fg=ColorConfig.current.BUTTON_TEXT,
+            activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+            activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
+            command=on_cancel
+        )
+        cancel_btn.pack(side=tk.LEFT, padx=8)
+
+        dialog.protocol("WM_DELETE_WINDOW", on_cancel)
 
         dialog.wait_window()
         return result[0]
 
     def on_close(self):
         if self.unsaved_changes:
-            if self._custom_askyesno("Unsaved Changes", "You have unsaved changes. Would you like to save before exiting?"):
+            response = self._custom_askyesno("Unsaved Changes", "You have unsaved changes. Would you like to save before exiting?")
+            if response is None:
+                # Cancel pressed, abort close
+                return
+            if response:
                 self.save_network_state()  # This should prompt the user to save the file
         self.save_window_geometry()
         self.root.destroy()
