@@ -95,6 +95,16 @@ class NetworkMapGUI:
         )
         self.groups_banner_label.pack(side=tk.TOP, fill=tk.X)
         self.groups_banner_label.pack_forget()
+
+        # Node deletion banner label (hidden by default)
+        self.node_banner_label = tk.Label(
+            self.root,
+            text="",
+            font=("Helvetica", 12, "bold"),
+            fg="#ff9900",
+            bg=ColorConfig.current.FRAME_BG
+        )
+        # Do not pack; will use place() when needed for bottom banner
      
         # Update button styles
         button_style = {
@@ -1391,7 +1401,17 @@ class NetworkMapGUI:
             self.node_ip_label.config(text="IP: -")
             self.unsaved_changes = True
         else:
-            messagebox.showinfo('Remove Node', 'Switch to Configuration mode to delete nodes.')
+            # Show node deletion banner for 5 seconds
+            self.node_banner_label.config(
+                text="Switch to Configuration mode to delete nodes.",
+                bg=ColorConfig.current.FRAME_BG,
+                fg="#ff9900",
+                font=("Helvetica", 12, "bold"),
+                height=0
+            )
+            self.node_banner_label.place(relx=0.5, rely=1.0, relwidth=1, anchor='s')
+            self.node_banner_label.lift()
+            self.root.after(5000, self.node_banner_label.place_forget)
         
     def raise_all_nodes(self): # for making nodes display above the connection lines
         for node in self.nodes:
