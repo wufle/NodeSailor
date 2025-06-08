@@ -1806,7 +1806,7 @@ class NetworkMapGUI:
 
     def new_network_state(self):
         # Confirm with the user before clearing the network state
-        response = messagebox.askyesno("New Network State", "Are you sure you want to create a new network state? This will clear all current loaded data.")
+        response = self._custom_askyesno("New Network State", "Are you sure you want to create a new network state? This will clear all current loaded data.")
         if response:
             self.clear_current_loaded()  # Clear existing nodes and connections
             self.clear_node_status()  # Reset the status of all nodes
