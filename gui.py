@@ -1587,7 +1587,7 @@ class NetworkMapGUI:
                     except Exception:
                         pass
 
-                dialog, content = self.create_popup("Connection Details", 400, 180, on_close=close_connection_window, grab=True)
+                dialog, content = self.create_popup("Connection Details", 400, 150, on_close=close_connection_window, grab=True)
                 self.center_window_absolute(dialog)
                 self.connection_window = dialog
                 label_label = tk.Label(content, text="Label:", bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.INFO_TEXT)
@@ -1646,7 +1646,7 @@ class NetworkMapGUI:
                                 except Exception:
                                     pass
 
-                            dialog, content = self.create_popup("Connection Details", 400, 180, on_close=close_connection_window, grab=True)
+                            dialog, content = self.create_popup("Connection Details", 400, 150, on_close=close_connection_window, grab=True)
                             self.center_window_absolute(dialog)
                             self.connection_window = dialog
                             label_label = tk.Label(content, text="Label:", bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.INFO_TEXT)
@@ -2334,7 +2334,7 @@ class NetworkMapGUI:
         win.overrideredirect(True)
         win.transient(self.root)
         win.resizable(True, True)
-        win.minsize(300, 200)
+        win.minsize(300, 100)
 
         if grab:
             try: win.grab_set()
