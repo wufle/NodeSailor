@@ -1257,6 +1257,7 @@ class NetworkMapGUI:
             if node:
                 node.update_info(name, **vlan_ips, remote_desktop_address=remote, file_path=path, web_config_url=web)
                 self.on_node_select(node)
+                self.unsaved_changes = True
             else:
                 if name and event:
                     new_node = NetworkNode(self.canvas, name, event.x, event.y, **vlan_ips,
