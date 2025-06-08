@@ -1252,9 +1252,13 @@ class NetworkMapGUI:
         if node: web_entry.insert(0, node.web_config_url)
         
 
+        # Label for displaying save notes/messages
+        save_note_label = tk.Label(content, text="", fg="#ff9900", bg=ColorConfig.current.FRAME_BG, font=('Helvetica', 10))
+        save_note_label.grid(row=9, column=0, columnspan=2, pady=(0, 5))
+
         def save_node():
             if self.mode != "Configuration":
-                messagebox.showinfo('Save Node', 'Switch to Configuration mode to save or update nodes.')
+                save_note_label.config(text="Switch to Configuration mode to save or update nodes.")
                 return
             name = name_entry.get()
             vlan_ips = {vlan: VLAN_entries[vlan].get() for vlan in VLAN_entries}
