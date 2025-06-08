@@ -405,7 +405,7 @@ class NetworkMapGUI:
         self.initial_x = self.root.winfo_x()
         self.initial_y = self.root.winfo_y()
 
-    def add_custom_titlebar(self, window, title, on_close=None):
+    def add_custom_titlebar(self, window, title, on_close=None, toplevel=None):
         outer = tk.Frame(window, bg=ColorConfig.current.BORDER_COLOR, padx=2, pady=2)
         outer.pack(fill=tk.BOTH, expand=True)
 
@@ -416,19 +416,26 @@ class NetworkMapGUI:
                         fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
         label.pack(side=tk.LEFT, padx=10)
 
-        btn = tk.Button(titlebar, text='X', command=on_close or window.destroy,
+        btn = tk.Button(titlebar, text='X', command=on_close or (toplevel or window).destroy,
                         bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
                         font=self.custom_font)
         btn.pack(side=tk.RIGHT)
 
+        # Use the correct window to move (toplevel if provided)
+        move_target = toplevel if toplevel is not None else window
+
         def start(event):
-            window._x = event.x
-            window._y = event.y
+            move_target._x = event.x_root
+            move_target._y = event.y_root
 
         def drag(event):
-            x = window.winfo_x() + event.x - window._x
-            y = window.winfo_y() + event.y - window._y
-            window.geometry(f"+{x}+{y}")
+            dx = event.x_root - move_target._x
+            dy = event.y_root - move_target._y
+            x = move_target.winfo_x() + dx
+            y = move_target.winfo_y() + dy
+            move_target.geometry(f"+{x}+{y}")
+            move_target._x = event.x_root
+            move_target._y = event.y_root
 
         titlebar.bind("<ButtonPress-1>", start)
         titlebar.bind("<B1-Motion>", drag)
@@ -2183,7 +2190,27 @@ class NetworkMapGUI:
             result[0] = None
             dialog.destroy()
 
-        self.add_custom_titlebar(dialog, title, on_close)
+        # --- Custom titlebar (no border color behind) ---
+        #self.add_custom_titlebar(dialog, title, on_close, toplevel=dialog)
+
+        # --- Frame as main container (border/frame), packed below titlebar ---
+        outer_frame = tk.Frame(
+            dialog,
+            bg=ColorConfig.current.BORDER_COLOR,
+            padx=2,
+            pady=2
+        )
+        outer_frame.pack(fill="both", expand=True)
+        # Move the border frame below the titlebar
+        outer_frame.lift()  # Ensure it's below the titlebar if needed
+
+        # All widgets now go inside an inner frame with FRAME_BG
+        inner_frame = tk.Frame(
+            outer_frame,
+            bg=ColorConfig.current.FRAME_BG
+        )
+
+        inner_frame.pack(fill="both", expand=True)
 
         # Center the dialog
         dialog.update_idletasks()
@@ -2191,10 +2218,16 @@ class NetworkMapGUI:
         y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (120 // 2)
         dialog.geometry(f"250x138+{x}+{y}")
 
-        label = tk.Label(dialog, text=message, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, wraplength=220)
+        label = tk.Label(
+            inner_frame,
+            text=message,
+            bg=ColorConfig.current.FRAME_BG,
+            fg=ColorConfig.current.BUTTON_TEXT,
+            wraplength=220
+        )
         label.pack(pady=(20, 10), padx=10)
 
-        btn_frame = tk.Frame(dialog, bg=ColorConfig.current.FRAME_BG)
+        btn_frame = tk.Frame(inner_frame, bg=ColorConfig.current.FRAME_BG)
         btn_frame.pack(pady=(0, 10))
 
         def on_yes():
@@ -2246,7 +2279,7 @@ class NetworkMapGUI:
 
     def on_close(self):
         if self.unsaved_changes:
-            response = self._custom_askyesno("Unsaved Changes", "You have unsaved changes. Would you like to save before exiting?")
+            response = self._custom_askyesno("", "You have unsaved changes. Would you like to save before exiting?")
             if response is None:
                 # Cancel pressed, abort close
                 return
