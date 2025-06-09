@@ -2,7 +2,7 @@ import tkinter as tk
 from colors import ColorConfig
 import os
 
-LEGEND_STATE_PATH = "_internal/legend_state.txt"
+LEGEND_STATE_PATH = "data/legend_state.txt"
 
 def read_legend_state():
     state = {}
@@ -103,7 +103,7 @@ def show_operator_guidance(root, center_func=None, custom_font=None):
     import os
     from PIL import Image, ImageTk
 
-    screenshots_dir = os.path.join(os.path.dirname(__file__), "_internal", "screenshots", "operator_guidance")
+    screenshots_dir = os.path.join(os.path.dirname(__file__), "data", "screenshots", "operator_guidance")
     image_files = [f for f in os.listdir(screenshots_dir) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".bmp"))]
     image_files.sort()
     images = []
@@ -212,7 +212,7 @@ def show_configuration_guidance(root, center_func=None, custom_font=None):
     import os
     from PIL import Image, ImageTk
 
-    screenshots_dir = os.path.join(os.path.dirname(__file__), "_internal", "screenshots", "configuration_guidance")
+    screenshots_dir = os.path.join(os.path.dirname(__file__), "data", "screenshots", "configuration_guidance")
     image_files = [f for f in os.listdir(screenshots_dir) if f.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".bmp"))]
     image_files.sort()
     images = []

@@ -49,9 +49,9 @@ class NetworkMapGUI:
         self.load_window_geometry()  # Load saved window size and position
         # PyInstaller-compatible icon path
         if getattr(sys, 'frozen', False):
-            icon_path = os.path.join(sys._MEIPASS, '_internal', 'favicon.ico')
+            icon_path = os.path.join(sys._MEIPASS, 'data', 'favicon.ico')
         else:
-            icon_path = '_internal/favicon.ico'
+            icon_path = 'data/favicon.ico'
         root.iconbitmap(icon_path)
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
         self.custom_font = font.Font(family="Helvetica", size=12)
@@ -975,7 +975,7 @@ class NetworkMapGUI:
             content_frame.pack(fill=tk.BOTH, expand=True)
 
             # Image
-            img = Image.open("_internal/legend.png").resize((404, 400), Image.Resampling.LANCZOS)
+            img = Image.open("data/legend.png").resize((404, 400), Image.Resampling.LANCZOS)
             photo_img = ImageTk.PhotoImage(img)
             img_label = tk.Label(content_frame, image=photo_img, bg=ColorConfig.current.FRAME_BG)
             img_label.image = photo_img  # Keep a reference to avoid garbage collection
@@ -1103,7 +1103,7 @@ class NetworkMapGUI:
 
     def load_legend_state(self):
         try:
-            with open("_internal/legend_state.txt", "r") as f:
+            with open("data/legend_state.txt", "r") as f:
                 for line in f:
                     if line.startswith("HIDE_LEGEND="):
                         value = line.strip().split("=", 1)[1].strip().lower()
@@ -1969,12 +1969,12 @@ class NetworkMapGUI:
             show_operator_guidance(self.root, self.center_window_on_screen, self.custom_font)
 
     def save_last_file_path(self, file_path):
-        with open('_internal/last_file_path.txt', 'w') as f:
+        with open('data/last_file_path.txt', 'w') as f:
             f.write(file_path)
 
     def load_last_file(self):
         try:
-            with open('_internal/last_file_path.txt', 'r') as f:
+            with open('data/last_file_path.txt', 'r') as f:
                 last_file_path = f.read().strip()
                 if os.path.exists(last_file_path):
                     self.load_network_state_from_path(last_file_path)
@@ -2321,7 +2321,7 @@ class NetworkMapGUI:
 
     def load_window_geometry(self):
         try:
-            with open("_internal/legend_state.txt", "r") as f:
+            with open("data/legend_state.txt", "r") as f:
                 for line in f:
                     if line.startswith("WINDOW_GEOMETRY:"):
                         geometry = line.strip().split(":", 1)[1]
@@ -2416,11 +2416,11 @@ class NetworkMapGUI:
 
     def load_custom_commands(self):
         try:
-            with open('_internal/custom_commands.json', 'r') as f:
+            with open('data/custom_commands.json', 'r') as f:
                 return json.load(f)
         except FileNotFoundError:
             return {}
 
     def save_custom_commands(self):
-        with open('_internal/custom_commands.json', 'w') as f:
+        with open('data/custom_commands.json', 'w') as f:
             json.dump(self.custom_commands, f, indent=4)
