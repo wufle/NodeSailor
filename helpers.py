@@ -1,17 +1,28 @@
 import tkinter as tk
 from colors import ColorConfig
 import os
+import sys
 
-LEGEND_STATE_PATH = "data/legend_state.txt"
+if hasattr(sys, "frozen"):
+    # Running as PyInstaller executable
+    BASE_DIR = os.path.dirname(sys.executable)
+    LEGEND_STATE_PATH = os.path.join(BASE_DIR, "_internal", "data", "legend_state.txt")
+else:
+    # Running from source
+    LEGEND_STATE_PATH = os.path.join("data", "legend_state.txt")
 
 def read_legend_state():
     state = {}
-    if os.path.exists(LEGEND_STATE_PATH):
-        with open(LEGEND_STATE_PATH, "r") as f:
-            for line in f:
-                if "=" in line:
-                    k, v = line.strip().split("=", 1)
-                    state[k] = v == "1"
+    try:
+        if os.path.exists(LEGEND_STATE_PATH):
+            with open(LEGEND_STATE_PATH, "r") as f:
+                for line in f:
+                    if "=" in line:
+                        k, v = line.strip().split("=", 1)
+                        state[k] = v == "1"
+    except Exception:
+        # Fallback: return empty state if file is unreadable
+        state = {}
     return state
 
 def write_legend_state(update):
@@ -20,24 +31,30 @@ def write_legend_state(update):
     state.update(update)
     lines = []
     written = set()
-    if os.path.exists(LEGEND_STATE_PATH):
-        with open(LEGEND_STATE_PATH, "r") as f:
-            for line in f:
-                if "=" in line:
-                    k, _ = line.strip().split("=", 1)
-                    if k in update:
-                        lines.append(f"{k}={'1' if state[k] else '0'}\n")
-                        written.add(k)
+    try:
+        if os.path.exists(LEGEND_STATE_PATH):
+            with open(LEGEND_STATE_PATH, "r") as f:
+                for line in f:
+                    if "=" in line:
+                        k, _ = line.strip().split("=", 1)
+                        if k in update:
+                            lines.append(f"{k}={'1' if state[k] else '0'}\n")
+                            written.add(k)
+                        else:
+                            lines.append(line)
                     else:
                         lines.append(line)
-                else:
-                    lines.append(line)
-    # Add any new keys not already present
-    for k in update:
-        if k not in written:
-            lines.append(f"{k}={'1' if state[k] else '0'}\n")
-    with open(LEGEND_STATE_PATH, "w") as f:
-        f.writelines(lines)
+        # Add any new keys not already present
+        for k in update:
+            if k not in written:
+                lines.append(f"{k}={'1' if state[k] else '0'}\n")
+        # Ensure the directory exists before writing
+        os.makedirs(os.path.dirname(LEGEND_STATE_PATH), exist_ok=True)
+        with open(LEGEND_STATE_PATH, "w") as f:
+            f.writelines(lines)
+    except Exception:
+        # Fail silently or log if needed; fallback is to do nothing
+        pass
 
 def _setup_draggable_titlebar(win, title_bar, title_label):
     def start_drag(event):

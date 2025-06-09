@@ -14,7 +14,7 @@ import customtkinter as ctk  # Added for CTk window
 from utils import get_ip_addresses
 from colors import ColorConfig
 from tooltip import ToolTip
-from helpers import show_operator_guidance, show_configuration_guidance, read_legend_state, write_legend_state
+from helpers import show_operator_guidance, show_configuration_guidance, read_legend_state, write_legend_state, LEGEND_STATE_PATH
 from nodes import NetworkNode
 from connections import ConnectionLine
 from notes import StickyNote
@@ -975,7 +975,12 @@ class NetworkMapGUI:
             content_frame.pack(fill=tk.BOTH, expand=True)
 
             # Image
-            img = Image.open("data/legend.png").resize((404, 400), Image.Resampling.LANCZOS)
+            import sys, os
+            if getattr(sys, 'frozen', False):
+                legend_path = os.path.join(sys._MEIPASS, 'data', 'legend.png')
+            else:
+                legend_path = os.path.join('data', 'legend.png')
+            img = Image.open(legend_path).resize((404, 400), Image.Resampling.LANCZOS)
             photo_img = ImageTk.PhotoImage(img)
             img_label = tk.Label(content_frame, image=photo_img, bg=ColorConfig.current.FRAME_BG)
             img_label.image = photo_img  # Keep a reference to avoid garbage collection
@@ -1103,13 +1108,14 @@ class NetworkMapGUI:
 
     def load_legend_state(self):
         try:
-            with open("data/legend_state.txt", "r") as f:
+            with open(LEGEND_STATE_PATH, "r") as f:
                 for line in f:
                     if line.startswith("HIDE_LEGEND="):
                         value = line.strip().split("=", 1)[1].strip().lower()
                         self.hide_legend_on_start.set(value == '1' or value == 'true')
-        except FileNotFoundError:
-            pass
+        except Exception:
+            # Fallback: default to not hiding legend if file is missing/unreadable
+            self.hide_legend_on_start.set(False)
         
     def center_window_on_screen(self, window):
         window.update_idletasks()  # Ensure all widgets are rendered
@@ -2321,12 +2327,13 @@ class NetworkMapGUI:
 
     def load_window_geometry(self):
         try:
-            with open("data/legend_state.txt", "r") as f:
+            with open(LEGEND_STATE_PATH, "r") as f:
                 for line in f:
                     if line.startswith("WINDOW_GEOMETRY:"):
                         geometry = line.strip().split(":", 1)[1]
                         self.root.geometry(geometry)
-        except FileNotFoundError:
+        except Exception:
+            # Fallback: do not set geometry if file is missing/unreadable
             pass
 
     def create_popup(self, title, width, height, on_close=None, grab=False):
