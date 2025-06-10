@@ -977,10 +977,10 @@ class NetworkMapGUI:
             # Image
             import sys, os
             if getattr(sys, 'frozen', False):
-                legend_path = os.path.join(sys._MEIPASS, 'data', 'legend.png')
+                legend_path = os.path.join(sys._MEIPASS, 'data', 'favicon.ico')
             else:
-                legend_path = os.path.join('data', 'legend.png')
-            img = Image.open(legend_path).resize((404, 400), Image.Resampling.LANCZOS)
+                legend_path = os.path.join('data', 'favicon.ico')
+            img = Image.open(legend_path).resize((300, 300), Image.Resampling.LANCZOS)
             photo_img = ImageTk.PhotoImage(img)
             img_label = tk.Label(content_frame, image=photo_img, bg=ColorConfig.current.FRAME_BG)
             img_label.image = photo_img  # Keep a reference to avoid garbage collection
