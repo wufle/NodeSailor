@@ -397,24 +397,6 @@ class NetworkMapGUI:
         y = self.legend_window.winfo_y() + deltay
         self.legend_window.geometry(f"+{x}+{y}")
 
-    def start_resize(self, event):
-        self.start_x = event.x_root
-        self.start_y = event.y_root
-        self.initial_width = self.root.winfo_width()
-        self.initial_height = self.root.winfo_height()
-
-    def stop_resize(self, event):
-        self.start_x = None
-        self.start_y = None
-
-    def start_resize_top_left(self, event):
-        self.start_x = event.x_root
-        self.start_y = event.y_root
-        self.initial_width = self.root.winfo_width()
-        self.initial_height = self.root.winfo_height()
-        self.initial_x = self.root.winfo_x()
-        self.initial_y = self.root.winfo_y()
-
     def add_custom_titlebar(self, window, title, on_close=None, toplevel=None):
         outer = tk.Frame(window, bg=ColorConfig.current.BORDER_COLOR, padx=2, pady=2)
         outer.pack(fill=tk.BOTH, expand=True)
@@ -453,20 +435,6 @@ class NetworkMapGUI:
         label.bind("<B1-Motion>", drag)
 
         return outer
-
-    def start_move(self, event):
-        """Capture the initial mouse position for dragging."""
-        self.x = event.x
-        self.y = event.y
-
-    def do_move(self, event):
-        """Move the window based on mouse movement."""
-        if not self.is_maximized:
-            deltax = event.x - self.x
-            deltay = event.y - self.y
-            x = self.root.winfo_x() + deltax
-            y = self.root.winfo_y() + deltay
-            self.root.geometry(f"+{x}+{y}")
 
     def show_color_editor(self):
         if self.legend_window and self.legend_window.winfo_exists():
@@ -683,7 +651,7 @@ class NetworkMapGUI:
         text_area.pack(fill=tk.BOTH, expand=True)
 
         help_lines = [
-            ("NodeSailor v0.9.24- Help\n", "title"),
+            ("NodeSailor v0.9.25- Help\n", "title"),
             ("\nOverview:\n", "header"),
             ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, RDP and more with the implementation of custom commands.\n", "text"),
 
@@ -954,7 +922,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="NodeSailor v0.9.24", bg=ColorConfig.current.FRAME_BG,
+            title_label = tk.Label(title_bar, text="NodeSailor v0.9.25", bg=ColorConfig.current.FRAME_BG,
                                 fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
@@ -1170,12 +1138,8 @@ class NetworkMapGUI:
             vlan_value = getattr(node, vlan_key, "-")
             self.vlan_labels[vlan_key].config(text=vlan_value)
 
-    def open_node_window(self, node=None, event=None):
-        #import logging
-        #logging.basicConfig(level=logging.DEBUG)
-        
+    def open_node_window(self, node=None, event=None):   
         if hasattr(self, 'node_window') and self.node_window and self.node_window.winfo_exists():
-            
             self.node_window.lift()
             return
 
@@ -2024,19 +1988,6 @@ class NetworkMapGUI:
         if hasattr(self, "group_manager") and hasattr(self.group_manager, "groups"):
             for group in self.group_manager.groups:
                 group.update_properties()
-
-    def start_move(self, event):
-        """Capture the initial mouse position for dragging."""
-        self.x = event.x
-        self.y = event.y
-
-    def do_move(self, event):
-        """Move the window based on mouse movement."""
-        deltax = event.x - self.x
-        deltay = event.y - self.y
-        x = self.root.winfo_x() + deltax
-        y = self.root.winfo_y() + deltay
-        self.root.geometry(f"+{x}+{y}")
 
 # Node list editor moved to node_list.py as open_node_list_editor(gui)
 
