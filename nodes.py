@@ -1,6 +1,6 @@
 from colors import ColorConfig
 import tkinter as tk
-from tkinter import messagebox, simpledialog, font
+from tkinter import messagebox, font
 import subprocess
 import platform
 import os

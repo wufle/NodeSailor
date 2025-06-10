@@ -1,7 +1,7 @@
 import tkinter as tk
 import customtkinter as ctk 
 from tkinter import messagebox
-from tkinter import simpledialog, messagebox, font, filedialog, colorchooser, ttk
+from tkinter import messagebox, font, filedialog, colorchooser, ttk
 import subprocess
 from threading import Thread
 import json

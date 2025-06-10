@@ -1,6 +1,5 @@
 from colors import ColorConfig
 import tkinter as tk
-from tkinter import simpledialog
 
 class StickyNote:
     def __init__(self, canvas, text, x, y, gui=None,
@@ -126,17 +125,6 @@ class StickyNote:
                 if hasattr(self.gui, "regain_focus"):
                     self.gui.regain_focus()
             self.gui.show_sticky_note_popup(self.text, on_ok)
-        else:
-            # fallback to simpledialog if gui method is not available
-            new_text = simpledialog.askstring(
-                "Edit Note",
-                "Enter new note text:",
-                initialvalue=self.text
-            )
-            if new_text is not None:
-                self.text = new_text
-                self.canvas.itemconfig(self.note, text=self.text)
-                self.adjust_note_size()
 
     def delete_sticky(self):
         # If the GUI is available, call its remove_sticky. Otherwise, just delete ourselves.

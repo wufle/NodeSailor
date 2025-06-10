@@ -1,7 +1,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.font as font
-from tkinter import colorchooser, filedialog, messagebox, simpledialog
+from tkinter import colorchooser, filedialog, messagebox
 import ctypes
 import platform
 import json
@@ -1455,7 +1455,7 @@ class NetworkMapGUI:
                 pass
             self.sticky_note_popup = None
 
-        popup, content = self.create_popup("Sticky Note", 320, 120, grab=True)
+        popup, content = self.create_popup("Sticky Note", 320, 150, grab=True)
         self.sticky_note_popup = popup
         self.center_window_absolute(popup)
         content.config(highlightthickness=0)

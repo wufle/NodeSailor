@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import colorchooser, simpledialog, messagebox
+from tkinter import colorchooser, messagebox
 import json
 import os
 
