@@ -84,6 +84,25 @@ class NetworkMapGUI:
         self.buttons_frame = tk.Frame(root)
         self.buttons_frame.pack(side=tk.TOP, fill=tk.X)
         self.buttons_frame.config(bg=ColorConfig.current.FRAME_BG)
+        
+        # Tooltip toggle button ('?')
+        self.tooltip_button = tk.Button(
+            self.buttons_frame,
+            text='?',
+            command=self.toggle_tooltips,
+            font=self.custom_font,
+            bg=ColorConfig.current.BUTTON_BG,
+            fg=ColorConfig.current.BUTTON_TEXT,
+            activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+            activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
+            relief=tk.SUNKEN if self.show_tooltips else tk.RAISED,
+            padx=5,
+            pady=2
+        )
+        self.tooltip_button.pack(side=tk.RIGHT, padx=4, pady=2)
+
+        # Add tooltip for the tooltip button itself
+        ToolTip(self.tooltip_button, "Enable or disable tooltips", self, bg=lambda: ColorConfig.current.INFO_NOTE_BG)
 
         # Groups mode banner label (persistent, hidden by default)
         self.groups_banner_label = tk.Label(
@@ -216,7 +235,7 @@ class NetworkMapGUI:
         whoamI_button = tk.Button(self.buttons_frame, text='Who am I?', command=self.highlight_matching_nodes, **button_style)
         whoamI_button.pack(side=tk.LEFT, padx=5, pady=5)
         
-        ToolTip(whoamI_button, "Highlight matching nodes", self,
+        ToolTip(whoamI_button, "Highlight node matching active system IP address", self,
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
         fg=lambda: ColorConfig.current.INFO_TEXT)
 
@@ -363,9 +382,8 @@ class NetworkMapGUI:
 
     def toggle_tooltips(self):
         self.show_tooltips = not self.show_tooltips
-        # self.help_button.config(relief=tk.SUNKEN if self.show_tooltips else tk.RAISED)
-        if self.show_tooltips:
-            self.show_help()
+        # Update button appearance
+        self.tooltip_button.config(relief=tk.SUNKEN if self.show_tooltips else tk.RAISED)
 
     def bind_all_shortcuts(self):
         """Bind all global keyboard shortcuts."""
