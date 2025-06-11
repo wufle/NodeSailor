@@ -2,6 +2,8 @@ import tkinter as tk
 from colors import ColorConfig
 
 from colors import ColorConfig, get_group_colors
+import json
+import os
 
 class RectangleGroup:
     HANDLE_SIZE = 8
@@ -304,32 +306,49 @@ class GroupManager:
         """Finish drawing the rectangle and create a group"""
         if not self.drawing or not self.gui.groups_mode_active:
             return
-            
+
         self.drawing = False
-        
+
         # Only create a group if the rectangle has some size
         if abs(self.canvas.canvasx(event.x) - self.start_x) > 10 and abs(self.canvas.canvasy(event.y) - self.start_y) > 10:
             # Delete the temporary rectangle
             self.canvas.delete(self.current_group)
-            
-            # Create a new group
+
+            # Load color presets from config
+            config_path = "group_editor_config.json"
+            if os.path.exists(config_path):
+                try:
+                    with open(config_path, "r") as f:
+                        config_data = json.load(f)
+                        color_presets = config_data.get("color_presets", [])
+                except Exception:
+                    color_presets = []
+            else:
+                color_presets = []
+
+            # Set default color_preset_id
+            color_preset_id = color_presets[0]["id"] if color_presets and "id" in color_presets[0] else None
+
+            # Create a new group with color presets and preset id
             group = RectangleGroup(
                 self.canvas,
                 self.start_x, self.start_y,
                 self.canvas.canvasx(event.x), self.canvas.canvasy(event.y),
                 f"Group {len(self.groups) + 1}",
-                ColorConfig.current.GROUP_DEFAULT
+                ColorConfig.current.GROUP_DEFAULT,
+                color_preset_id=color_preset_id,
+                color_presets=color_presets
             )
-            
+
             self.groups.append(group)
             self.selected_group = group
-            
-            # Open the group editor
-            self.gui.open_group_editor(group)
+
+            # Open the group editor with color presets
+            self.gui.open_group_editor(group, color_presets=color_presets)
         else:
             # Delete the temporary rectangle if it's too small
             self.canvas.delete(self.current_group)
-        
+
         self.current_group = None
     
     def select_group(self, event):
