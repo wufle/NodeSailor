@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import messagebox
 
 def manage_custom_commands(gui_self):
     ColorConfig = gui_self.ColorConfig if hasattr(gui_self, "ColorConfig") else __import__("colors").ColorConfig
@@ -96,24 +95,9 @@ def manage_custom_commands(gui_self):
     btn_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
     btn_frame.pack(pady=10)
 
-    def add_command():
-        name = name_entry.get().strip()
-        cmd = cmd_entry.get("1.0", tk.END).strip()
-        if applicability_var.get():
-            applicable_nodes = None
-        else:
-            applicable_nodes = [node_names[i] for i in node_select_listbox.curselection()]
-        if name and cmd:
-            gui_self.custom_commands[name] = {
-                "template": cmd,
-                "applicable_nodes": applicable_nodes
-            }
-            listbox.insert(tk.END, name)
-            name_entry.delete(0, tk.END)
-            cmd_entry.delete("1.0", tk.END)
-            applicability_var.set(True)
-            node_select_listbox.selection_clear(0, tk.END)
-            gui_self.save_custom_commands()
+    def new_command():
+        name_entry.delete(0, tk.END)
+        cmd_entry.delete("1.0", tk.END)
 
     def delete_command():
         selection = listbox.curselection()
@@ -152,14 +136,11 @@ def manage_custom_commands(gui_self):
         'pady': 2
     }
 
-    tk.Button(btn_frame, text="Add", command=add_command, **btn_style).pack(side=tk.LEFT, padx=5)
+    tk.Button(btn_frame, text="New", command=new_command, **btn_style).pack(side=tk.LEFT, padx=5)
     tk.Button(btn_frame, text="Delete", command=delete_command, **btn_style).pack(side=tk.LEFT, padx=5)
     tk.Button(btn_frame, text="Save", command=save_commands, **btn_style).pack(side=tk.LEFT, padx=5)
-    tk.Button(btn_frame, text="Close", command=gui_self.make_popup_closer("custom_cmd_window"), **btn_style).pack(side=tk.LEFT, padx=5)
 
     tk.Label(content, text="""
-
-
                 
 Custom Commands:
 - Use placeholders like {ip}, {name}, {file}, {web}, {rdp}, {vlan100}, etc.
