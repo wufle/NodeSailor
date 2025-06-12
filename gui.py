@@ -475,6 +475,7 @@ class NetworkMapGUI:
             self.regain_focus()
 
         self.color_editor_window, content = self.create_popup("Color Scheme Editor", 300, 900, on_close=on_close, grab=False)
+        self.color_editor_window.attributes('-topmost', True)
 
         theme_var = tk.StringVar(value="Dark" if ColorConfig.current == ColorConfig.Dark else "Light")
 
