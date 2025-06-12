@@ -671,7 +671,7 @@ class NetworkMapGUI:
         help_lines = [
             ("NodeSailor v0.9.25- Help\n", "title"),
             ("\nOverview:\n", "header"),
-            ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, RDP and more with the implementation of custom commands.\n", "text"),
+            ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, quick launchers for file explorer, web browser, RDP and more with the implementation of custom commands.\n", "text"),
 
             ("\nUser Modes:\n", "header"),
             ("- Operator: Monitor and interact with the network.\n"
@@ -695,13 +695,13 @@ class NetworkMapGUI:
              "- Right Click: Open context menu.\n", "text"),
 
             ("\nGroups:\n", "header"),
-            ("Groups allow you to visually organize nodes into labeled rectangles. Use the Groups button to create, edit, or remove groups. Drag nodes into a group to include them. Groups can be renamed and repositioned for clarity.\n", "text"),
+            ("Groups allow the configurator to visually organize nodes into labeled rectangles. Use the Groups button to create, edit, or remove groups. Groups can be renamed and repositioned for clarity.\n", "text"),
 
             ("\nNode List Editor:\n", "header"),
-            ("The Node List Editor presents all nodes in a table for quick editing. Use it to add, remove, or modify node properties such as name, IP address, and description. Access via the Node List button.\n", "text"),
+            ("The Node List Editor presents all nodes in a table for quick editing. Use it to add, remove, or modify node properties. Access via the Node List button.\n", "text"),
 
             ("\nConnections List Editor:\n", "header"),
-            ("The Connections Editor displays all connections in a list format. Use it to add, remove, or edit connections between nodes efficiently. Access via the Connections List button.\n", "text"),
+            ("The Connections Editor displays all connections in a list format. Use it to add, remove, or edit connections between nodes. Access via the Connections List button.\n", "text"),
 
             ("\nVLAN Checkboxes:\n", "header"),
             ("- Toggle visibility of VLAN nodes.\n", "text"),
