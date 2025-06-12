@@ -474,7 +474,7 @@ class NetworkMapGUI:
             self.color_editor_window = None
             self.regain_focus()
 
-        self.color_editor_window, content = self.create_popup("Color Scheme Editor", 500, 900, on_close=on_close, grab=False)
+        self.color_editor_window, content = self.create_popup("Color Scheme Editor", 300, 900, on_close=on_close, grab=False)
 
         theme_var = tk.StringVar(value="Dark" if ColorConfig.current == ColorConfig.Dark else "Light")
 
@@ -1058,7 +1058,7 @@ class NetworkMapGUI:
             self.config_menu_window = None
             self.regain_focus()
             
-        self.config_menu_window, content = self.create_popup("Configuration Menu", 300, 450, on_close=close_config_menu, grab=False)
+        self.config_menu_window, content = self.create_popup("Configuration Menu", 300, 250, on_close=close_config_menu, grab=False)
         
         # Button styles
         button_style = {
