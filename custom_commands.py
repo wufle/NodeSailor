@@ -122,6 +122,8 @@ def manage_custom_commands(gui_self):
             del gui_self.custom_commands[name]
             listbox.delete(selection[0])
             gui_self.save_custom_commands()
+            name_entry.delete(0, tk.END)
+            cmd_entry.delete("1.0", tk.END)
 
     def save_commands():
         name = name_entry.get().strip()
