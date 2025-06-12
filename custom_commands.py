@@ -16,6 +16,7 @@ def manage_custom_commands(gui_self):
                             selectbackground=ColorConfig.current.ENTRY_FOCUS_BG,
                             selectforeground=ColorConfig.current.BUTTON_TEXT)
     listbox.pack(pady=10, padx=10)
+    gui_self.custom_commands_listbox = listbox
 
     for name in gui_self.custom_commands.keys():
         listbox.insert(tk.END, name)

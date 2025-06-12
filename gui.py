@@ -1809,6 +1809,16 @@ class NetworkMapGUI:
             config["color_presets"] = DEFAULT_PRESETS
             with open(CONFIG_PATH, "w") as f:
                 json.dump(config, f, indent=4)
+
+            # Reset custom commands file to empty
+            try:
+                with open("data/custom_commands.json", "w") as f:
+                    json.dump({}, f, indent=4)
+                self.custom_commands = {}
+                if hasattr(self, "custom_commands_listbox"):
+                    self.custom_commands_listbox.delete(0, "end")
+            except Exception:
+                pass
     
             # Show operator guidance window if in Operator mode
             if self.mode == "Operator":
@@ -1818,6 +1828,14 @@ class NetworkMapGUI:
         with open(file_path, 'r') as f:
             self.clear_current_loaded()  # Clears existing nodes, connections, and stickynotes
             state = json.load(f)
+
+            # Reset custom commands file to empty if not present in state
+            if "custom_commands" not in state or not state["custom_commands"]:
+                try:
+                    with open("data/custom_commands.json", "w") as fcc:
+                        json.dump({}, fcc, indent=4)
+                except Exception:
+                    pass
 
             # Extract group editor config from state, fallback to defaults if missing/None
             group_color_presets = state.get("group_color_presets")
@@ -1895,10 +1913,20 @@ class NetworkMapGUI:
             with open(file_path, 'r') as f:
                 self.clear_current_loaded()  # Clear existing nodes, connections and labels
                 state = json.load(f)
+                
+                # Reset custom commands file to empty if not present in state
+                if "custom_commands" not in state or not state["custom_commands"]:
+                    try:
+                        with open("data/custom_commands.json", "w") as fcc:
+                            json.dump({}, fcc, indent=4)
+                    except Exception:
+                        pass
+                
                 # Load custom commands if present
                 if "custom_commands" in state:
                     self.custom_commands = state["custom_commands"]
                     self.save_custom_commands()
+                
                 # --- Begin group_editor_config.json sync logic ---
                 color_presets = state.get('group_color_presets')
                 window_height = state.get('group_window_height')
@@ -1924,9 +1952,9 @@ class NetworkMapGUI:
                 # Load nodes
                 for node_data in state['nodes']:
                     node = NetworkNode(
-                        self.canvas, 
-                        node_data['name'], 
-                        node_data['x'], 
+                        self.canvas,
+                        node_data['name'],
+                        node_data['x'],
                         node_data['y'],
                         VLAN_100=node_data.get('VLAN_100', ''),
                         VLAN_200=node_data.get('VLAN_200', ''),
