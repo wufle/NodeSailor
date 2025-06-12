@@ -5,7 +5,7 @@ from tkinter import colorchooser, filedialog, messagebox
 import ctypes
 import platform
 import json
-from group_editor import DEFAULT_PRESETS, DEFAULT_HEIGHT
+from group_editor import DEFAULT_PRESETS, DEFAULT_HEIGHT, CONFIG_PATH
 import logging
 import math
 import os
@@ -1799,6 +1799,16 @@ class NetworkMapGUI:
             self.clear_current_loaded()  # Clear existing nodes and connections
             self.clear_node_status()  # Reset the status of all nodes
             self.legend_window.destroy()  # Close the legend window
+
+            # Reset color presets in group_editor_config.json to defaults
+            try:
+                with open(CONFIG_PATH, "r") as f:
+                    config = json.load(f)
+            except Exception:
+                config = {}
+            config["color_presets"] = DEFAULT_PRESETS
+            with open(CONFIG_PATH, "w") as f:
+                json.dump(config, f, indent=4)
     
             # Show operator guidance window if in Operator mode
             if self.mode == "Operator":

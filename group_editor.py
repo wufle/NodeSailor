@@ -3,6 +3,8 @@ from tkinter import colorchooser, messagebox
 import json
 import os
 
+CONFIG_PATH = "group_editor_config.json"
+
 DEFAULT_HEIGHT = 460
 DEFAULT_PRESETS = [
     {
