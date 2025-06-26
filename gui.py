@@ -2,12 +2,8 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.font as font
 from tkinter import colorchooser, filedialog, messagebox
-import ctypes
-import platform
 import json
 from group_editor import DEFAULT_PRESETS, DEFAULT_HEIGHT, CONFIG_PATH
-import logging
-import math
 import os
 import sys
 

@@ -1,4 +1,3 @@
-from colors import ColorConfig
 import tkinter as tk
 
 class ToolTip:

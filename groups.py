@@ -1,5 +1,4 @@
 import tkinter as tk
-from colors import ColorConfig
 
 from colors import ColorConfig, get_group_colors
 import json
