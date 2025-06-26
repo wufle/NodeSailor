@@ -4,6 +4,12 @@ from colors import ColorConfig
 from colors import ColorConfig, get_group_colors
 import json
 import os
+import sys
+
+def get_resource_path(filename):
+    if getattr(sys, 'frozen', False):
+        return os.path.join(sys._MEIPASS, filename)
+    return filename
 
 class RectangleGroup:
     HANDLE_SIZE = 8
@@ -315,7 +321,7 @@ class GroupManager:
             self.canvas.delete(self.current_group)
 
             # Load color presets from config
-            config_path = "group_editor_config.json"
+            config_path = get_resource_path("group_editor_config.json")
             if os.path.exists(config_path):
                 try:
                     with open(config_path, "r") as f:

@@ -10,6 +10,11 @@ import logging
 import math
 import os
 import sys
+
+def get_resource_path(filename):
+    if getattr(sys, 'frozen', False):
+        return os.path.join(sys._MEIPASS, filename)
+    return filename
 import customtkinter as ctk  # Added for CTk window
 from utils import get_ip_addresses
 from colors import ColorConfig
@@ -48,10 +53,7 @@ class NetworkMapGUI:
         self.sticky_note_popup = None
         self.load_window_geometry()  # Load saved window size and position
         # PyInstaller-compatible icon path
-        if getattr(sys, 'frozen', False):
-            icon_path = os.path.join(sys._MEIPASS, 'data', 'favicon.ico')
-        else:
-            icon_path = 'data/favicon.ico'
+        icon_path = get_resource_path('data/favicon.ico')
         root.iconbitmap(icon_path)
         self.root.configure(bg=ColorConfig.current.FRAME_BG)
         self.custom_font = font.Font(family="Helvetica", size=12)
@@ -670,7 +672,7 @@ class NetworkMapGUI:
         text_area.pack(fill=tk.BOTH, expand=True)
 
         help_lines = [
-            ("NodeSailor v0.9.25- Help\n", "title"),
+            ("NodeSailor v0.9.26- Help\n", "title"),
             ("\nOverview:\n", "header"),
             ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, quick launchers for file explorer, web browser, RDP and more with the implementation of custom commands.\n", "text"),
 
@@ -941,7 +943,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="NodeSailor v0.9.25", bg=ColorConfig.current.FRAME_BG,
+            title_label = tk.Label(title_bar, text="NodeSailor v0.9.26", bg=ColorConfig.current.FRAME_BG,
                                 fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
@@ -963,10 +965,7 @@ class NetworkMapGUI:
 
             # Image
             import sys, os
-            if getattr(sys, 'frozen', False):
-                legend_path = os.path.join(sys._MEIPASS, 'data', 'favicon.ico')
-            else:
-                legend_path = os.path.join('data', 'favicon.ico')
+            legend_path = get_resource_path('data/favicon.ico')
             img = Image.open(legend_path).resize((300, 300), Image.Resampling.LANCZOS)
             photo_img = ImageTk.PhotoImage(img)
             img_label = tk.Label(content_frame, image=photo_img, bg=ColorConfig.current.FRAME_BG)
@@ -1770,7 +1769,7 @@ class NetworkMapGUI:
 
         # Read group color presets and window height from group_editor_config.json
         try:
-            with open("group_editor_config.json", "r") as config_file:
+            with open(get_resource_path("group_editor_config.json"), "r") as config_file:
                 config_data = json.load(config_file)
                 state["group_color_presets"] = config_data.get("color_presets")
                 state["group_window_height"] = config_data.get("window_height")
@@ -1803,17 +1802,17 @@ class NetworkMapGUI:
 
             # Reset color presets in group_editor_config.json to defaults
             try:
-                with open(CONFIG_PATH, "r") as f:
+                with open(get_resource_path(CONFIG_PATH), "r") as f:
                     config = json.load(f)
             except Exception:
                 config = {}
             config["color_presets"] = DEFAULT_PRESETS
-            with open(CONFIG_PATH, "w") as f:
+            with open(get_resource_path(CONFIG_PATH), "w") as f:
                 json.dump(config, f, indent=4)
 
             # Reset custom commands file to empty
             try:
-                with open("data/custom_commands.json", "w") as f:
+                with open(get_resource_path("data/custom_commands.json"), "w") as f:
                     json.dump({}, f, indent=4)
                 self.custom_commands = {}
                 if hasattr(self, "custom_commands_listbox"):
@@ -1996,12 +1995,12 @@ class NetworkMapGUI:
             show_operator_guidance(self.root, self.center_window_on_screen, self.custom_font)
 
     def save_last_file_path(self, file_path):
-        with open('data/last_file_path.txt', 'w') as f:
+        with open(get_resource_path('data/last_file_path.txt'), 'w') as f:
             f.write(file_path)
 
     def load_last_file(self):
         try:
-            with open('data/last_file_path.txt', 'r') as f:
+            with open(get_resource_path('data/last_file_path.txt'), 'r') as f:
                 last_file_path = f.read().strip()
                 if os.path.exists(last_file_path):
                     self.load_network_state_from_path(last_file_path)
@@ -2431,11 +2430,11 @@ class NetworkMapGUI:
 
     def load_custom_commands(self):
         try:
-            with open('data/custom_commands.json', 'r') as f:
+            with open(get_resource_path('data/custom_commands.json'), 'r') as f:
                 return json.load(f)
         except FileNotFoundError:
             return {}
 
     def save_custom_commands(self):
-        with open('data/custom_commands.json', 'w') as f:
+        with open(get_resource_path('data/custom_commands.json'), 'w') as f:
             json.dump(self.custom_commands, f, indent=4)

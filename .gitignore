@@ -15,3 +15,4 @@ example network test.json
 __pycache__/
 *.pyc
 group_editor_config.json
+data/custom_commands.json
