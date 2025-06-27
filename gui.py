@@ -6,11 +6,6 @@ import json
 from group_editor import DEFAULT_PRESETS, DEFAULT_HEIGHT, CONFIG_PATH
 import os
 import sys
-
-def get_resource_path(filename):
-    if getattr(sys, 'frozen', False):
-        return os.path.join(sys._MEIPASS, filename)
-    return filename
 import customtkinter as ctk  # Added for CTk window
 from utils import get_ip_addresses
 from colors import ColorConfig
@@ -25,6 +20,11 @@ from connection_list_editor import open_connection_list_editor
 from groups import GroupManager, RectangleGroup
 from group_editor import open_group_editor
 from custom_commands import manage_custom_commands
+
+def get_resource_path(filename):
+    if getattr(sys, 'frozen', False):
+        return os.path.join(sys._MEIPASS, filename)
+    return filename
 
 class NetworkMapGUI:
     def manage_custom_commands(self):
@@ -1763,16 +1763,10 @@ class NetworkMapGUI:
             group_data = group.to_dict()
             state['groups'].append(group_data)
 
-        # Read group color presets and window height from group_editor_config.json
-        try:
-            with open(get_resource_path("group_editor_config.json"), "r") as config_file:
-                config_data = json.load(config_file)
-                state["group_color_presets"] = config_data.get("color_presets")
-                state["group_window_height"] = config_data.get("window_height")
-        except Exception as e:
-            # Optionally log or handle error, but do not block save
-            state["group_color_presets"] = None
-            state["group_window_height"] = None
+        # Save group color presets and window height from in-memory values or defaults
+        # Always save the current in-memory color presets, including any custom presets
+        state["group_color_presets"] = getattr(self.group_manager, "color_presets", DEFAULT_PRESETS)
+        state["group_window_height"] = getattr(self.group_manager, "window_height", DEFAULT_HEIGHT)
 
         # Add custom commands to state
         state["custom_commands"] = self.custom_commands
@@ -1834,12 +1828,16 @@ class NetworkMapGUI:
                     pass
 
             # Extract group editor config from state, fallback to defaults if missing/None
-            group_color_presets = state.get("group_color_presets")
+            group_color_presets = state.get("group_color_presets", DEFAULT_PRESETS)
             if not group_color_presets:
-                group_color_presets = None
-            group_window_height = state.get("group_window_height")
+                group_color_presets = DEFAULT_PRESETS
+            group_window_height = state.get("group_window_height", DEFAULT_HEIGHT)
             if not group_window_height:
-                group_window_height = None
+                group_window_height = DEFAULT_HEIGHT
+
+            # Ensure group_manager has up-to-date color presets
+            if hasattr(self, "group_manager"):
+                self.group_manager.color_presets = group_color_presets
 
             # Load custom VLAN labels (if present)
             if 'vlan_labels' in state:
@@ -1923,22 +1921,7 @@ class NetworkMapGUI:
                     self.custom_commands = state["custom_commands"]
                     self.save_custom_commands()
                 
-                # --- Begin group_editor_config.json sync logic ---
-                color_presets = state.get('group_color_presets')
-                window_height = state.get('group_window_height')
-                if color_presets is not None and window_height is not None:
-                    config_data = {
-                        "color_presets": color_presets,
-                        "window_height": window_height
-                    }
-                else:
-                    config_data = {
-                        "color_presets": DEFAULT_PRESETS,
-                        "window_height": DEFAULT_HEIGHT
-                    }
-                with open("group_editor_config.json", "w") as config_file:
-                    json.dump(config_data, config_file, indent=4)
-                # --- End group_editor_config.json sync logic ---
+                # group_editor_config.json sync logic removed; settings are now only saved in the main save file
                 if 'vlan_labels' in state:
                     self.vlan_label_names.update(state['vlan_labels'])
                     for vlan, label in self.vlan_title_labels.items():
@@ -1973,8 +1956,11 @@ class NetworkMapGUI:
                 
                 # Load groups
                 self.group_manager.groups = []
+                group_color_presets = state.get("group_color_presets", DEFAULT_PRESETS)
+                if hasattr(self, "group_manager"):
+                    self.group_manager.color_presets = group_color_presets
                 for group_data in state.get('groups', []):
-                    group = RectangleGroup.from_dict(self.canvas, group_data, color_presets=color_presets)
+                    group = RectangleGroup.from_dict(self.canvas, group_data, color_presets=group_color_presets)
                     self.group_manager.groups.append(group)
                 
                 # Make sure groups are behind nodes and connections

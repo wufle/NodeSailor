@@ -198,6 +198,9 @@ def open_group_editor(gui_self, group=None, color_presets=None, window_height=No
                 "dark_border": fields["dark_border"].get().strip() or "#ffffff",
             }
             color_presets.append(preset)
+            # Sync with main app's group_manager if available
+            if hasattr(gui_self, "group_manager") and hasattr(gui_self.group_manager, "color_presets"):
+                gui_self.group_manager.color_presets = color_presets.copy()
             # Increase window height by 40px per new color set
             nonlocal window_height
             window_height += 40
