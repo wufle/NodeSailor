@@ -6,10 +6,10 @@ import sys
 if hasattr(sys, "frozen"):
     # Running as PyInstaller executable
     BASE_DIR = os.path.dirname(sys.executable)
-    LEGEND_STATE_PATH = os.path.join(BASE_DIR, "_internal", "data", "legend_state.txt")
+    LEGEND_STATE_PATH = os.path.join(BASE_DIR, "Nodesailor_settings.txt")
 else:
     # Running from source
-    LEGEND_STATE_PATH = os.path.join("data", "legend_state.txt")
+    LEGEND_STATE_PATH = os.path.join("data", "Nodesailor_settings.txt")
 
 def read_legend_state():
     state = {}
