@@ -1800,6 +1800,10 @@ class NetworkMapGUI:
             with open(get_resource_path(CONFIG_PATH), "w") as f:
                 json.dump(config, f, indent=4)
 
+            # Also reset in-memory color presets to defaults
+            if hasattr(self, "group_manager"):
+                self.group_manager.color_presets = DEFAULT_PRESETS
+
             # Reset custom commands file to empty
             try:
                 with open(get_resource_path("data/custom_commands.json"), "w") as f:

@@ -1,14 +1,1 @@
-{
-    "ping -t": {
-        "template": "ping {ip} -t",
-        "applicable_nodes": null
-    },
-    "ping -derp": {
-        "template": "ping {ip} -derp",
-        "applicable_nodes": null
-    },
-    "asdfasdf": {
-        "template": "fasdasdfasdf",
-        "applicable_nodes": null
-    }
-}
+{}
