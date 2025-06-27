@@ -2387,7 +2387,7 @@ class NetworkMapGUI:
     def open_group_editor(self, group=None):
         """Open the group editor window"""
         from group_editor import open_group_editor
-        open_group_editor(self, group)
+        open_group_editor(self, group, color_presets=getattr(self.group_manager, "color_presets", None))
 
     def save_colors(self):
         colors = {
