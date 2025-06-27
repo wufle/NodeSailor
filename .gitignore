@@ -15,4 +15,4 @@ __pycache__/
 *.pyc
 group_editor_config.json
 data/custom_commands.json
-data/Nodesailor_settings.txt
+data/NodeSailor_settings.txt

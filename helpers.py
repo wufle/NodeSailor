@@ -6,16 +6,16 @@ import sys
 if hasattr(sys, "frozen"):
     # Running as PyInstaller executable
     BASE_DIR = os.path.dirname(sys.executable)
-    Nodesailor_settings_PATH = os.path.join(BASE_DIR, "Nodesailor_settings.txt")
+    NodeSailor_settings_PATH = os.path.join(BASE_DIR, "NodeSailor_settings.txt")
 else:
     # Running from source
-    Nodesailor_settings_PATH = os.path.join("data", "Nodesailor_settings.txt")
+    NodeSailor_settings_PATH = os.path.join("data", "NodeSailor_settings.txt")
 
-def read_Nodesailor_settings():
+def read_NodeSailor_settings():
     state = {}
     try:
-        if os.path.exists(Nodesailor_settings_PATH):
-            with open(Nodesailor_settings_PATH, "r") as f:
+        if os.path.exists(NodeSailor_settings_PATH):
+            with open(NodeSailor_settings_PATH, "r") as f:
                 for line in f:
                     if "=" in line:
                         k, v = line.strip().split("=", 1)
@@ -25,15 +25,15 @@ def read_Nodesailor_settings():
         state = {}
     return state
 
-def write_Nodesailor_settings(update):
+def write_NodeSailor_settings(update):
     # update: dict of key(s) to update
-    state = read_Nodesailor_settings()
+    state = read_NodeSailor_settings()
     state.update(update)
     lines = []
     written = set()
     try:
-        if os.path.exists(Nodesailor_settings_PATH):
-            with open(Nodesailor_settings_PATH, "r") as f:
+        if os.path.exists(NodeSailor_settings_PATH):
+            with open(NodeSailor_settings_PATH, "r") as f:
                 for line in f:
                     if "=" in line:
                         k, _ = line.strip().split("=", 1)
@@ -49,8 +49,8 @@ def write_Nodesailor_settings(update):
             if k not in written:
                 lines.append(f"{k}={'1' if state[k] else '0'}\n")
         # Ensure the directory exists before writing
-        os.makedirs(os.path.dirname(Nodesailor_settings_PATH), exist_ok=True)
-        with open(Nodesailor_settings_PATH, "w") as f:
+        os.makedirs(os.path.dirname(NodeSailor_settings_PATH), exist_ok=True)
+        with open(NodeSailor_settings_PATH, "w") as f:
             f.writelines(lines)
     except Exception:
         # Fail silently or log if needed; fallback is to do nothing
@@ -78,7 +78,7 @@ def _bring_to_front(win):
     win.after(10, lambda: win.attributes("-topmost", False))
 
 def show_operator_guidance(root, center_func=None, custom_font=None):
-    state = read_Nodesailor_settings()
+    state = read_NodeSailor_settings()
     if state.get("hide_operator_guidance", False):
         return
 
@@ -173,7 +173,7 @@ def show_operator_guidance(root, center_func=None, custom_font=None):
 
     var = tk.BooleanVar(value=False)
     def on_check():
-        write_Nodesailor_settings({"hide_operator_guidance": var.get()})
+        write_NodeSailor_settings({"hide_operator_guidance": var.get()})
     cb = tk.Checkbutton(content, text="Don't display this window again", variable=var,
                         command=on_check, bg=ColorConfig.current.INFO_NOTE_BG,
                         fg=ColorConfig.current.INFO_TEXT, selectcolor=ColorConfig.current.INFO_NOTE_BG,
@@ -189,7 +189,7 @@ def show_operator_guidance(root, center_func=None, custom_font=None):
         center_func(win)
 
 def show_configuration_guidance(root, center_func=None, custom_font=None):
-    state = read_Nodesailor_settings()
+    state = read_NodeSailor_settings()
     if state.get("hide_configuration_guidance", False):
         return
 
@@ -281,7 +281,7 @@ def show_configuration_guidance(root, center_func=None, custom_font=None):
 
     var = tk.BooleanVar(value=False)
     def on_check():
-        write_Nodesailor_settings({"hide_configuration_guidance": var.get()})
+        write_NodeSailor_settings({"hide_configuration_guidance": var.get()})
     cb = tk.Checkbutton(content, text="Don't display this window again", variable=var,
                         command=on_check, bg=ColorConfig.current.INFO_NOTE_BG,
                         fg=ColorConfig.current.INFO_TEXT, selectcolor=ColorConfig.current.INFO_NOTE_BG,

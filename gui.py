@@ -10,7 +10,7 @@ import customtkinter as ctk  # Added for CTk window
 from utils import get_ip_addresses
 from colors import ColorConfig
 from tooltip import ToolTip
-from helpers import show_operator_guidance, show_configuration_guidance, read_Nodesailor_settings, write_Nodesailor_settings, Nodesailor_settings_PATH
+from helpers import show_operator_guidance, show_configuration_guidance, read_NodeSailor_settings, write_NodeSailor_settings, NodeSailor_settings_PATH
 from nodes import NetworkNode
 from connections import ConnectionLine
 from notes import StickyNote
@@ -362,7 +362,7 @@ class NetworkMapGUI:
         
         self.toggle_mode() # sets to Operator mode on startup
         self.hide_legend_on_start = tk.BooleanVar(value=False)
-        self.load_Nodesailor_settings()
+        self.load_NodeSailor_settings()
         if self.hide_legend_on_start.get():
             self.load_last_file()  # Load the last file without displaying the legend
         else:
@@ -1013,7 +1013,7 @@ class NetworkMapGUI:
                 content_frame,
                 text="Hide this window on next startup and load most recent on next startup",
                 variable=self.hide_legend_on_start,
-                command=self.save_Nodesailor_settings,
+                command=self.save_NodeSailor_settings,
                 bg=ColorConfig.current.FRAME_BG,
                 fg=ColorConfig.current.BUTTON_TEXT,
                 selectcolor=ColorConfig.current.FRAME_BG,
@@ -1083,14 +1083,14 @@ class NetworkMapGUI:
         
         self.fix_window_geometry(self.config_menu_window, 300, 350)
 
-    def save_Nodesailor_settings(self):
+    def save_NodeSailor_settings(self):
         state = {}
         # Update only the relevant setting and preserve others
-        write_Nodesailor_settings({'HIDE_LEGEND': self.hide_legend_on_start.get()})
+        write_NodeSailor_settings({'HIDE_LEGEND': self.hide_legend_on_start.get()})
 
-    def load_Nodesailor_settings(self):
+    def load_NodeSailor_settings(self):
         try:
-            with open(Nodesailor_settings_PATH, "r") as f:
+            with open(NodeSailor_settings_PATH, "r") as f:
                 for line in f:
                     if line.startswith("HIDE_LEGEND="):
                         value = line.strip().split("=", 1)[1].strip().lower()
@@ -2315,12 +2315,12 @@ class NetworkMapGUI:
         geometry = self.root.geometry()
         state = {}
         # Update only the relevant setting and preserve others
-        write_Nodesailor_settings({'WINDOW_GEOMETRY': geometry})
+        write_NodeSailor_settings({'WINDOW_GEOMETRY': geometry})
 
 
     def load_window_geometry(self):
         try:
-            with open(Nodesailor_settings_PATH, "r") as f:
+            with open(NodeSailor_settings_PATH, "r") as f:
                 for line in f:
                     if line.startswith("WINDOW_GEOMETRY:"):
                         geometry = line.strip().split(":", 1)[1]
