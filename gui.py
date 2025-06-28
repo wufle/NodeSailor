@@ -951,17 +951,13 @@ class NetworkMapGUI:
 
     def update_vlan_colors(self, node, ping_results):
         vlan_keys = list(self.vlan_label_names.keys())
-        vlan_ips = [getattr(node, vlan) for vlan in vlan_keys]
-        ips_to_ping = [ip for ip in vlan_ips if ip]  # Filter out empty strings
         for i, vlan in enumerate(vlan_keys):
-            if getattr(node, vlan):
+            if vlan in self.vlan_labels:
                 if i < len(ping_results):
                     color = ColorConfig.current.NODE_PING_SUCCESS if ping_results[i] else ColorConfig.current.NODE_PING_FAILURE
                 else:
                     color = ColorConfig.current.NODE_PING_FAILURE  # Default to failure if no result
                 self.vlan_labels[vlan].config(bg=color)
-            else:
-                self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_NOTE_BG)
 
 
     def display_legend(self):
