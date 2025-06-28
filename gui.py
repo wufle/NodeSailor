@@ -1981,12 +1981,12 @@ class NetworkMapGUI:
             show_operator_guidance(self.root, self.center_window_on_screen, self.custom_font)
 
     def save_last_file_path(self, file_path):
-        with open(get_resource_path('data/last_file_path.txt'), 'w') as f:
+        with open(get_resource_path('data/last_file_path.ini'), 'w') as f:
             f.write(file_path)
 
     def load_last_file(self):
         try:
-            with open(get_resource_path('data/last_file_path.txt'), 'r') as f:
+            with open(get_resource_path('data/last_file_path.ini'), 'r') as f:
                 last_file_path = f.read().strip()
                 if os.path.exists(last_file_path):
                     self.load_network_state_from_path(last_file_path)

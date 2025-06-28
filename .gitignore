@@ -3,7 +3,7 @@ Lib/
 Scripts/
 pyenv.cfg
 run.cmd
-last_file_path.txt
+last_file_path.ini
 .vscode/settings.json
 NodeSailor.spec
 example network2.json
@@ -13,7 +13,4 @@ example network test.json
 .roomodes
 __pycache__/
 *.pyc
-group_editor_config.json
-data/custom_commands.json
-data/NodeSailor_settings.txt
-data/custom_commands.json
+data/NodeSailor_settings.ini

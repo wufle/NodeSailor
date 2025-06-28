@@ -6,10 +6,10 @@ import sys
 if hasattr(sys, "frozen"):
     # Running as PyInstaller executable
     BASE_DIR = os.path.dirname(sys.executable)
-    NodeSailor_settings_PATH = os.path.join(BASE_DIR, "NodeSailor_settings.txt")
+    NodeSailor_settings_PATH = os.path.join(BASE_DIR, "NodeSailor_settings.ini")
 else:
     # Running from source
-    NodeSailor_settings_PATH = os.path.join("data", "NodeSailor_settings.txt")
+    NodeSailor_settings_PATH = os.path.join("data", "NodeSailor_settings.ini")
 
 def read_NodeSailor_settings():
     state = {}
