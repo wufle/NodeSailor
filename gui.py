@@ -21,6 +21,11 @@ from groups import GroupManager, RectangleGroup
 from group_editor import open_group_editor
 from custom_commands import manage_custom_commands
 
+# Default height for Edit Node window (for 4 VLANs)
+DEFAULT_NODE_HEIGHT = 360
+# Height per VLAN row (used for dynamic resizing)
+NODE_HEIGHT_PER_VLAN = 35
+
 def get_resource_path(filename):
     if getattr(sys, 'frozen', False):
         return os.path.join(sys._MEIPASS, filename)
@@ -1223,7 +1228,17 @@ class NetworkMapGUI:
             except Exception:
                 pass
 
-        win, content = self.create_popup("Edit Node" if node else "Create Node", 340, 360, on_close=close_node_editor, grab=False)
+        # Dynamically calculate window height based on VLAN count
+        num_vlans = len(self.vlan_label_names)
+        if hasattr(self, "node_window_height"):
+            base_height = getattr(self, "node_window_height", DEFAULT_NODE_HEIGHT)
+        else:
+            base_height = DEFAULT_NODE_HEIGHT
+        # Dynamic: default for 4 VLANs, adjust for more/fewer
+        dynamic_height = DEFAULT_NODE_HEIGHT + (num_vlans - 4) * NODE_HEIGHT_PER_VLAN
+        self.node_window_height = dynamic_height
+        
+        win, content = self.create_popup("Edit Node" if node else "Create Node", 400, dynamic_height, on_close=close_node_editor, grab=False)
         self.node_window = win
         win.lift(self.root)
         win.attributes("-topmost", True)
@@ -1255,27 +1270,32 @@ class NetworkMapGUI:
             VLAN_entries[vlan] = entry
             
 
-        tk.Label(content, text="Remote Desktop Address:", **label_args).grid(row=5, column=0, padx=10, pady=5, sticky="e")
+        vlan_row_offset = len(self.vlan_label_names) + 1
+        
+        tk.Label(content, text="Remote Desktop Address: ", **label_args).grid(row=vlan_row_offset, column=0, padx=10, pady=5, sticky="e")
         remote_entry = tk.Entry(content, **entry_args)
-        remote_entry.grid(row=5, column=1, padx=10, pady=5)
+        remote_entry.grid(row=vlan_row_offset, column=1, padx=10, pady=5)
         if node: remote_entry.insert(0, node.remote_desktop_address)
         
-
-        tk.Label(content, text="File Path:", **label_args).grid(row=6, column=0, padx=10, pady=5, sticky="e")
+        tk.Label(content, text="File Path: ", **label_args).grid(row=vlan_row_offset + 1, column=0, padx=10, pady=5, sticky="e")
         file_entry = tk.Entry(content, **entry_args)
-        file_entry.grid(row=6, column=1, padx=10, pady=5)
+        file_entry.grid(row=vlan_row_offset + 1, column=1, padx=10, pady=5)
         if node: file_entry.insert(0, node.file_path)
         
-
-        tk.Label(content, text="Web Config URL:", **label_args).grid(row=7, column=0, padx=10, pady=5, sticky="e")
+        tk.Label(content, text="Web Config URL:", **label_args).grid(row=vlan_row_offset + 2, column=0, padx=10, pady=5, sticky="e")
         web_entry = tk.Entry(content, **entry_args)
-        web_entry.grid(row=7, column=1, padx=10, pady=5)
+        web_entry.grid(row=vlan_row_offset + 2, column=1, padx=10, pady=5)
         if node: web_entry.insert(0, node.web_config_url)
         
-
-        # Label for displaying save notes/messages
+        # Calculate the row for the spacer and Save button
+        save_row = vlan_row_offset + 4  # 3 fields after VLANs, 1 spacer row
+        
+        # Add a spacer row that expands to push the Save button to the bottom
+        content.grid_rowconfigure(save_row - 1, weight=1)
+        
+        # Label for displaying save notes/messages (just above Save button)
         save_note_label = tk.Label(content, text="", fg="#ff9900", bg=ColorConfig.current.FRAME_BG, font=('Helvetica', 10))
-        save_note_label.grid(row=9, column=0, columnspan=2, pady=(0, 5))
+        save_note_label.grid(row=save_row - 2, column=0, columnspan=2, pady=(0, 5))
 
         def save_node():
             if self.mode != "Configuration":
@@ -1301,13 +1321,19 @@ class NetworkMapGUI:
                 self.node_list_editor.focus_set()
             close_node_editor()
 
-        tk.Button(content, text="Save", command=save_node,
-                bg=ColorConfig.current.BUTTON_BG,
-                fg=ColorConfig.current.BUTTON_TEXT,
-                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
-                font=('Helvetica', 10)).grid(row=8, column=0, columnspan=2, pady=10)
-
+        tk.Button(
+            content,
+            text="Save",
+            command=save_node,
+            bg=ColorConfig.current.BUTTON_BG,
+            width=12  # Fixed width so button size does not change on resize
+        ).grid(
+            row=save_row,
+            column=0,
+            columnspan=2,
+            pady=10,
+            sticky="ew"
+        )
         self.fix_window_geometry(self.node_window, 340, 360)
         
 
@@ -1795,6 +1821,9 @@ class NetworkMapGUI:
         state["group_color_presets"] = getattr(self.group_manager, "color_presets", DEFAULT_PRESETS)
         state["group_window_height"] = getattr(self.group_manager, "window_height", DEFAULT_HEIGHT)
 
+        # Save node window height
+        state["node_window_height"] = getattr(self, "node_window_height", DEFAULT_NODE_HEIGHT)
+        
         # Add custom commands to state
         state["custom_commands"] = self.custom_commands
 
@@ -1866,6 +1895,9 @@ class NetworkMapGUI:
             if not group_window_height:
                 group_window_height = DEFAULT_HEIGHT
 
+            # Load node window height
+            self.node_window_height = state.get("node_window_height", DEFAULT_NODE_HEIGHT)
+            
             # Ensure group_manager has up-to-date color presets
             if hasattr(self, "group_manager"):
                 self.group_manager.color_presets = group_color_presets
@@ -2378,6 +2410,8 @@ class NetworkMapGUI:
         wrapper = self.add_custom_titlebar(win, title, on_close or real_close)
         content = tk.Frame(wrapper, bg=ColorConfig.current.FRAME_BG)
         content.pack(fill=tk.BOTH, expand=True)
+        content.columnconfigure(0, weight=0)
+        content.columnconfigure(1, weight=1)
 
         # --- BEGIN: Global Shortcut Bindings for Popups ---
         def bind_global_shortcuts(window):
