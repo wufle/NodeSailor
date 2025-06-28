@@ -14,3 +14,4 @@ example network test.json
 __pycache__/
 *.pyc
 data/NodeSailor_settings.ini
+data/custom_commands.json

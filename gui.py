@@ -61,13 +61,16 @@ class NetworkMapGUI:
         self.show_tooltips = False
         self.color_editor_window = None
         self.vlan_label_names = {
-            'VLAN_100': 'VLAN_100',
-            'VLAN_200': 'VLAN_200',
-            'VLAN_300': 'VLAN_300',
-            'VLAN_400': 'VLAN_400'
+            'VLAN_1': 'VLAN_1',
+            'VLAN_2': 'VLAN_2',
+            'VLAN_3': 'VLAN_3',
+            'VLAN_4': 'VLAN_4'
         }
         # Setup custom scrollbar styles for current theme
         self._setup_scrollbar_styles()
+        self.info_value_style = {'font': ('Helvetica', 10),
+                                 'bg': ColorConfig.current.INFO_NOTE_BG,
+                                 'anchor': 'w'}
         
         # Bind <Map> event to restore secondary windows
         self.root.bind("<Map>", self.on_restore)
@@ -626,7 +629,8 @@ class NetworkMapGUI:
             # Refresh info panel VLANs to reflect changes
             self.refresh_info_panel_vlans(
                 {'font': ('Helvetica', 10), 'bg': ColorConfig.current.INFO_NOTE_BG, 'fg': ColorConfig.current.INFO_TEXT, 'anchor': 'w'},
-                {'font': ('Helvetica', 10), 'bg': ColorConfig.current.INFO_NOTE_BG, 'fg': ColorConfig.current.INFO_TEXT}
+                {'font': ('Helvetica', 10), 'bg': ColorConfig.current.INFO_NOTE_BG, 'fg': ColorConfig.current.INFO_TEXT},
+                self.info_value_style
             )
             close_vlan_editor()
 
@@ -1870,6 +1874,8 @@ class NetworkMapGUI:
             self.clear_node_status()  # Reset the status of all nodes
             self.legend_window.destroy()  # Close the legend window
 
+            # Reset VLAN labels to default values
+            self.vlan_label_names = {'VLAN_1': 'VLAN_1', 'VLAN_2': 'VLAN_2', 'VLAN_3': 'VLAN_3', 'VLAN_4': 'VLAN_4'}
             # Reset color presets in group_editor_config.json to defaults
             try:
                 with open(get_resource_path(CONFIG_PATH), "r") as f:
