@@ -251,27 +251,6 @@ class NetworkMapGUI:
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
         fg=lambda: ColorConfig.current.INFO_TEXT)
 
-        # Checkboxes for VLANs
-        self.vlan_visibility = {'VLAN_100': tk.BooleanVar(value=True),
-                                'VLAN_200': tk.BooleanVar(value=True),
-                                'VLAN_300': tk.BooleanVar(value=True),
-                                'VLAN_400': tk.BooleanVar(value=True)}
-        
-        self.vlan_checkboxes = {}
-        for vlan, var in self.vlan_visibility.items():
-            cb = tk.Checkbutton(
-                self.buttons_frame,
-                text=self.vlan_label_names[vlan],
-                variable=var,
-                bg=ColorConfig.current.FRAME_BG,
-                fg=ColorConfig.current.BUTTON_TEXT,
-                selectcolor=ColorConfig.current.FRAME_BG,
-                activebackground=ColorConfig.current.BUTTON_BG,
-                activeforeground=ColorConfig.current.BUTTON_TEXT,
-                command=self.update_vlan_visibility
-            )
-            cb.pack(side=tk.LEFT, padx=5)
-            self.vlan_checkboxes[vlan] = cb
 
         # Zoom controls in bottom-left corner
         zoom_frame = tk.Frame(self.root, bg=ColorConfig.current.FRAME_BG, height=30)
@@ -351,11 +330,11 @@ class NetworkMapGUI:
         
         self.vlan_labels = {}
         self.vlan_title_labels = {}
-        for i, vlan in enumerate(['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400'], start=2):
+        for i, vlan in enumerate(self.vlan_label_names.keys(), start=2):
             title = tk.Label(self.info_panel, text=self.vlan_label_names[vlan] + ":", **info_label_style)
             title.grid(row=i, column=0, sticky='w', padx=5, pady=2)
             self.vlan_title_labels[vlan] = title
-
+        
             self.vlan_labels[vlan] = tk.Label(self.info_panel, text="-", **info_value_style)
             self.vlan_labels[vlan].grid(row=i, column=1, sticky='w', padx=5, pady=2)
 
@@ -562,39 +541,87 @@ class NetworkMapGUI:
             self.vlan_label_editor = None
             self.regain_focus()  # Restore focus to the main window
 
-        self.vlan_label_editor, content = self.create_popup("Edit VLAN Labels", 170, 230, on_close=close_vlan_editor, grab=False)
+        self.vlan_label_editor, content = self.create_popup("Edit VLAN Labels", 320, 350, on_close=close_vlan_editor, grab=False)
 
         entries = {}
-        for i, vlan in enumerate(self.vlan_label_names.keys()):
-            tk.Label(content, text=vlan + ":", anchor="e",
-                    bg=ColorConfig.current.FRAME_BG,
-                    fg=ColorConfig.current.BUTTON_TEXT,
-                    font=('Helvetica', 10))\
-                .grid(row=i, column=0, padx=10, pady=5, sticky="e")
-            entry = tk.Entry(content, bg=ColorConfig.current.ENTRY_FOCUS_BG, fg=ColorConfig.current.ENTRY_TEXT, insertbackground=ColorConfig.current.ENTRY_TEXT)
-            entry.insert(0, self.vlan_label_names[vlan])
-            entry.grid(row=i, column=1, padx=10, pady=5)
-            entries[vlan] = entry
+
+        vlan_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
+        vlan_frame.grid(row=0, column=0, columnspan=3, sticky="nsew")
+
+        def refresh_vlan_entries():
+            # Clear current widgets in vlan_frame
+            for widget in vlan_frame.winfo_children():
+                widget.destroy()
+            entries.clear()
+            for i, vlan in enumerate(self.vlan_label_names.keys()):
+                tk.Label(vlan_frame, text=vlan + ":", anchor="e",
+                        bg=ColorConfig.current.FRAME_BG,
+                        fg=ColorConfig.current.BUTTON_TEXT,
+                        font=('Helvetica', 10))\
+                    .grid(row=i, column=0, padx=10, pady=5, sticky="e")
+                entry = tk.Entry(vlan_frame, bg=ColorConfig.current.ENTRY_FOCUS_BG, fg=ColorConfig.current.ENTRY_TEXT, insertbackground=ColorConfig.current.ENTRY_TEXT)
+                entry.insert(0, self.vlan_label_names[vlan])
+                entry.grid(row=i, column=1, padx=10, pady=5)
+                entries[vlan] = entry
+                def make_remove(vlan_name):
+                    return lambda: remove_vlan(vlan_name)
+                remove_btn = tk.Button(vlan_frame, text="Remove", command=make_remove(vlan),
+                                      bg=ColorConfig.current.BUTTON_BG,
+                                      fg=ColorConfig.current.BUTTON_TEXT,
+                                      activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                                      activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
+                                      font=('Helvetica', 9))
+                remove_btn.grid(row=i, column=2, padx=5, pady=5)
+
+        def add_vlan():
+            # Find next available VLAN name
+            base = "VLAN_"
+            idx = 1
+            while f"{base}{idx}" in self.vlan_label_names:
+                idx += 1
+            new_vlan = f"{base}{idx}"
+            self.vlan_label_names[new_vlan] = ""
+            refresh_vlan_entries()
+
+        def remove_vlan(vlan):
+            if vlan in self.vlan_label_names:
+                del self.vlan_label_names[vlan]
+            refresh_vlan_entries()
+
+        refresh_vlan_entries()
+
+        add_btn = tk.Button(content, text="Add VLAN", command=add_vlan,
+                            bg=ColorConfig.current.BUTTON_BG,
+                            fg=ColorConfig.current.BUTTON_TEXT,
+                            activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                            activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
+                            font=('Helvetica', 10))
+        add_btn.grid(row=1, column=0, columnspan=3, pady=5)
 
         def save_labels():
+            # Remove VLANs that were deleted
+            to_remove = [vlan for vlan in self.vlan_label_names if vlan not in entries]
+            for vlan in to_remove:
+                del self.vlan_label_names[vlan]
+            # Update/add VLANs
             for vlan, entry in entries.items():
                 self.vlan_label_names[vlan] = entry.get()
             for vlan, label in self.vlan_title_labels.items():
-                label.config(text=self.vlan_label_names[vlan] + ":")
-            for vlan, cb in self.vlan_checkboxes.items():
-                cb.config(text=self.vlan_label_names[vlan])
+                if vlan in self.vlan_label_names:
+                    label.config(text=self.vlan_label_names[vlan] + ":")
+            # VLAN checkboxes removed; dynamic VLAN UI is updated via refresh_vlan_entries()
             close_vlan_editor()
 
         button_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
-        button_frame.grid(row=5, column=0, columnspan=2, pady=10)
+        button_frame.grid(row=2, column=0, columnspan=3, pady=10)
         tk.Button(button_frame, text="Save", command=save_labels,
                 bg=ColorConfig.current.BUTTON_BG,
                 fg=ColorConfig.current.BUTTON_TEXT,
                 activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
                 activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
                 font=('Helvetica', 10)).pack()
-        
-        self.fix_window_geometry(self.vlan_label_editor, 170, 230)
+
+        self.fix_window_geometry(self.vlan_label_editor, 320, 350)
 
     def show_help(self, event=None):
         """
@@ -900,16 +927,16 @@ class NetworkMapGUI:
     def update_vlan_visibility(self):
         for node in self.nodes:
             # Determine if the node should be visible or greyed out
-            should_be_visible = any(self.vlan_visibility[vlan].get() for vlan in ['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400'] if getattr(node, vlan))
+            should_be_visible = any(self.vlan_visibility[vlan].get() for vlan in self.vlan_label_names.keys() if getattr(node, vlan))
             node_color = ColorConfig.current.NODE_DEFAULT if should_be_visible else ColorConfig.current.NODE_GREYED_OUT
             self.canvas.itemconfigure(node.shape, fill=node_color)
 
     def update_vlan_colors(self, node, ping_results):
-        vlan_ips = [getattr(node, vlan) for vlan in ['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400']]
+        vlan_keys = list(self.vlan_label_names.keys())
+        vlan_ips = [getattr(node, vlan) for vlan in vlan_keys]
         ips_to_ping = [ip for ip in vlan_ips if ip]  # Filter out empty strings
-        for i, vlan in enumerate(['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400']):
+        for i, vlan in enumerate(vlan_keys):
             if getattr(node, vlan):
-                # Only try to access ping_results[i] if we have a result for this IP
                 if i < len(ping_results):
                     color = ColorConfig.current.NODE_PING_SUCCESS if ping_results[i] else ColorConfig.current.NODE_PING_FAILURE
                 else:
@@ -1137,7 +1164,7 @@ class NetworkMapGUI:
         self.canvas.itemconfig(node.shape, outline=ColorConfig.current.NODE_HIGHLIGHT, width=4)  # orange outline with a width of 4
 
         # Reset VLAN label colors immediately when a new node is selected
-        for vlan in ['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400']:
+        for vlan in self.vlan_label_names.keys():
             self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_NOTE_BG)
 
         # Update the information panel
@@ -1148,7 +1175,7 @@ class NetworkMapGUI:
         self.selected_node = node
 
         # Update the VLAN information
-        for vlan_key in ['VLAN_100', 'VLAN_200', 'VLAN_300', 'VLAN_400']:
+        for vlan_key in self.vlan_label_names.keys():
             vlan_value = getattr(node, vlan_key, "-")
             self.vlan_labels[vlan_key].config(text=vlan_value)
 
@@ -1220,11 +1247,11 @@ class NetworkMapGUI:
         name_entry.focus_force()
 
         VLAN_entries = {}
-        for i, vlan in enumerate(["VLAN_100", "VLAN_200", "VLAN_300", "VLAN_400"], start=1):
+        for i, vlan in enumerate(self.vlan_label_names.keys(), start=1):
             tk.Label(content, text=f"{vlan}:", **label_args).grid(row=i, column=0, padx=10, pady=5, sticky="e")
             entry = tk.Entry(content, **entry_args)
             entry.grid(row=i, column=1, padx=10, pady=5)
-            if node: entry.insert(0, getattr(node, vlan))
+            if node: entry.insert(0, node.vlans.get(vlan, ""))
             VLAN_entries[vlan] = entry
             
 
@@ -1848,20 +1875,21 @@ class NetworkMapGUI:
                 self.vlan_label_names.update(state['vlan_labels'])
                 for vlan, label in self.vlan_title_labels.items():
                     label.config(text=self.vlan_label_names[vlan] + ":")
-                for vlan, cb in self.vlan_checkboxes.items():
-                    cb.config(text=self.vlan_label_names[vlan])
+                # VLAN checkboxes removed; dynamic VLAN UI is updated via refresh_vlan_entries()
 
             # Load nodes
             for node_data in state.get('nodes', []):
+                # Extract and convert legacy VLAN keys to new structure
+                vlans = {k: v for k, v in node_data.items() if k.startswith('VLAN_')}
+                # Remove legacy VLAN keys from node_data to avoid TypeError
+                for vlan_key in vlans.keys():
+                    node_data.pop(vlan_key)
                 node = NetworkNode(
                     self.canvas,
                     node_data['name'],
                     node_data['x'],
                     node_data['y'],
-                    VLAN_100=node_data.get('VLAN_100', ''),
-                    VLAN_200=node_data.get('VLAN_200', ''),
-                    VLAN_300=node_data.get('VLAN_300', ''),
-                    VLAN_400=node_data.get('VLAN_400', ''),
+                    vlans=vlans,
                     remote_desktop_address=node_data.get('remote_desktop_address', ''),
                     file_path=node_data.get('file_path', ''),
                     web_config_url=node_data.get('web_config_url', '')
@@ -1930,20 +1958,20 @@ class NetworkMapGUI:
                     self.vlan_label_names.update(state['vlan_labels'])
                     for vlan, label in self.vlan_title_labels.items():
                         label.config(text=self.vlan_label_names[vlan] + ":")
-                    for vlan, cb in self.vlan_checkboxes.items():
-                        cb.config(text=self.vlan_label_names[vlan])
+                    # VLAN checkboxes removed; dynamic VLAN UI is updated via refresh_vlan_entries()
                 # Load nodes
                 for node_data in state['nodes']:
+                    # Extract and convert legacy VLAN keys to new structure
+                    vlans = {k: v for k, v in node_data.items() if k.startswith('VLAN_')}
+                    # Remove legacy VLAN keys from node_data to avoid TypeError
+                    for vlan_key in vlans.keys():
+                        node_data.pop(vlan_key)
                     node = NetworkNode(
                         self.canvas,
                         node_data['name'],
                         node_data['x'],
                         node_data['y'],
-                        VLAN_100=node_data.get('VLAN_100', ''),
-                        VLAN_200=node_data.get('VLAN_200', ''),
-                        VLAN_300=node_data.get('VLAN_300', ''),
-                        VLAN_400=node_data.get('VLAN_400', ''),
-                        # Load new variables
+                        vlans=vlans,
                         remote_desktop_address=node_data.get('remote_desktop_address', ''),
                         file_path=node_data.get('file_path', ''),
                         web_config_url=node_data.get('web_config_url', '')
@@ -2000,7 +2028,8 @@ class NetworkMapGUI:
         my_ips = get_ip_addresses()
         host_node_set = False  
         for node in self.nodes:
-            if any(ip in my_ips for ip in [node.VLAN_100, node.VLAN_200, node.VLAN_300, node.VLAN_400]):
+            vlan_values = getattr(node, "vlans", {}).values() if hasattr(node, "vlans") and isinstance(node.vlans, dict) else []
+            if any(ip in my_ips for ip in vlan_values):
                 self.flash_node(node, 9)
                 self.host_node = node  # Set the host node
                 host_node_set = True

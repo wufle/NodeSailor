@@ -204,11 +204,10 @@ def open_node_list_editor(gui):
                 x, y = 100, 100  # Default values if conversion fails
 
             # Create new node
+            # Build VLANs dictionary dynamically
+            vlans = {vlan: values.get(vlan, '') for vlan in gui.vlan_label_names.keys()}
             new_node = NetworkNode(gui.canvas, name=name, x=x, y=y,
-                                VLAN_100=values.get('VLAN_100', ''),
-                                VLAN_200=values.get('VLAN_200', ''),
-                                VLAN_300=values.get('VLAN_300', ''),
-                                VLAN_400=values.get('VLAN_400', ''),
+                                vlans=vlans,
                                 remote_desktop_address=values.get('remote_desktop_address', ''),
                                 file_path=values.get('file_path', ''),
                                 web_config_url=values.get('web_config_url', ''))
@@ -491,12 +490,11 @@ def open_node_list_editor(gui):
         ensure_editor_can_fit()
 
     # Initialize the fields list
-    fields = [
-        ("Name", "name"),
-        (gui.vlan_label_names["VLAN_100"], "VLAN_100"),
-        (gui.vlan_label_names["VLAN_200"], "VLAN_200"),
-        (gui.vlan_label_names["VLAN_300"], "VLAN_300"),
-        (gui.vlan_label_names["VLAN_400"], "VLAN_400"),
+    fields = [("Name", "name")]
+    # Add VLAN fields dynamically
+    for vlan, label in gui.vlan_label_names.items():
+        fields.append((label, vlan))
+    fields += [
         ("RDP Address", "remote_desktop_address"),
         ("File Path", "file_path"),
         ("Web URL", "web_config_url"),

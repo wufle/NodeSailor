@@ -8,13 +8,10 @@ import webbrowser
 import threading
 
 class NetworkNode:
-    def __init__(self, canvas, name, x, y, VLAN_100='', VLAN_200='', VLAN_300='', VLAN_400='', remote_desktop_address='', file_path='', web_config_url=''):
+    def __init__(self, canvas, name, x, y, vlans=None, remote_desktop_address='', file_path='', web_config_url=''):
         self.canvas = canvas
         self.name = name
-        self.VLAN_100 = VLAN_100
-        self.VLAN_200 = VLAN_200
-        self.VLAN_300 = VLAN_300
-        self.VLAN_400 = VLAN_400
+        self.vlans = vlans if vlans is not None else {}
         self.remote_desktop_address = remote_desktop_address
         self.file_path = file_path
         self.web_config_url = web_config_url
@@ -63,12 +60,10 @@ class NetworkNode:
                 except tk.TclError:
                     pass  # Ignore if widget is destroyed
 
-    def update_info(self, name, VLAN_100='', VLAN_200='', VLAN_300='', VLAN_400='', remote_desktop_address='', file_path='', web_config_url=''):
+    def update_info(self, name, vlans=None, remote_desktop_address='', file_path='', web_config_url=''):
         self.name = name
-        self.VLAN_100 = VLAN_100
-        self.VLAN_200 = VLAN_200
-        self.VLAN_300 = VLAN_300
-        self.VLAN_400 = VLAN_400
+        if vlans is not None:
+            self.vlans = vlans
         self.remote_desktop_address = remote_desktop_address
         self.file_path = file_path
         self.web_config_url = web_config_url
@@ -114,9 +109,8 @@ class NetworkNode:
                 self.canvas.after(0, lambda: gui.update_vlan_colors(self, results))
 
         def ping_all_vlans():
-            vlan_ips = [self.VLAN_100, self.VLAN_200, self.VLAN_300, self.VLAN_400]
-            ips_to_ping = [ip for ip in vlan_ips if ip]  # Filter out empty strings
-            results = [run_ping(ip) for ip in ips_to_ping] if ips_to_ping else [False]
+            vlan_ips = [ip for ip in self.vlans.values() if ip]
+            results = [run_ping(ip) for ip in vlan_ips] if vlan_ips else [False]
             self.canvas.after(0, update_ui, results)
 
         threading.Thread(target=ping_all_vlans).start()
@@ -259,16 +253,16 @@ class NetworkNode:
             'file': self.file_path or '',
             'web': self.web_config_url or '',
             'rdp': self.remote_desktop_address or '',
-            'vlan100': self.VLAN_100 or '',
-            'vlan200': self.VLAN_200 or '',
-            'vlan300': self.VLAN_300 or '',
-            'vlan400': self.VLAN_400 or ''
         }
+        # Add VLANs dynamically to context
+        for vlan_key, vlan_value in self.vlans.items():
+            context[vlan_key.lower()] = vlan_value or ''
 
         # Pick first available IP as the default {ip}
-        for vlan in ['vlan100', 'vlan200', 'vlan300', 'vlan400']:
-            if context[vlan]:
-                context['ip'] = context[vlan]
+        for vlan in self.vlans:
+            key = vlan.lower()
+            if context.get(key):
+                context['ip'] = context[key]
                 break
 
         try:
