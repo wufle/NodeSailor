@@ -66,6 +66,7 @@ class NetworkMapGUI:
             'VLAN_3': 'VLAN_3',
             'VLAN_4': 'VLAN_4'
         }
+        self.vlan_label_order = list(self.vlan_label_names.keys())
         # Setup custom scrollbar styles for current theme
         self._setup_scrollbar_styles()
         self.info_value_style = {'font': ('Helvetica', 10),
@@ -359,7 +360,16 @@ class NetworkMapGUI:
         self.vlan_title_labels = {}
         # Dynamically create VLAN label widgets for all VLANs in node.vlans
         if hasattr(node, "vlans") and isinstance(node.vlans, dict):
-            for i, (vlan, vlan_value) in enumerate(node.vlans.items(), start=2):
+            # Sort VLANs by label for display
+            # Use self.vlan_label_order if set, else sort by label
+            if hasattr(self, "vlan_label_order") and self.vlan_label_order:
+                ordered_keys = [v for v in self.vlan_label_order if v in node.vlans]
+                # Add any remaining VLANs not in vlan_label_order at the end
+                ordered_keys += [v for v in node.vlans if v not in ordered_keys]
+                sorted_vlans = [(v, node.vlans[v]) for v in ordered_keys]
+            else:
+                sorted_vlans = sorted(node.vlans.items(), key=lambda x: self.vlan_label_names.get(x[0], x[0]))
+            for i, (vlan, vlan_value) in enumerate(sorted_vlans, start=2):
                 vlan_label = self.vlan_label_names.get(vlan, vlan)
                 title = tk.Label(self.info_panel, text=f"{vlan_label}:", **info_label_style)
                 title.grid(row=i, column=0, sticky='w', padx=5, pady=2)
@@ -565,12 +575,23 @@ class NetworkMapGUI:
         vlan_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         vlan_frame.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
+        # Helper to update window height dynamically
+        def update_vlan_window_height():
+            min_height = 350
+            max_height = 700
+            base_height = 140  # space for controls/buttons
+            per_vlan = 40      # per VLAN row
+            n = len(self.vlan_label_order)
+            height = min(max(min_height, base_height + per_vlan * n), max_height)
+            self.vlan_label_editor.geometry(f"400x{height}")
+
         def refresh_vlan_entries():
             # Clear current widgets in vlan_frame
             for widget in vlan_frame.winfo_children():
                 widget.destroy()
             entries.clear()
-            for i, vlan in enumerate(self.vlan_label_names.keys()):
+            # Use custom VLAN order for display
+            for i, vlan in enumerate(self.vlan_label_order):
                 tk.Label(vlan_frame, text=vlan + ":", anchor="e",
                         bg=ColorConfig.current.FRAME_BG,
                         fg=ColorConfig.current.BUTTON_TEXT,
@@ -580,6 +601,7 @@ class NetworkMapGUI:
                 entry.insert(0, self.vlan_label_names[vlan])
                 entry.grid(row=i, column=1, padx=10, pady=5)
                 entries[vlan] = entry
+
                 def make_remove(vlan_name):
                     return lambda: remove_vlan(vlan_name)
                 remove_btn = tk.Button(vlan_frame, text="Remove", command=make_remove(vlan),
@@ -588,7 +610,39 @@ class NetworkMapGUI:
                                       activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
                                       activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
                                       font=('Helvetica', 9))
-                remove_btn.grid(row=i, column=2, padx=5, pady=5)
+                remove_btn.grid(row=i, column=4, padx=5, pady=5)
+
+                # Up/Down buttons for reordering
+                def make_move_up(idx):
+                    return lambda: move_vlan(idx, -1)
+                def make_move_down(idx):
+                    return lambda: move_vlan(idx, 1)
+                up_btn = tk.Button(vlan_frame, text="↑", command=make_move_up(i),
+                                   bg=ColorConfig.current.BUTTON_BG,
+                                   fg=ColorConfig.current.BUTTON_TEXT,
+                                   activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                                   activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
+                                   font=('Helvetica', 9), width=2)
+                up_btn.grid(row=i, column=2, padx=2, pady=5)
+                down_btn = tk.Button(vlan_frame, text="↓", command=make_move_down(i),
+                                     bg=ColorConfig.current.BUTTON_BG,
+                                     fg=ColorConfig.current.BUTTON_TEXT,
+                                     activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                                     activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
+                                     font=('Helvetica', 9), width=2)
+                down_btn.grid(row=i, column=3, padx=2, pady=5)
+            update_vlan_window_height()
+
+        def move_vlan(idx, direction):
+            new_idx = idx + direction
+            if 0 <= new_idx < len(self.vlan_label_order):
+                self.vlan_label_order[idx], self.vlan_label_order[new_idx] = (
+                    self.vlan_label_order[new_idx], self.vlan_label_order[idx]
+                )
+                refresh_vlan_entries()
+        # Ensure the window is wide enough for all buttons
+        self.vlan_label_editor.minsize(400, 350)
+        # Remove static geometry setting; handled dynamically
 
         def add_vlan():
             # Find next available VLAN name
@@ -598,11 +652,14 @@ class NetworkMapGUI:
                 idx += 1
             new_vlan = f"{base}{idx}"
             self.vlan_label_names[new_vlan] = ""
+            self.vlan_label_order.append(new_vlan)
             refresh_vlan_entries()
 
         def remove_vlan(vlan):
             if vlan in self.vlan_label_names:
                 del self.vlan_label_names[vlan]
+                if vlan in self.vlan_label_order:
+                    self.vlan_label_order.remove(vlan)
             refresh_vlan_entries()
 
         refresh_vlan_entries()
@@ -620,6 +677,8 @@ class NetworkMapGUI:
             to_remove = [vlan for vlan in self.vlan_label_names if vlan not in entries]
             for vlan in to_remove:
                 del self.vlan_label_names[vlan]
+                if vlan in self.vlan_label_order:
+                    self.vlan_label_order.remove(vlan)
             # Update/add VLANs
             for vlan, entry in entries.items():
                 self.vlan_label_names[vlan] = entry.get()
@@ -644,7 +703,7 @@ class NetworkMapGUI:
                 activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
                 font=('Helvetica', 10)).pack()
 
-        self.fix_window_geometry(self.vlan_label_editor, 320, 350)
+        self.fix_window_geometry(self.vlan_label_editor, 500, 650)
 
     def show_help(self, event=None):
         """
@@ -1277,14 +1336,23 @@ class NetworkMapGUI:
         name_entry.focus_force()
 
         VLAN_entries = {}
-        for i, vlan in enumerate(self.vlan_label_names.keys(), start=1):
+        # Sort VLANs by label for display
+        # Use self.vlan_label_order if set, else sort by label
+        if hasattr(self, "vlan_label_order") and self.vlan_label_order:
+            ordered_keys = [v for v in self.vlan_label_order if v in self.vlan_label_names]
+            # Add any remaining VLANs not in vlan_label_order at the end
+            ordered_keys += [v for v in self.vlan_label_names if v not in ordered_keys]
+            sorted_vlans = ordered_keys
+        else:
+            sorted_vlans = sorted(self.vlan_label_names.keys(), key=lambda k: self.vlan_label_names.get(k, k))
+        for i, vlan in enumerate(sorted_vlans, start=1):
             vlan_label = self.vlan_label_names.get(vlan, vlan)
             tk.Label(content, text=f"{vlan_label}:", **label_args).grid(row=i, column=0, padx=10, pady=5, sticky="e")
             entry = tk.Entry(content, **entry_args)
             entry.grid(row=i, column=1, padx=10, pady=5)
             if node: entry.insert(0, node.vlans.get(vlan, ""))
             VLAN_entries[vlan] = entry
-            
+
 
         vlan_row_offset = len(self.vlan_label_names) + 1
         
@@ -1878,6 +1946,7 @@ class NetworkMapGUI:
 
             # Reset VLAN labels to default values
             self.vlan_label_names = {'VLAN_1': 'VLAN_1', 'VLAN_2': 'VLAN_2', 'VLAN_3': 'VLAN_3', 'VLAN_4': 'VLAN_4'}
+            self.vlan_label_order = list(self.vlan_label_names.keys())
             # Reset color presets in group_editor_config.json to defaults
             try:
                 with open(get_resource_path(CONFIG_PATH), "r") as f:
@@ -1941,6 +2010,15 @@ class NetworkMapGUI:
                 vlan_labels_in_nodes.update({k for k in node_data if k.startswith('VLAN_')})
             used_vlans = vlan_labels_in_file | vlan_labels_in_nodes
             self.vlan_label_names = {vlan: state.get('vlan_labels', {}).get(vlan, vlan) for vlan in used_vlans}
+            # Restore VLAN order if present, else use current order
+            if 'vlan_label_order' in state:
+                self.vlan_label_order = [v for v in state['vlan_label_order'] if v in self.vlan_label_names]
+                # Add any new VLANs not in saved order to the end
+                for v in self.vlan_label_names:
+                    if v not in self.vlan_label_order:
+                        self.vlan_label_order.append(v)
+            else:
+                self.vlan_label_order = list(self.vlan_label_names.keys())
             # Update UI to only show these VLANs
             for vlan, label in self.vlan_title_labels.items():
                 if vlan in self.vlan_label_names:
@@ -2033,6 +2111,14 @@ class NetworkMapGUI:
                     vlan_labels_in_nodes.update({k for k in node_data if k.startswith('VLAN_')})
                 used_vlans = vlan_labels_in_file | vlan_labels_in_nodes
                 self.vlan_label_names = {vlan: state.get('vlan_labels', {}).get(vlan, vlan) for vlan in used_vlans}
+                # Restore VLAN order if present, else use current order
+                if 'vlan_label_order' in state:
+                    self.vlan_label_order = [v for v in state['vlan_label_order'] if v in self.vlan_label_names]
+                    for v in self.vlan_label_names:
+                        if v not in self.vlan_label_order:
+                            self.vlan_label_order.append(v)
+                else:
+                    self.vlan_label_order = list(self.vlan_label_names.keys())
                 # Update UI to only show these VLANs
                 for vlan, label in self.vlan_title_labels.items():
                     if vlan in self.vlan_label_names:
