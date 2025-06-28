@@ -333,28 +333,36 @@ class NetworkMapGUI:
         self.node_ip_label = tk.Label(self.info_panel, text="", **info_value_style)
         self.node_ip_label.grid(row=1, column=1, sticky='w', padx=5, pady=2)
         
-        self.vlan_labels = {}
-        self.vlan_title_labels = {}
-        for i, vlan in enumerate(self.vlan_label_names.keys(), start=2):
-            title = tk.Label(self.info_panel, text=self.vlan_label_names[vlan] + ":", **info_label_style)
-            title.grid(row=i, column=0, sticky='w', padx=5, pady=2)
-            self.vlan_title_labels[vlan] = title
-        
-            self.vlan_labels[vlan] = tk.Label(self.info_panel, text="-", **info_value_style)
-            self.vlan_labels[vlan].grid(row=i, column=1, sticky='w', padx=5, pady=2)
-
+        self.refresh_info_panel_vlans(None, info_label_style, info_value_style)
         
         self.toggle_mode() # sets to Operator mode on startup
         self.hide_legend_on_start = tk.BooleanVar(value=False)
         self.load_NodeSailor_settings()
         if self.hide_legend_on_start.get():
-            self.load_last_file()  # Load the last file without displaying the legend
-        else:
-            self.display_legend()  # Display the legend window
+            pass
+
 
         root.protocol("WM_DELETE_WINDOW", self.on_close)
 
         self.update_ui_colors()
+
+    def refresh_info_panel_vlans(self, node, info_label_style, info_value_style):
+        # Remove existing VLAN label widgets from info_panel
+        for label in getattr(self, 'vlan_title_labels', {}).values():
+            label.destroy()
+        for label in getattr(self, 'vlan_labels', {}).values():
+            label.destroy()
+        self.vlan_labels = {}
+        self.vlan_title_labels = {}
+        # Dynamically create VLAN label widgets for all VLANs in node.vlans
+        if hasattr(node, "vlans") and isinstance(node.vlans, dict):
+            for i, (vlan, vlan_value) in enumerate(node.vlans.items(), start=2):
+                title = tk.Label(self.info_panel, text=f"{vlan}:", **info_label_style)
+                title.grid(row=i, column=0, sticky='w', padx=5, pady=2)
+                self.vlan_title_labels[vlan] = title
+
+                self.vlan_labels[vlan] = tk.Label(self.info_panel, text=vlan_value, **info_value_style)
+                self.vlan_labels[vlan].grid(row=i, column=1, sticky='w', padx=5, pady=2)
 
     def on_restore(self, event):
         # Lift all secondary windows that are Toplevels
@@ -615,6 +623,11 @@ class NetworkMapGUI:
                 if vlan in self.vlan_label_names:
                     label.config(text=self.vlan_label_names[vlan] + ":")
             # VLAN checkboxes removed; dynamic VLAN UI is updated via refresh_vlan_entries()
+            # Refresh info panel VLANs to reflect changes
+            self.refresh_info_panel_vlans(
+                {'font': ('Helvetica', 10), 'bg': ColorConfig.current.INFO_NOTE_BG, 'fg': ColorConfig.current.INFO_TEXT, 'anchor': 'w'},
+                {'font': ('Helvetica', 10), 'bg': ColorConfig.current.INFO_NOTE_BG, 'fg': ColorConfig.current.INFO_TEXT}
+            )
             close_vlan_editor()
 
         button_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
@@ -1168,21 +1181,22 @@ class NetworkMapGUI:
         # Update the appearance of the current selected node
         self.canvas.itemconfig(node.shape, outline=ColorConfig.current.NODE_HIGHLIGHT, width=4)  # orange outline with a width of 4
 
-        # Reset VLAN label colors immediately when a new node is selected
-        for vlan in self.vlan_label_names.keys():
-            self.vlan_labels[vlan].config(bg=ColorConfig.current.INFO_NOTE_BG)
-
         # Update the information panel
         self.node_name_label.config(text=node.name)
-        
+
+        # Update the VLAN info panel dynamically
+        info_label_style = {'font': ('Helvetica', 10),
+                            'bg': ColorConfig.current.INFO_NOTE_BG,
+                            'fg': ColorConfig.current.INFO_TEXT,
+                            'anchor': 'w'}
+        info_value_style = {'font': ('Helvetica', 10),
+                            'bg': ColorConfig.current.INFO_NOTE_BG,
+                            'fg': ColorConfig.current.INFO_TEXT}
+        self.refresh_info_panel_vlans(node, info_label_style, info_value_style)
+
         # Update the selected and previous selected nodes
         self.previous_selected_node = node
         self.selected_node = node
-
-        # Update the VLAN information
-        for vlan_key in self.vlan_label_names.keys():
-            vlan_value = getattr(node, vlan_key, "-")
-            self.vlan_labels[vlan_key].config(text=vlan_value)
 
     def open_node_window(self, node=None, event=None):   
         if hasattr(self, 'node_window') and self.node_window and self.node_window.winfo_exists():
@@ -1307,13 +1321,27 @@ class NetworkMapGUI:
             path = file_entry.get()
             web = web_entry.get()
             if node:
-                node.update_info(name, **vlan_ips, remote_desktop_address=remote, file_path=path, web_config_url=web)
+                node.update_info(
+                    name,
+                    vlans=vlan_ips,
+                    remote_desktop_address=remote,
+                    file_path=path,
+                    web_config_url=web
+                )
                 self.on_node_select(node)
                 self.unsaved_changes = True
             else:
                 if name and event:
-                    new_node = NetworkNode(self.canvas, name, event.x, event.y, **vlan_ips,
-                                        remote_desktop_address=remote, file_path=path, web_config_url=web)
+                    new_node = NetworkNode(
+                        self.canvas,
+                        name,
+                        event.x,
+                        event.y,
+                        vlans=vlan_ips,
+                        remote_desktop_address=remote,
+                        file_path=path,
+                        web_config_url=web
+                    )
                     self.nodes.append(new_node)
                     self.on_node_select(new_node)
             if hasattr(self, 'node_list_editor') and self.node_list_editor and self.node_list_editor.winfo_exists():
@@ -1770,16 +1798,16 @@ class NetworkMapGUI:
         for node in self.nodes:
             node_data = {
                 'name': node.name,
-                'VLAN_100': node.VLAN_100,
-                'VLAN_200': node.VLAN_200,
-                'VLAN_300': node.VLAN_300,
-                'VLAN_400': node.VLAN_400,
                 'x': node.x,
                 'y': node.y,
                 'remote_desktop_address': node.remote_desktop_address,
                 'file_path': node.file_path,
                 'web_config_url': node.web_config_url
             }
+            # Serialize all VLANs dynamically
+            if hasattr(node, "vlans") and isinstance(node.vlans, dict):
+                for vlan_key, vlan_value in node.vlans.items():
+                    node_data[vlan_key] = vlan_value
             state['nodes'].append(node_data)
 
         # Gather connection data
