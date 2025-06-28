@@ -2556,6 +2556,9 @@ class NetworkMapGUI:
         content.columnconfigure(0, weight=0)
         content.columnconfigure(1, weight=1)
 
+        # Center the popup relative to the main window
+        self.center_window_on_screen(win)
+
         # --- BEGIN: Global Shortcut Bindings for Popups ---
         def bind_global_shortcuts(window):
             # F1 Help
