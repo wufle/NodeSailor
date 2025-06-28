@@ -568,19 +568,19 @@ class NetworkMapGUI:
             self.vlan_label_editor = None
             self.regain_focus()  # Restore focus to the main window
 
-        self.vlan_label_editor, content = self.create_popup("Edit VLAN Labels", 320, 350, on_close=close_vlan_editor, grab=False)
+        self.vlan_label_editor, content = self.create_popup("Edit VLAN Labels", 400, 350, on_close=close_vlan_editor, grab=False)
 
         entries = {}
 
         vlan_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         vlan_frame.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
-        # Helper to update window height dynamically
+        # Helper to update window height dynamically (for refresh/reorder)
         def update_vlan_window_height():
-            min_height = 350
-            max_height = 700
-            base_height = 140  # space for controls/buttons
-            per_vlan = 40      # per VLAN row
+            min_height = 100
+            max_height = 1000
+            base_height = 120  # space for controls/buttons
+            per_vlan = 36      # per VLAN row
             n = len(self.vlan_label_order)
             height = min(max(min_height, base_height + per_vlan * n), max_height)
             self.vlan_label_editor.geometry(f"400x{height}")
@@ -632,6 +632,12 @@ class NetworkMapGUI:
                                      font=('Helvetica', 9), width=2)
                 down_btn.grid(row=i, column=3, padx=2, pady=5)
             update_vlan_window_height()
+
+        # Populate VLAN entries before showing window and setting geometry
+        refresh_vlan_entries()
+        update_vlan_window_height()
+        self.vlan_label_editor.deiconify()
+        self.vlan_label_editor.update_idletasks()
 
         def move_vlan(idx, direction):
             new_idx = idx + direction
@@ -703,7 +709,8 @@ class NetworkMapGUI:
                 activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
                 font=('Helvetica', 10)).pack()
 
-        self.fix_window_geometry(self.vlan_label_editor, 500, 650)
+        final_height = self.vlan_label_editor.winfo_height()
+        self.vlan_label_editor.after(1, lambda: self.vlan_label_editor.geometry(f"400x{final_height}"))
 
     def show_help(self, event=None):
         """
