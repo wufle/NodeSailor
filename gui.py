@@ -1867,6 +1867,7 @@ class NetworkMapGUI:
             'nodes': [],
             'connections': [],
             'vlan_labels': self.vlan_label_names,
+            'vlan_label_order': getattr(self, 'vlan_label_order', []),
             'stickynotes': [],
             'groups': []
         }
