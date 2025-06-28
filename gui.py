@@ -1295,7 +1295,7 @@ class NetworkMapGUI:
         
         # Label for displaying save notes/messages (just above Save button)
         save_note_label = tk.Label(content, text="", fg="#ff9900", bg=ColorConfig.current.FRAME_BG, font=('Helvetica', 10))
-        save_note_label.grid(row=save_row - 2, column=0, columnspan=2, pady=(0, 5))
+        save_note_label.grid(row=save_row - 1, column=0, columnspan=2, pady=(0, 5))
 
         def save_node():
             if self.mode != "Configuration":
@@ -1325,14 +1325,14 @@ class NetworkMapGUI:
             content,
             text="Save",
             command=save_node,
+            fg=ColorConfig.current.BUTTON_TEXT,
             bg=ColorConfig.current.BUTTON_BG,
             width=12  # Fixed width so button size does not change on resize
         ).grid(
             row=save_row,
             column=0,
             columnspan=2,
-            pady=10,
-            sticky="ew"
+            pady=10
         )
         self.fix_window_geometry(self.node_window, 340, 360)
         
