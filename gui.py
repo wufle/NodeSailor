@@ -1934,12 +1934,20 @@ class NetworkMapGUI:
             if hasattr(self, "group_manager"):
                 self.group_manager.color_presets = group_color_presets
 
-            # Load custom VLAN labels (if present)
-            if 'vlan_labels' in state:
-                self.vlan_label_names.update(state['vlan_labels'])
-                for vlan, label in self.vlan_title_labels.items():
+            # Load VLAN labels only for those present in the file or referenced in nodes
+            vlan_labels_in_file = set(state.get('vlan_labels', {}).keys())
+            vlan_labels_in_nodes = set()
+            for node_data in state.get('nodes', []):
+                vlan_labels_in_nodes.update({k for k in node_data if k.startswith('VLAN_')})
+            used_vlans = vlan_labels_in_file | vlan_labels_in_nodes
+            self.vlan_label_names = {vlan: state.get('vlan_labels', {}).get(vlan, vlan) for vlan in used_vlans}
+            # Update UI to only show these VLANs
+            for vlan, label in self.vlan_title_labels.items():
+                if vlan in self.vlan_label_names:
                     label.config(text=self.vlan_label_names[vlan] + ":")
-                # VLAN checkboxes removed; dynamic VLAN UI is updated via refresh_vlan_entries()
+                else:
+                    label.config(text="")
+            # VLAN checkboxes removed; dynamic VLAN UI is updated via refresh_vlan_entries()
 
             # Load nodes
             for node_data in state.get('nodes', []):
@@ -2018,11 +2026,20 @@ class NetworkMapGUI:
                     self.save_custom_commands()
                 
                 # group_editor_config.json sync logic removed; settings are now only saved in the main save file
-                if 'vlan_labels' in state:
-                    self.vlan_label_names.update(state['vlan_labels'])
-                    for vlan, label in self.vlan_title_labels.items():
+                # Load VLAN labels only for those present in the file or referenced in nodes
+                vlan_labels_in_file = set(state.get('vlan_labels', {}).keys())
+                vlan_labels_in_nodes = set()
+                for node_data in state.get('nodes', []):
+                    vlan_labels_in_nodes.update({k for k in node_data if k.startswith('VLAN_')})
+                used_vlans = vlan_labels_in_file | vlan_labels_in_nodes
+                self.vlan_label_names = {vlan: state.get('vlan_labels', {}).get(vlan, vlan) for vlan in used_vlans}
+                # Update UI to only show these VLANs
+                for vlan, label in self.vlan_title_labels.items():
+                    if vlan in self.vlan_label_names:
                         label.config(text=self.vlan_label_names[vlan] + ":")
-                    # VLAN checkboxes removed; dynamic VLAN UI is updated via refresh_vlan_entries()
+                    else:
+                        label.config(text="")
+                # VLAN checkboxes removed; dynamic VLAN UI is updated via refresh_vlan_entries()
                 # Load nodes
                 for node_data in state['nodes']:
                     # Extract and convert legacy VLAN keys to new structure
