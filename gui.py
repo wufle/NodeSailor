@@ -360,7 +360,8 @@ class NetworkMapGUI:
         # Dynamically create VLAN label widgets for all VLANs in node.vlans
         if hasattr(node, "vlans") and isinstance(node.vlans, dict):
             for i, (vlan, vlan_value) in enumerate(node.vlans.items(), start=2):
-                title = tk.Label(self.info_panel, text=f"{vlan}:", **info_label_style)
+                vlan_label = self.vlan_label_names.get(vlan, vlan)
+                title = tk.Label(self.info_panel, text=f"{vlan_label}:", **info_label_style)
                 title.grid(row=i, column=0, sticky='w', padx=5, pady=2)
                 self.vlan_title_labels[vlan] = title
 
@@ -1277,7 +1278,8 @@ class NetworkMapGUI:
 
         VLAN_entries = {}
         for i, vlan in enumerate(self.vlan_label_names.keys(), start=1):
-            tk.Label(content, text=f"{vlan}:", **label_args).grid(row=i, column=0, padx=10, pady=5, sticky="e")
+            vlan_label = self.vlan_label_names.get(vlan, vlan)
+            tk.Label(content, text=f"{vlan_label}:", **label_args).grid(row=i, column=0, padx=10, pady=5, sticky="e")
             entry = tk.Entry(content, **entry_args)
             entry.grid(row=i, column=1, padx=10, pady=5)
             if node: entry.insert(0, node.vlans.get(vlan, ""))
