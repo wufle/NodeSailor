@@ -21,7 +21,7 @@ from groups import GroupManager, RectangleGroup
 from group_editor import open_group_editor
 from custom_commands import manage_custom_commands
 
-# Default height for Edit Node window (for 4 VLANs)
+# Default height for Edit Node window (for 4 VLANs) 
 DEFAULT_NODE_HEIGHT = 360
 # Height per VLAN row (used for dynamic resizing)
 NODE_HEIGHT_PER_VLAN = 35
