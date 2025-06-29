@@ -347,7 +347,13 @@ def open_node_list_editor(gui):
         for row_index, node in enumerate(sorted_nodes, start=5):
             xy_fields = []
             for col_index, (label, attr) in enumerate(fields):
-                value = getattr(node, attr, "")
+                # Fetch VLAN value from node.vlans mapping if present
+                if hasattr(node, "vlans") and attr in getattr(node, "vlans", {}):
+                    value = node.vlans.get(attr, "")
+                elif hasattr(node, "data") and isinstance(node.data, dict) and "vlans" in node.data and attr in node.data["vlans"]:
+                    value = node.data["vlans"].get(attr, "")
+                else:
+                    value = getattr(node, attr, "")
                 # Set column widths
                 if attr in ("x", "y"):
                     entry_width = 4
@@ -513,6 +519,15 @@ def open_node_list_editor(gui):
     for key in sorted(all_node_keys):
         if not key.startswith('_') and key not in existing_attrs:
             fields.append((key.replace('_', ' ').title(), key))
+
+    # Filter out specified columns by label or attribute (case-insensitive)
+    HIDE_LABELS = {"canvas", "connections", "font", "shape", "text", "type", "vlans"}
+    HIDE_ATTRS = {"canvas", "connections", "font", "shape", "text", "type", "vlans"}
+    fields = [
+        (label, attr)
+        for (label, attr) in fields
+        if label.strip().lower() not in HIDE_LABELS and attr.strip().lower() not in HIDE_ATTRS
+    ]
 
     # Initialize sorting state
     if not hasattr(gui, 'sort_column'):
