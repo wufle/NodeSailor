@@ -15,3 +15,5 @@ __pycache__/
 *.pyc
 data/NodeSailor_settings.ini
 data/custom_commands.json
+example network7.json
+example network6.json

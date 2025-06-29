@@ -335,7 +335,11 @@ def open_node_list_editor(gui):
         if getattr(gui, 'sort_column', None) is not None:
             attr = fields[gui.sort_column][1]
             def get_sort_key(node):
-                value = getattr(node, attr, "")
+                if attr.startswith("VLAN_"):
+                    vlan_id = int(attr[5:])
+                    value = node.vlans.get(vlan_id, "")
+                else:
+                    value = getattr(node, attr, "")
                 if attr in ("x", "y"):
                     return float(value) if value else 0
                 return str(value).lower() if value else ""
@@ -406,7 +410,18 @@ def open_node_list_editor(gui):
                         except ValueError:
                             return
                     else:
-                        setattr(n, a, val)
+                        if a.startswith("VLAN_"):
+                            vlan_id_str = a[5:]
+                            vlan_id_int = int(vlan_id_str)
+                            possible_keys = [vlan_id_str, vlan_id_int, f"VLAN_{vlan_id_str}"]
+                            for key in possible_keys:
+                                if key in n.vlans:
+                                    n.vlans[key] = val
+                                    break
+                            else:
+                                n.vlans[vlan_id_str] = val
+                        else:
+                            setattr(n, a, val)
                         if a == "name":
                             n.canvas.itemconfigure(n.text, text=n.name)
                         n.adjust_node_size()
@@ -439,7 +454,18 @@ def open_node_list_editor(gui):
                         except ValueError:
                             return
                     else:
-                        setattr(n, a, val)
+                        if a.startswith("VLAN_"):
+                            vlan_id_str = a[5:]
+                            vlan_id_int = int(vlan_id_str)
+                            possible_keys = [vlan_id_str, vlan_id_int, f"VLAN_{vlan_id_str}"]
+                            for key in possible_keys:
+                                if key in n.vlans:
+                                    n.vlans[key] = val
+                                    break
+                            else:
+                                n.vlans[vlan_id_str] = val
+                        else:
+                            setattr(n, a, val)
                         if a == "name":
                             n.canvas.itemconfigure(n.text, text=n.name)
                         n.adjust_node_size()
@@ -543,7 +569,11 @@ def open_node_list_editor(gui):
             gui.sort_reverse = False
 
         def get_sort_key(node):
-            value = getattr(node, attr)
+            if attr.startswith("VLAN_"):
+                vlan_id = int(attr[5:])
+                value = node.vlans.get(vlan_id, "")
+            else:
+                value = getattr(node, attr)
             if attr in ("x", "y"):
                 return float(value) if value else 0
             return str(value).lower() if value else ""

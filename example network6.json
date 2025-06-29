@@ -31,7 +31,7 @@
             "x": 1217.12,
             "y": 484.74,
             "remote_desktop_address": "",
-            "file_path": "",
+            "file_path": "45345",
             "web_config_url": "",
             "VLAN_100": "1.2.3.4",
             "VLAN_200": "",
@@ -55,7 +55,7 @@
             "x": 1090.0,
             "y": 120.0,
             "remote_desktop_address": "",
-            "file_path": "",
+            "file_path": "3345",
             "web_config_url": "www.google.com",
             "VLAN_100": "8.8.8.8",
             "VLAN_200": "",
@@ -114,7 +114,7 @@
             "name": "laptop 1",
             "x": 656.78,
             "y": 651.06,
-            "remote_desktop_address": "",
+            "remote_desktop_address": "345",
             "file_path": "",
             "web_config_url": "",
             "VLAN_100": "192.168.0.101",
@@ -217,12 +217,12 @@
         }
     ],
     "vlan_labels": {
+        "VLAN_400": "VLAN_400",
         "VLAN_100": "VLAN_100",
-        "VLAN_200": "VLAN_200",
         "VLAN_1": "asdasd",
+        "VLAN_200": "VLAN_200",
         "VLAN_300": "VLAN_300",
-        "VLAN_2": "ddddd",
-        "VLAN_400": "VLAN_400"
+        "VLAN_2": "ddddd"
     },
     "vlan_label_order": [
         "VLAN_100",
