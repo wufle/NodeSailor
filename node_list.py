@@ -205,7 +205,7 @@ def open_node_list_editor(gui):
 
             # Create new node
             # Build VLANs dictionary dynamically
-            vlans = {vlan: values.get(vlan, '') for vlan in gui.vlan_label_names.keys()}
+            vlans = {vlan: values.get(vlan, '') for vlan in getattr(gui, 'vlan_label_order', gui.vlan_label_names.keys())}
             new_node = NetworkNode(gui.canvas, name=name, x=x, y=y,
                                 vlans=vlans,
                                 remote_desktop_address=values.get('remote_desktop_address', ''),
@@ -335,7 +335,7 @@ def open_node_list_editor(gui):
         if getattr(gui, 'sort_column', None) is not None:
             attr = fields[gui.sort_column][1]
             def get_sort_key(node):
-                value = getattr(node, attr)
+                value = getattr(node, attr, "")
                 if attr in ("x", "y"):
                     return float(value) if value else 0
                 return str(value).lower() if value else ""
@@ -347,7 +347,7 @@ def open_node_list_editor(gui):
         for row_index, node in enumerate(sorted_nodes, start=5):
             xy_fields = []
             for col_index, (label, attr) in enumerate(fields):
-                value = getattr(node, attr)
+                value = getattr(node, attr, "")
                 # Set column widths
                 if attr in ("x", "y"):
                     entry_width = 4
@@ -492,7 +492,8 @@ def open_node_list_editor(gui):
     # Initialize the fields list
     fields = [("Name", "name")]
     # Add VLAN fields dynamically
-    for vlan, label in gui.vlan_label_names.items():
+    for vlan in getattr(gui, 'vlan_label_order', gui.vlan_label_names.keys()):
+        label = gui.vlan_label_names.get(vlan, vlan)
         fields.append((label, vlan))
     fields += [
         ("RDP Address", "remote_desktop_address"),
@@ -501,6 +502,17 @@ def open_node_list_editor(gui):
         ("X", "x"),
         ("Y", "y"),
     ]
+
+    # Dynamically add any extra fields found in node data
+    all_node_keys = set()
+    for node in getattr(gui, 'nodes', []):
+        all_node_keys.update(node.__dict__.keys() if hasattr(node, '__dict__') else node.keys())
+    # Flatten fields to a set of attribute names already present
+    existing_attrs = set(attr for _, attr in fields)
+    # Add any missing keys as columns (skip private/dunder and already present)
+    for key in sorted(all_node_keys):
+        if not key.startswith('_') and key not in existing_attrs:
+            fields.append((key.replace('_', ' ').title(), key))
 
     # Initialize sorting state
     if not hasattr(gui, 'sort_column'):

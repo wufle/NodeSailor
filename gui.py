@@ -49,6 +49,8 @@ class NetworkMapGUI:
                         arrowcolor=ColorConfig.current.BUTTON_TEXT)
 
     def __init__(self, root):
+        # Ensure gui.nodes always references the main node list
+        self.gui = self
         # root should be created with ctk.CTk() for CustomTkinter support
         self.root = root
         self.sticky_note_popup = None
@@ -2153,6 +2155,8 @@ class NetworkMapGUI:
                     )
                     self.nodes.append(node)
                     self.highlight_matching_nodes()
+                # Ensure gui.nodes references the loaded node list for Node List window
+                self.gui.nodes = self.nodes
                 # Load connections
                 for conn_data in state['connections']:
                     node1 = self.nodes[conn_data['from']]
