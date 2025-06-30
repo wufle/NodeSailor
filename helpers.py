@@ -87,21 +87,6 @@ def show_operator_guidance(root, center_func=None, custom_font=None):
     win.overrideredirect(True)
     win.transient(root)
 
-    # Center the window if a centering function is provided, else center manually
-    if center_func:
-        center_func(win)
-    else:
-        win.update_idletasks()
-        width = win.winfo_width()
-        height = win.winfo_height()
-        main_x = root.winfo_x()
-        main_y = root.winfo_y()
-        main_width = root.winfo_width()
-        main_height = root.winfo_height()
-        x = max(0, main_x + (main_width - width) // 2)
-        y = max(0, main_y + (main_height - height) // 2)
-        win.geometry(f'{width}x{height}+{x}+{y}')
-
     # Outer border frame
     outer_frame = tk.Frame(win, bg=ColorConfig.current.BORDER_COLOR, padx=2, pady=2)
     outer_frame.pack(fill=tk.BOTH, expand=True)
