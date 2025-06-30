@@ -110,8 +110,10 @@ class NetworkNode:
                 self.canvas.after(0, lambda: gui.update_vlan_colors(self, results))
 
         def ping_all_vlans():
-            vlan_ips = [self.vlans.get(vlan) for vlan in vlan_order]
-            results = [run_ping(ip) if ip else False for ip in vlan_ips] if vlan_ips else [False]
+            # Filter out VLANs with no data (empty or None)
+            filtered_vlans = [vlan for vlan in vlan_order if self.vlans.get(vlan)]
+            vlan_ips = [self.vlans.get(vlan) for vlan in filtered_vlans]
+            results = [run_ping(ip) for ip in vlan_ips] if vlan_ips else []
             self.canvas.after(0, update_ui, results)
 
         threading.Thread(target=ping_all_vlans).start()

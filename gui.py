@@ -371,7 +371,9 @@ class NetworkMapGUI:
                 sorted_vlans = [(v, node.vlans[v]) for v in ordered_keys]
             else:
                 sorted_vlans = sorted(node.vlans.items(), key=lambda x: self.vlan_label_names.get(x[0], x[0]))
-            for i, (vlan, vlan_value) in enumerate(sorted_vlans, start=2):
+            # Only display VLANs with data (not empty or None)
+            filtered_vlans = [(v, vval) for v, vval in sorted_vlans if vval not in ("", None)]
+            for i, (vlan, vlan_value) in enumerate(filtered_vlans, start=2):
                 vlan_label = self.vlan_label_names.get(vlan, vlan)
                 title = tk.Label(self.info_panel, text=f"{vlan_label}:", **info_label_style)
                 title.grid(row=i, column=0, sticky='w', padx=5, pady=2)
@@ -1033,7 +1035,9 @@ class NetworkMapGUI:
 
     def update_vlan_colors(self, node, ping_results):
         vlan_keys = self.vlan_label_order
-        for i, vlan in enumerate(vlan_keys):
+        # Only update color for VLANs with data
+        data_vlans = [vlan for vlan in vlan_keys if getattr(node, "vlans", {}).get(vlan)]
+        for i, vlan in enumerate(data_vlans):
             if vlan in self.vlan_labels:
                 if i < len(ping_results):
                     color = ColorConfig.current.NODE_PING_SUCCESS if ping_results[i] else ColorConfig.current.NODE_PING_FAILURE
