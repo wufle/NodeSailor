@@ -2,159 +2,159 @@
     "nodes": [
         {
             "name": "Study PC",
-            "VLAN_100": "192.168.0.3",
-            "VLAN_200": "",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 589.46,
             "y": 129.32999999999998,
             "remote_desktop_address": "Study",
             "file_path": "\\\\192.168.0.3",
-            "web_config_url": ""
+            "web_config_url": "",
+            "VLAN_100": "192.168.0.3",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": ""
         },
         {
             "name": "Theatre PC",
-            "VLAN_100": "192.168.0.2",
-            "VLAN_200": "10.1.1.2",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 529.0699999999999,
             "y": 242.18999999999997,
             "remote_desktop_address": "",
             "file_path": "",
-            "web_config_url": ""
+            "web_config_url": "",
+            "VLAN_100": "192.168.0.2",
+            "VLAN_200": "10.1.1.2",
+            "VLAN_300": "",
+            "VLAN_400": ""
         },
         {
             "name": "bogus",
-            "VLAN_100": "1.2.3.4",
-            "VLAN_200": "",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 1217.12,
             "y": 484.74,
             "remote_desktop_address": "",
             "file_path": "",
-            "web_config_url": ""
+            "web_config_url": "",
+            "VLAN_100": "1.2.3.4",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": ""
         },
         {
             "name": "Sprinklers",
-            "VLAN_100": "192.168.0.113",
-            "VLAN_200": "",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 577.58,
             "y": 500.58,
             "remote_desktop_address": "",
             "file_path": "",
-            "web_config_url": "http://192.168.0.113:8080/"
+            "web_config_url": "http://192.168.0.113:8080/",
+            "VLAN_100": "192.168.0.113",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": ""
         },
         {
             "name": "Google!",
-            "VLAN_100": "8.8.8.8",
-            "VLAN_200": "",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 1093.37,
             "y": 120.41999999999996,
             "remote_desktop_address": "",
             "file_path": "",
-            "web_config_url": "www.google.com"
+            "web_config_url": "www.google.com",
+            "VLAN_100": "8.8.8.8",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": ""
         },
         {
             "name": "Router",
-            "VLAN_100": "192.168.0.1",
-            "VLAN_200": "",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 821.12,
             "y": 355.05,
             "remote_desktop_address": "",
             "file_path": "",
-            "web_config_url": "http:\\\\192.168.0.1"
+            "web_config_url": "http:\\\\192.168.0.1",
+            "VLAN_100": "192.168.0.1",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": ""
         },
         {
             "name": "Printer",
-            "VLAN_100": "192.168.0.103",
-            "VLAN_200": "",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 517.1899999999999,
             "y": 404.55,
             "remote_desktop_address": "",
             "file_path": "",
-            "web_config_url": ""
+            "web_config_url": "",
+            "VLAN_100": "192.168.0.103",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": ""
         },
         {
             "name": "NAS",
-            "VLAN_100": "192.168.0.42",
-            "VLAN_200": "",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 489.46999999999997,
             "y": 325.35,
             "remote_desktop_address": "NAS",
             "file_path": "\\\\192.168.0.42\\C$",
-            "web_config_url": "\\\\192.168.0.42"
+            "web_config_url": "\\\\192.168.0.42",
+            "VLAN_100": "192.168.0.42",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": ""
         },
         {
             "name": "switch01",
-            "VLAN_100": "192.168.0.100",
-            "VLAN_200": "",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 826.0699999999999,
             "y": 621.36,
             "remote_desktop_address": "",
             "file_path": "",
-            "web_config_url": ""
+            "web_config_url": "",
+            "VLAN_100": "192.168.0.100",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": ""
         },
         {
             "name": "laptop 1",
-            "VLAN_100": "192.168.0.101",
-            "VLAN_200": "",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 656.78,
             "y": 651.06,
             "remote_desktop_address": "",
             "file_path": "",
-            "web_config_url": ""
+            "web_config_url": "",
+            "VLAN_100": "192.168.0.101",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": ""
         },
         {
             "name": "laptop 2",
-            "VLAN_100": "192.168.0.102",
-            "VLAN_200": "",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 740.9300000000001,
             "y": 740.1600000000001,
             "remote_desktop_address": "",
             "file_path": "",
-            "web_config_url": ""
+            "web_config_url": "",
+            "VLAN_100": "192.168.0.102",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": ""
         },
         {
             "name": "laptop 3",
-            "VLAN_100": "192.168.0.103",
-            "VLAN_200": "",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 866.66,
             "y": 754.02,
             "remote_desktop_address": "",
             "file_path": "",
-            "web_config_url": ""
+            "web_config_url": "",
+            "VLAN_100": "192.168.0.103",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": ""
         },
         {
             "name": "laptop 4",
-            "VLAN_100": "192.168.0.104",
-            "VLAN_200": "",
-            "VLAN_300": "",
-            "VLAN_400": "",
             "x": 989.42,
             "y": 683.73,
             "remote_desktop_address": "",
             "file_path": "",
-            "web_config_url": ""
+            "web_config_url": "",
+            "VLAN_100": "192.168.0.104",
+            "VLAN_200": "",
+            "VLAN_300": "",
+            "VLAN_400": ""
         }
     ],
     "connections": [
@@ -215,10 +215,83 @@
         }
     ],
     "vlan_labels": {
-        "VLAN_100": "VLAN_100",
-        "VLAN_200": "VLAN_200",
         "VLAN_300": "VLAN_300",
-        "VLAN_400": "VLAN_400"
+        "VLAN_100": "VLAN_100",
+        "VLAN_400": "VLAN_400",
+        "VLAN_200": "VLAN_200"
     },
-    "stickynotes": []
+    "vlan_label_order": [
+        "VLAN_100",
+        "VLAN_200",
+        "VLAN_300",
+        "VLAN_400"
+    ],
+    "stickynotes": [],
+    "groups": [],
+    "group_color_presets": [
+        {
+            "id": "preset1",
+            "name": "Classic Blue",
+            "light_bg": "#e3f0ff",
+            "light_border": "#3a7bd5",
+            "dark_bg": "#22304a",
+            "dark_border": "#3a7bd5"
+        },
+        {
+            "id": "preset2",
+            "name": "Sunset",
+            "light_bg": "#ffe5d0",
+            "light_border": "#ff7f50",
+            "dark_bg": "#4a2c23",
+            "dark_border": "#ff7f50"
+        },
+        {
+            "id": "preset3",
+            "name": "Mint",
+            "light_bg": "#e0fff4",
+            "light_border": "#2ecc71",
+            "dark_bg": "#204034",
+            "dark_border": "#2ecc71"
+        },
+        {
+            "id": "preset4",
+            "name": "Lavender",
+            "light_bg": "#f3e8ff",
+            "light_border": "#a259e6",
+            "dark_bg": "#2d234a",
+            "dark_border": "#a259e6"
+        },
+        {
+            "id": "preset5",
+            "name": "Slate",
+            "light_bg": "#f0f4f8",
+            "light_border": "#607d8b",
+            "dark_bg": "#232b32",
+            "dark_border": "#607d8b"
+        },
+        {
+            "id": "preset6",
+            "name": "Contrast",
+            "light_bg": "#ffffff",
+            "light_border": "#000000",
+            "dark_bg": "#000000",
+            "dark_border": "#ffffff"
+        }
+    ],
+    "group_window_height": 460,
+    "node_window_height": 360,
+    "custom_commands": {
+        "ping -t": {
+            "template": "ping {ddddd} -t\npause",
+            "applicable_nodes": null
+        },
+        "ping -derp": {
+            "template": "ping {ip} -derp",
+            "applicable_nodes": null
+        },
+        "asdfasdf": {
+            "template": "fasdasdfasdf",
+            "applicable_nodes": null
+        }
+    }
 }

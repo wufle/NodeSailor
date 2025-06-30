@@ -688,18 +688,26 @@ class NetworkMapGUI:
                 if vlan in self.vlan_label_order:
                     self.vlan_label_order.remove(vlan)
             # Update/add VLANs
+            # Track VLANs before update
+            prev_vlans = set(self.vlan_label_names.keys())
             for vlan, entry in entries.items():
                 self.vlan_label_names[vlan] = entry.get()
+            # Detect new VLANs (present now, not before)
+            new_vlans = set(self.vlan_label_names.keys()) - prev_vlans
+            # Add new VLANs to all nodes' in-memory vlans structure
+            for vlan in new_vlans:
+                for node in getattr(self, "nodes", []):
+                    # Assume node.vlans is a dict; skip if already present
+                    if hasattr(node, "vlans"):
+                        if vlan not in node.vlans:
+                            node.vlans[vlan] = {}  # or appropriate default value
             for vlan, label in self.vlan_title_labels.items():
                 if vlan in self.vlan_label_names:
                     label.config(text=self.vlan_label_names[vlan] + ":")
-            # VLAN checkboxes removed; dynamic VLAN UI is updated via refresh_vlan_entries()
             # Refresh info panel VLANs to reflect changes
-            self.refresh_info_panel_vlans(
-                {'font': ('Helvetica', 10), 'bg': ColorConfig.current.INFO_NOTE_BG, 'fg': ColorConfig.current.INFO_TEXT, 'anchor': 'w'},
-                {'font': ('Helvetica', 10), 'bg': ColorConfig.current.INFO_NOTE_BG, 'fg': ColorConfig.current.INFO_TEXT},
+            for node in getattr(self, "nodes", []):
+                self.refresh_info_panel_vlans(node, {'font': ('Helvetica', 10), 'bg': ColorConfig.current.INFO_NOTE_BG, 'fg': ColorConfig.current.INFO_TEXT, 'anchor': 'w'}, self.info_value_style)
                 self.info_value_style
-            )
             close_vlan_editor()
             self.save_network_state()
 
