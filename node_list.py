@@ -547,8 +547,8 @@ def open_node_list_editor(gui):
             fields.append((key.replace('_', ' ').title(), key))
 
     # Filter out specified columns by label or attribute (case-insensitive)
-    HIDE_LABELS = {"canvas", "connections", "font", "shape", "text", "type", "vlans"}
-    HIDE_ATTRS = {"canvas", "connections", "font", "shape", "text", "type", "vlans"}
+    HIDE_LABELS = {"canvas", "connections", "font", "shape", "text", "type", "vlans", "last drag x", "last drag y"}
+    HIDE_ATTRS = {"canvas", "connections", "font", "shape", "text", "type", "vlans", "last_drag_x", "last_drag_y"}
     fields = [
         (label, attr)
         for (label, attr) in fields
