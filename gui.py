@@ -786,7 +786,7 @@ class NetworkMapGUI:
         text_area.pack(fill=tk.BOTH, expand=True)
 
         help_lines = [
-            ("NodeSailor v0.9.28- Help\n", "title"),
+            ("NodeSailor v0.9.29- Help\n", "title"),
             ("\nOverview:\n", "header"),
             ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, quick launchers for file explorer, web browser, RDP and more with the implementation of custom commands.\n", "text"),
 
@@ -1053,7 +1053,7 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="NodeSailor v0.9.28", bg=ColorConfig.current.FRAME_BG,
+            title_label = tk.Label(title_bar, text="NodeSailor v0.9.29", bg=ColorConfig.current.FRAME_BG,
                                 fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
             title_label.pack(side=tk.LEFT, padx=10)
 
@@ -1985,6 +1985,34 @@ class NetworkMapGUI:
             if self.mode == "Operator":
                 show_operator_guidance(self.root, self.center_window_on_screen, self.custom_font)
 
+    def validate_and_fix_vlans(self, network_data, file_path):
+        """
+        Ensure every node in the network data has all VLAN keys listed in 'vlan_labels'.
+        If a VLAN key is missing from a node, add it with an empty string as the value.
+        After fixing, overwrite the original JSON file with the updated data (pretty-printed).
+        """
+        print("Entered validate_and_fix_vlans")
+        vlan_labels = network_data.get("vlan_labels", {})
+        if isinstance(vlan_labels, dict):
+            vlan_keys = list(vlan_labels.keys())
+        else:
+            vlan_keys = list(vlan_labels)
+        print(f"[DEBUG] VLAN labels being checked: {vlan_keys}")
+        for idx, node in enumerate(network_data.get("nodes", [])):
+            print(f"[DEBUG] Node {idx} before modification: {node}")
+            missing_vlans = []
+            for vlan in vlan_keys:
+                if vlan not in node:
+                    node[vlan] = ""
+                    missing_vlans.append(vlan)
+            if missing_vlans:
+                print(f"[DEBUG] Node {idx} missing VLAN keys added: {missing_vlans}")
+            print(f"[DEBUG] Node {idx} after modification: {node}")
+        # Write the updated network_data back to the original JSON file
+        import json
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(network_data, f, indent=4, ensure_ascii=False)
+        
     def load_network_state_from_path(self, file_path):
         with open(file_path, 'r') as f:
             self.clear_current_loaded()  # Clears existing nodes, connections, and stickynotes
@@ -2099,6 +2127,9 @@ class NetworkMapGUI:
             with open(file_path, 'r') as f:
                 self.clear_current_loaded()  # Clear existing nodes, connections and labels
                 state = json.load(f)
+                print("Calling validate_and_fix_vlans")
+                if state is not None:
+                    self.validate_and_fix_vlans(state, file_path)
                 
                 # Reset custom commands file to empty if not present in state
                 if "custom_commands" not in state or not state["custom_commands"]:
@@ -2181,7 +2212,8 @@ class NetworkMapGUI:
                 for node in self.nodes:
                     node.raise_node()
             self.save_last_file_path(file_path)  # Save the last file path
-            self.legend_window.destroy()  # Close the legend window
+            if self.legend_window is not None:
+                self.legend_window.destroy()  # Close the legend window
 
         # Show operator guidance window if in Operator mode
         if self.mode == "Operator":
