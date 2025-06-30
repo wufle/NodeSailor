@@ -701,6 +701,7 @@ class NetworkMapGUI:
                 self.info_value_style
             )
             close_vlan_editor()
+            self.save_network_state()
 
         button_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
         button_frame.grid(row=2, column=0, columnspan=3, pady=10)
