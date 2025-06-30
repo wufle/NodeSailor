@@ -1032,7 +1032,7 @@ class NetworkMapGUI:
             self.canvas.itemconfigure(node.shape, fill=node_color)
 
     def update_vlan_colors(self, node, ping_results):
-        vlan_keys = list(self.vlan_label_names.keys())
+        vlan_keys = self.vlan_label_order
         for i, vlan in enumerate(vlan_keys):
             if vlan in self.vlan_labels:
                 if i < len(ping_results):
@@ -1605,7 +1605,7 @@ class NetworkMapGUI:
  
     def ping_all(self):
         for node in self.nodes:
-            node.ping()
+            node.ping(self.vlan_label_order)
     
     def show_sticky_note_popup(self, initial_text, on_ok_callback):
         # Destroy any existing sticky note popup

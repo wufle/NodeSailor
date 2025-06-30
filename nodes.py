@@ -85,9 +85,10 @@ class NetworkNode:
         self.canvas.selected_object = self
         self.last_drag_x = event.x
         self.last_drag_y = event.y
-        self.ping()
+        gui = self.canvas.gui
+        self.ping(gui.vlan_label_order)
          
-    def ping(self):
+    def ping(self, vlan_order):
         def run_ping(ip):
             # Check for OS and construct the command accordingly
             param = '-n' if platform.system().lower() == 'windows' else '-c'
@@ -109,8 +110,8 @@ class NetworkNode:
                 self.canvas.after(0, lambda: gui.update_vlan_colors(self, results))
 
         def ping_all_vlans():
-            vlan_ips = [ip for ip in self.vlans.values() if ip]
-            results = [run_ping(ip) for ip in vlan_ips] if vlan_ips else [False]
+            vlan_ips = [self.vlans.get(vlan) for vlan in vlan_order]
+            results = [run_ping(ip) if ip else False for ip in vlan_ips] if vlan_ips else [False]
             self.canvas.after(0, update_ui, results)
 
         threading.Thread(target=ping_all_vlans).start()
