@@ -1940,6 +1940,7 @@ class NetworkMapGUI:
         if file_path:
             with open(file_path, 'w') as f:
                 json.dump(state, f, indent=4)
+            self.validate_and_fix_vlans(state, file_path)
 
         # Close the legend window if it exists
         if self.legend_window and self.legend_window.winfo_exists():
@@ -1991,23 +1992,19 @@ class NetworkMapGUI:
         If a VLAN key is missing from a node, add it with an empty string as the value.
         After fixing, overwrite the original JSON file with the updated data (pretty-printed).
         """
-        print("Entered validate_and_fix_vlans")
         vlan_labels = network_data.get("vlan_labels", {})
         if isinstance(vlan_labels, dict):
             vlan_keys = list(vlan_labels.keys())
         else:
             vlan_keys = list(vlan_labels)
-        print(f"[DEBUG] VLAN labels being checked: {vlan_keys}")
         for idx, node in enumerate(network_data.get("nodes", [])):
-            print(f"[DEBUG] Node {idx} before modification: {node}")
             missing_vlans = []
             for vlan in vlan_keys:
                 if vlan not in node:
                     node[vlan] = ""
                     missing_vlans.append(vlan)
             if missing_vlans:
-                print(f"[DEBUG] Node {idx} missing VLAN keys added: {missing_vlans}")
-            print(f"[DEBUG] Node {idx} after modification: {node}")
+                pass
         # Write the updated network_data back to the original JSON file
         import json
         with open(file_path, "w", encoding="utf-8") as f:
@@ -2127,7 +2124,6 @@ class NetworkMapGUI:
             with open(file_path, 'r') as f:
                 self.clear_current_loaded()  # Clear existing nodes, connections and labels
                 state = json.load(f)
-                print("Calling validate_and_fix_vlans")
                 if state is not None:
                     self.validate_and_fix_vlans(state, file_path)
                 
