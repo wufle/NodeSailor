@@ -777,20 +777,11 @@ class NetworkMapGUI:
             title_bar = tk.Frame(outer_frame, bg=ColorConfig.current.FRAME_BG)
             title_bar.pack(side=tk.TOP, fill=tk.X)
 
-            title_label = tk.Label(title_bar, text="NodeSailor v0.9.29", bg=ColorConfig.current.FRAME_BG,
-                                fg=ColorConfig.current.BUTTON_TEXT, font=self.custom_font)
-            title_label.pack(side=tk.LEFT, padx=10)
-
             close_button = tk.Button(title_bar, text='X', command=self.close_legend,
                                     bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT,
                                     font=self.custom_font)
             close_button.pack(side=tk.RIGHT)
 
-            # Make the title bar draggable
-            title_bar.bind("<ButtonPress-1>", self.start_move_legend)
-            title_bar.bind("<B1-Motion>", self.do_move_legend)
-            title_label.bind("<ButtonPress-1>", self.start_move_legend)
-            title_label.bind("<B1-Motion>", self.do_move_legend)
             self.legend_window.bind("<Escape>", lambda e: self.close_legend())
 
             # Content frame
@@ -2263,7 +2254,6 @@ class NetworkMapGUI:
         # Update only the relevant setting and preserve others
         write_NodeSailor_settings({'WINDOW_GEOMETRY': geometry})
 
-
     def load_window_geometry(self):
         try:
             with open(NodeSailor_settings_PATH, "r") as f:
@@ -2320,7 +2310,6 @@ class NetworkMapGUI:
         win.after(1, apply_geometry)
 
         return win, content
-
 
     def make_popup_closer(self, attr):
         def closer():

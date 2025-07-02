@@ -73,7 +73,7 @@ def show_help_window(gui, event=None):
     text_area.pack(fill=tk.BOTH, expand=True)
 
     help_lines = [
-        ("NodeSailor v0.9.29- Help\n", "title"),
+        ("Help\n", "title"),
         ("\nOverview:\n", "header"),
         ("NodeSailor is a simple network visualization tool.  It allows the user to create a network map, display and test their connections with options for pinging, quick launchers for file explorer, web browser, RDP and more with the implementation of custom commands.\n", "text"),
         ("\nUser Modes:\n", "header"),

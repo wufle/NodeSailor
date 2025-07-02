@@ -32,22 +32,42 @@ def write_NodeSailor_settings(update):
     lines = []
     written = set()
     try:
+        # Read existing lines if file exists, else start with empty
         if os.path.exists(NodeSailor_settings_PATH):
             with open(NodeSailor_settings_PATH, "r") as f:
-                for line in f:
-                    if "=" in line:
-                        k, _ = line.strip().split("=", 1)
-                        if k in update:
-                            lines.append(f"{k}={'1' if state[k] else '0'}\n")
-                            written.add(k)
-                        else:
-                            lines.append(line)
+                existing_lines = f.readlines()
+        else:
+            existing_lines = []
+
+        # Track which keys have been written
+        written = set()
+        lines = []
+
+        # Update existing keys in file
+        for line in existing_lines:
+            if "=" in line:
+                k, _ = line.strip().split("=", 1)
+                if k in update:
+                    v = state[k]
+                    if isinstance(v, bool):
+                        lines.append(f"{k}={'1' if v else '0'}\n")
                     else:
-                        lines.append(line)
+                        lines.append(f"{k}={v}\n")
+                    written.add(k)
+                else:
+                    lines.append(line)
+            else:
+                lines.append(line)
+
         # Add any new keys not already present
         for k in update:
             if k not in written:
-                lines.append(f"{k}={'1' if state[k] else '0'}\n")
+                v = state[k]
+                if isinstance(v, bool):
+                    lines.append(f"{k}={'1' if v else '0'}\n")
+                else:
+                    lines.append(f"{k}={v}\n")
+
         # Ensure the directory exists before writing
         os.makedirs(os.path.dirname(NodeSailor_settings_PATH), exist_ok=True)
         with open(NodeSailor_settings_PATH, "w") as f:
