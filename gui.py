@@ -2258,8 +2258,8 @@ class NetworkMapGUI:
         try:
             with open(NodeSailor_settings_PATH, "r") as f:
                 for line in f:
-                    if line.startswith("WINDOW_GEOMETRY:"):
-                        geometry = line.strip().split(":", 1)[1]
+                    if line.startswith("WINDOW_GEOMETRY="):
+                        geometry = line.strip().split("=", 1)[1]
                         self.root.geometry(geometry)
         except Exception:
             # Fallback: do not set geometry if file is missing/unreadable
