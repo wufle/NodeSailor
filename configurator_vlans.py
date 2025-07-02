@@ -20,7 +20,7 @@ def edit_vlan_labels_window(gui):
         gui.vlan_label_editor = None
         gui.regain_focus()  # Restore focus to the main window
 
-    gui.vlan_label_editor, content = gui.create_popup("Edit VLANs", 400, 350, on_close=close_vlan_editor, grab=False)
+    gui.vlan_label_editor, content = gui.create_popup("Edit VLANs", 450, 350, on_close=close_vlan_editor, grab=False)
 
     entries = {}
 
@@ -209,4 +209,4 @@ def edit_vlan_labels_window(gui):
             font=('Helvetica', 10)).pack()
 
     final_height = gui.vlan_label_editor.winfo_height()
-    gui.vlan_label_editor.after(1, lambda: gui.vlan_label_editor.geometry(f"400x{final_height}"))
+    gui.vlan_label_editor.after(1, lambda: gui.vlan_label_editor.geometry(f"450x{final_height}"))

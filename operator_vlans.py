@@ -57,11 +57,14 @@ def show_operator_vlans_window(gui):
         # Use custom VLAN order for display
         for i, vlan in enumerate(gui.vlan_label_order):
             row_idx = i + 1  # Offset by 1 for Show All button
-            tk.Label(vlan_frame, text=vlan + ":", anchor="e",
-                    bg=ColorConfig.current.FRAME_BG,
-                    fg=ColorConfig.current.BUTTON_TEXT,
-                    font=('Helvetica', 10))\
-                .grid(row=row_idx, column=0, padx=10, pady=5, sticky="e")
+            tk.Label(
+                vlan_frame,
+                text=gui.vlan_label_names.get(vlan, vlan) + ":",
+                anchor="e",
+                bg=ColorConfig.current.FRAME_BG,
+                fg=ColorConfig.current.BUTTON_TEXT,
+                font=('Helvetica', 10)
+            ).grid(row=row_idx, column=0, padx=10, pady=5, sticky="e")
 
             # Toggle visibility button for this VLAN
             def make_toggle_vlan(vlan_name):
