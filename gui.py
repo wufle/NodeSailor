@@ -21,7 +21,8 @@ from groups import GroupManager, RectangleGroup
 from group_editor import open_group_editor
 from custom_commands import manage_custom_commands
 from gui_help import show_help_window  
-from gui_vlan import edit_vlan_labels_window
+from configurator_vlans import edit_vlan_labels_window
+from operator_vlans import show_operator_vlans_window
 
 # Default height for Edit Node window (for 4 VLANs) 
 DEFAULT_NODE_HEIGHT = 360
@@ -229,9 +230,25 @@ class NetworkMapGUI:
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
         fg=lambda: ColorConfig.current.INFO_TEXT)
         
-        self.edit_VLAN_button = tk.Button(self.buttons_frame, text='VLANs',
-                                               command=lambda: self.defer_popup(self.edit_vlan_labels), **button_style)
+        self.edit_VLAN_button = tk.Button(
+            self.buttons_frame,
+            text='VLANs',
+            command=lambda: self.defer_popup(self.edit_vlan_labels),
+            **button_style
+        )
         self.edit_VLAN_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+        # Operator VLANs button
+        def show_operator_vlans():
+            from operator_vlans import show_operator_vlans_window
+            show_operator_vlans_window(self)
+        self.operator_vlans_button = tk.Button(
+            self.buttons_frame,
+            text='VLANs',
+            command=lambda: self.defer_popup(show_operator_vlans),
+            **button_style
+        )
+        self.operator_vlans_button.pack(side=tk.LEFT, padx=5, pady=5)
 
         ToolTip(self.edit_VLAN_button, "Edit the VLAN labels and visibility", self,
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
