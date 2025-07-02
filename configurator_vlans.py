@@ -26,7 +26,11 @@ def edit_vlan_labels_window(gui):
 
     vlan_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
     vlan_frame.grid(row=0, column=0, columnspan=3, sticky="nsew")
-
+    
+    content.grid_rowconfigure(0, weight=1)  # vlan_frame row
+    content.grid_rowconfigure(2, weight=0)  # button_frame row
+    content.grid_columnconfigure(0, weight=1)
+    
     # Helper to update window height dynamically (for refresh/reorder)
     def update_vlan_window_height():
         min_height = 100
