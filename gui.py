@@ -80,8 +80,8 @@ class NetworkMapGUI:
         # Bind <Map> event to restore secondary windows
         self.root.bind("<Map>", self.on_restore)
 
-        # Load custom commands
-        self.custom_commands = self.load_custom_commands()
+        # Initialize custom commands (now only in-memory or loaded from network state)
+        self.custom_commands = {}
 
         self.mode = "Configuration"
         self.selected_object_type = None
@@ -1697,14 +1697,10 @@ class NetworkMapGUI:
                 self.group_manager.color_presets = DEFAULT_PRESETS
 
             # Reset custom commands file to empty
-            try:
-                with open(get_resource_path("data/custom_commands.json"), "w") as f:
-                    json.dump({}, f, indent=4)
-                self.custom_commands = {}
-                if hasattr(self, "custom_commands_listbox"):
-                    self.custom_commands_listbox.delete(0, "end")
-            except Exception:
-                pass
+            # Reset in-memory custom commands to empty
+            self.custom_commands = {}
+            if hasattr(self, "custom_commands_listbox") and self.custom_commands_listbox.winfo_exists():
+                self.custom_commands_listbox.delete(0, "end")
     
             # Show operator guidance window if in Operator mode
             if self.mode == "Operator":
@@ -1741,11 +1737,8 @@ class NetworkMapGUI:
 
             # Reset custom commands file to empty if not present in state
             if "custom_commands" not in state or not state["custom_commands"]:
-                try:
-                    with open("data/custom_commands.json", "w") as fcc:
-                        json.dump({}, fcc, indent=4)
-                except Exception:
-                    pass
+                # No longer reset custom_commands.json file; just clear in-memory
+                self.custom_commands = {}
 
             # Extract group editor config from state, fallback to defaults if missing/None
             group_color_presets = state.get("group_color_presets", DEFAULT_PRESETS)
@@ -1853,16 +1846,12 @@ class NetworkMapGUI:
                 
                 # Reset custom commands file to empty if not present in state
                 if "custom_commands" not in state or not state["custom_commands"]:
-                    try:
-                        with open("data/custom_commands.json", "w") as fcc:
-                            json.dump({}, fcc, indent=4)
-                    except Exception:
-                        pass
+                    # No longer reset custom_commands.json file; just clear in-memory
+                    self.custom_commands = {}
                 
                 # Load custom commands if present
                 if "custom_commands" in state:
                     self.custom_commands = state["custom_commands"]
-                    self.save_custom_commands()
                 
                 # group_editor_config.json sync logic removed; settings are now only saved in the main save file
                 # Load VLAN labels only for those present in the file or referenced in nodes
@@ -2375,14 +2364,3 @@ class NetworkMapGUI:
                 for attr, value in colors['Dark'].items():
                     setattr(ColorConfig.Dark, attr, value)
             self.update_ui_colors()
-
-    def load_custom_commands(self):
-        try:
-            with open(get_resource_path('data/custom_commands.json'), 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return {}
-
-    def save_custom_commands(self):
-        with open(get_resource_path('data/custom_commands.json'), 'w') as f:
-            json.dump(self.custom_commands, f, indent=4)

@@ -105,11 +105,10 @@ def manage_custom_commands(gui_self):
             name = listbox.get(selection[0])
             del gui_self.custom_commands[name]
             listbox.delete(selection[0])
-            gui_self.save_custom_commands()
             name_entry.delete(0, tk.END)
             cmd_entry.delete("1.0", tk.END)
 
-    def save_commands():
+    def save_command():
         name = name_entry.get().strip()
         cmd = cmd_entry.get("1.0", tk.END).strip()
         if applicability_var.get():
@@ -124,7 +123,6 @@ def manage_custom_commands(gui_self):
             # Update listbox if new
             if name not in listbox.get(0, tk.END):
                 listbox.insert(tk.END, name)
-        gui_self.save_custom_commands()
 
     btn_style = {
         'bg': ColorConfig.current.BUTTON_BG,
@@ -138,7 +136,7 @@ def manage_custom_commands(gui_self):
 
     tk.Button(btn_frame, text="New", command=new_command, **btn_style).pack(side=tk.LEFT, padx=5)
     tk.Button(btn_frame, text="Delete", command=delete_command, **btn_style).pack(side=tk.LEFT, padx=5)
-    tk.Button(btn_frame, text="Save", command=save_commands, **btn_style).pack(side=tk.LEFT, padx=5)
+    tk.Button(btn_frame, text="Save", command=save_command, **btn_style).pack(side=tk.LEFT, padx=5)
 
     tk.Label(content, text="""
                 
