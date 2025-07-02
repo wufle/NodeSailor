@@ -229,11 +229,11 @@ class NetworkMapGUI:
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
         fg=lambda: ColorConfig.current.INFO_TEXT)
         
-        self.edit_VLAN_button = tk.Button(self.buttons_frame, text='Edit VLAN Labels',
+        self.edit_VLAN_button = tk.Button(self.buttons_frame, text='VLANs',
                                                command=lambda: self.defer_popup(self.edit_vlan_labels), **button_style)
         self.edit_VLAN_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-        ToolTip(self.edit_VLAN_button, "Edit the VLAN labels", self,
+        ToolTip(self.edit_VLAN_button, "Edit the VLAN labels and visibility", self,
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
         fg=lambda: ColorConfig.current.INFO_TEXT)
         

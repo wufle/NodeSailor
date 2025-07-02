@@ -20,7 +20,7 @@ def edit_vlan_labels_window(gui):
         gui.vlan_label_editor = None
         gui.regain_focus()  # Restore focus to the main window
 
-    gui.vlan_label_editor, content = gui.create_popup("Edit VLAN Labels", 400, 350, on_close=close_vlan_editor, grab=False)
+    gui.vlan_label_editor, content = gui.create_popup("Edit VLANs", 400, 350, on_close=close_vlan_editor, grab=False)
 
     entries = {}
 
@@ -35,23 +35,40 @@ def edit_vlan_labels_window(gui):
         per_vlan = 36      # per VLAN row
         n = len(gui.vlan_label_order)
         height = min(max(min_height, base_height + per_vlan * n), max_height)
-        gui.vlan_label_editor.geometry(f"400x{height}")
+        gui.vlan_label_editor.geometry(f"450x{height}")
 
     def refresh_vlan_entries():
         # Clear current widgets in vlan_frame
         for widget in vlan_frame.winfo_children():
             widget.destroy()
         entries.clear()
+
+        # "Show All" button to reset visibility
+        def show_all_nodes():
+            for node in getattr(gui, "nodes", []):
+                gui.canvas.itemconfigure(node.shape, state=tk.NORMAL)
+                gui.canvas.itemconfigure(node.text, state=tk.NORMAL)
+        show_all_btn = tk.Button(
+            vlan_frame, text="Show All Nodes", command=show_all_nodes,
+            bg=ColorConfig.current.BUTTON_BG,
+            fg=ColorConfig.current.BUTTON_TEXT,
+            activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+            activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
+            font=('Helvetica', 9)
+        )
+        show_all_btn.grid(row=0, column=5, padx=5, pady=5, sticky="e")
+
         # Use custom VLAN order for display
         for i, vlan in enumerate(gui.vlan_label_order):
+            row_idx = i + 1  # Offset by 1 for Show All button
             tk.Label(vlan_frame, text=vlan + ":", anchor="e",
                     bg=ColorConfig.current.FRAME_BG,
                     fg=ColorConfig.current.BUTTON_TEXT,
                     font=('Helvetica', 10))\
-                .grid(row=i, column=0, padx=10, pady=5, sticky="e")
+                .grid(row=row_idx, column=0, padx=10, pady=5, sticky="e")
             entry = tk.Entry(vlan_frame, bg=ColorConfig.current.ENTRY_FOCUS_BG, fg=ColorConfig.current.ENTRY_TEXT, insertbackground=ColorConfig.current.ENTRY_TEXT)
             entry.insert(0, gui.vlan_label_names[vlan])
-            entry.grid(row=i, column=1, padx=10, pady=5)
+            entry.grid(row=row_idx, column=1, padx=10, pady=5)
             entries[vlan] = entry
 
             def make_remove(vlan_name):
@@ -62,7 +79,7 @@ def edit_vlan_labels_window(gui):
                                   activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
                                   activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
                                   font=('Helvetica', 9))
-            remove_btn.grid(row=i, column=4, padx=5, pady=5)
+            remove_btn.grid(row=row_idx, column=4, padx=5, pady=5)
 
             # Up/Down buttons for reordering
             def make_move_up(idx):
@@ -75,14 +92,36 @@ def edit_vlan_labels_window(gui):
                                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
                                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
                                font=('Helvetica', 9), width=2)
-            up_btn.grid(row=i, column=2, padx=2, pady=5)
+            up_btn.grid(row=row_idx, column=2, padx=2, pady=5)
             down_btn = tk.Button(vlan_frame, text="↓", command=make_move_down(i),
                                  bg=ColorConfig.current.BUTTON_BG,
                                  fg=ColorConfig.current.BUTTON_TEXT,
                                  activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
                                  activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
                                  font=('Helvetica', 9), width=2)
-            down_btn.grid(row=i, column=3, padx=2, pady=5)
+            down_btn.grid(row=row_idx, column=3, padx=2, pady=5)
+
+            # Toggle visibility button for this VLAN
+            def make_toggle_vlan(vlan_name):
+                def toggle_nodes():
+                    for node in getattr(gui, "nodes", []):
+                        # Show node if VLAN is present and non-empty
+                        if hasattr(node, "vlans") and node.vlans.get(vlan_name):
+                            gui.canvas.itemconfigure(node.shape, state=tk.NORMAL)
+                            gui.canvas.itemconfigure(node.text, state=tk.NORMAL)
+                        else:
+                            gui.canvas.itemconfigure(node.shape, state=tk.HIDDEN)
+                            gui.canvas.itemconfigure(node.text, state=tk.HIDDEN)
+                return toggle_nodes
+            toggle_btn = tk.Button(
+                vlan_frame, text="Show Only", command=make_toggle_vlan(vlan),
+                bg=ColorConfig.current.BUTTON_BG,
+                fg=ColorConfig.current.BUTTON_TEXT,
+                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
+                font=('Helvetica', 9)
+            )
+            toggle_btn.grid(row=row_idx, column=5, padx=5, pady=5)
         update_vlan_window_height()
 
     # Populate VLAN entries before showing window and setting geometry
@@ -99,7 +138,7 @@ def edit_vlan_labels_window(gui):
             )
             refresh_vlan_entries()
     # Ensure the window is wide enough for all buttons
-    gui.vlan_label_editor.minsize(400, 350)
+    gui.vlan_label_editor.minsize(450, 350)
     # Remove static geometry setting; handled dynamically
 
     def add_vlan():
