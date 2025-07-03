@@ -25,17 +25,26 @@ def show_display_options_window(gui):
     options_frame = tk.Frame(content, bg=ColorConfig.current.FRAME_BG)
     options_frame.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
-    # BooleanVars for checkboxes
-    vlan_var = tk.BooleanVar(value=True)
+    # BooleanVars for checkboxes (except VLANs)
     conn_var = tk.BooleanVar(value=True)
     conn_label_var = tk.BooleanVar(value=True)
     notes_var = tk.BooleanVar(value=True)
     groups_var = tk.BooleanVar(value=True)
 
+    # VLAN checkboxes state
+    vlan_vars = {}
+
     def update_display():
-        # VLANs (nodes)
+        # VLANs (nodes): Show node if any checked VLAN matches
+        checked_vlans = [vlan for vlan, var in vlan_vars.items() if var.get()]
         for node in getattr(gui, "nodes", []):
-            state = tk.NORMAL if vlan_var.get() else tk.HIDDEN
+            show = False
+            if hasattr(node, "vlans"):
+                for vlan in checked_vlans:
+                    if node.vlans.get(vlan):
+                        show = True
+                        break
+            state = tk.NORMAL if show else tk.HIDDEN
             gui.canvas.itemconfigure(node.shape, state=state)
             gui.canvas.itemconfigure(node.text, state=state)
         # Connections
@@ -59,21 +68,20 @@ def show_display_options_window(gui):
                 gui.canvas.itemconfigure(group.rectangle, state=group_state)
                 gui.canvas.itemconfigure(group.text, state=group_state)
 
-    # Checkboxes
-    tk.Checkbutton(options_frame, text="Show VLANs", variable=vlan_var, command=update_display, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG).grid(row=0, column=0, sticky="w", padx=10, pady=5, columnspan=2)
-    tk.Checkbutton(options_frame, text="Show Connections", variable=conn_var, command=update_display, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG).grid(row=1, column=0, sticky="w", padx=10, pady=5, columnspan=2)
-    tk.Checkbutton(options_frame, text="Show Connection Labels", variable=conn_label_var, command=update_display, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG).grid(row=2, column=0, sticky="w", padx=10, pady=5, columnspan=2)
-    tk.Checkbutton(options_frame, text="Show Sticky Notes", variable=notes_var, command=update_display, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG).grid(row=3, column=0, sticky="w", padx=10, pady=5, columnspan=2)
-    tk.Checkbutton(options_frame, text="Show Groups", variable=groups_var, command=update_display, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG).grid(row=4, column=0, sticky="w", padx=10, pady=5, columnspan=2)
+    # Checkboxes (no VLANs/global)
+    tk.Checkbutton(options_frame, text="Show Connections", variable=conn_var, command=update_display, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG).grid(row=0, column=0, sticky="w", padx=10, pady=5, columnspan=2)
+    tk.Checkbutton(options_frame, text="Show Connection Labels", variable=conn_label_var, command=update_display, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG).grid(row=1, column=0, sticky="w", padx=10, pady=5, columnspan=2)
+    tk.Checkbutton(options_frame, text="Show Sticky Notes", variable=notes_var, command=update_display, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG).grid(row=2, column=0, sticky="w", padx=10, pady=5, columnspan=2)
+    tk.Checkbutton(options_frame, text="Show Groups", variable=groups_var, command=update_display, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG).grid(row=3, column=0, sticky="w", padx=10, pady=5, columnspan=2)
 
-    # VLAN section (reuse original logic)
+    # VLAN section (checkboxes for each VLAN)
     vlan_frame = tk.Frame(options_frame, bg=ColorConfig.current.FRAME_BG)
-    vlan_frame.grid(row=5, column=0, columnspan=3, sticky="nsew")
+    vlan_frame.grid(row=4, column=0, columnspan=3, sticky="nsew")
 
     def update_vlan_window_height():
         min_height = 100
         max_height = 1000
-        base_height = 180  # space for controls/buttons
+        base_height = 140  # space for controls/buttons
         per_vlan = 36      # per VLAN row
         n = len(gui.vlan_label_order)
         height = min(max(min_height, base_height + per_vlan * n), max_height)
@@ -83,55 +91,22 @@ def show_display_options_window(gui):
         # Clear current widgets in vlan_frame
         for widget in vlan_frame.winfo_children():
             widget.destroy()
-
-        # "Show All" button to reset visibility
-        def show_all_nodes():
-            for node in getattr(gui, "nodes", []):
-                gui.canvas.itemconfigure(node.shape, state=tk.NORMAL)
-                gui.canvas.itemconfigure(node.text, state=tk.NORMAL)
-        show_all_btn = tk.Button(
-            vlan_frame, text="Show All Nodes", command=show_all_nodes,
-            bg=ColorConfig.current.BUTTON_BG,
-            fg=ColorConfig.current.BUTTON_TEXT,
-            activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-            activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
-            font=('Helvetica', 9)
-        )
-        show_all_btn.grid(row=0, column=3, padx=5, pady=5, sticky="e")
+        vlan_vars.clear()
 
         # Use custom VLAN order for display
         for i, vlan in enumerate(gui.vlan_label_order):
-            row_idx = i + 1  # Offset by 1 for Show All button
-            tk.Label(
+            row_idx = i  # No offset needed
+            vlan_vars[vlan] = tk.BooleanVar(value=True)
+            tk.Checkbutton(
                 vlan_frame,
-                text=gui.vlan_label_names.get(vlan, vlan) + ":",
-                anchor="e",
+                text=gui.vlan_label_names.get(vlan, vlan),
+                variable=vlan_vars[vlan],
+                command=update_display,
                 bg=ColorConfig.current.FRAME_BG,
                 fg=ColorConfig.current.BUTTON_TEXT,
+                selectcolor=ColorConfig.current.FRAME_BG,
                 font=('Helvetica', 10)
-            ).grid(row=row_idx, column=0, padx=10, pady=5, sticky="e")
-
-            # Toggle visibility button for this VLAN
-            def make_toggle_vlan(vlan_name):
-                def toggle_nodes():
-                    for node in getattr(gui, "nodes", []):
-                        # Show node if VLAN is present and non-empty
-                        if hasattr(node, "vlans") and node.vlans.get(vlan_name):
-                            gui.canvas.itemconfigure(node.shape, state=tk.NORMAL)
-                            gui.canvas.itemconfigure(node.text, state=tk.NORMAL)
-                        else:
-                            gui.canvas.itemconfigure(node.shape, state=tk.HIDDEN)
-                            gui.canvas.itemconfigure(node.text, state=tk.HIDDEN)
-                return toggle_nodes
-            toggle_btn = tk.Button(
-                vlan_frame, text="Show Only", command=make_toggle_vlan(vlan),
-                bg=ColorConfig.current.BUTTON_BG,
-                fg=ColorConfig.current.BUTTON_TEXT,
-                activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
-                activeforeground=ColorConfig.current.BUTTON_ACTIVE_TEXT,
-                font=('Helvetica', 9)
-            )
-            toggle_btn.grid(row=row_idx, column=3, padx=5, pady=5)
+            ).grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
         update_vlan_window_height()
 
     refresh_vlan_entries()
