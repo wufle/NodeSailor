@@ -232,7 +232,7 @@ class NetworkMapGUI:
         
         self.edit_VLAN_button = tk.Button(
             self.buttons_frame,
-            text='VLANs',
+            text='VLAN Config',
             command=lambda: self.defer_popup(self.edit_vlan_labels),
             **button_style
         )
@@ -244,7 +244,7 @@ class NetworkMapGUI:
             show_operator_vlans_window(self)
         self.operator_vlans_button = tk.Button(
             self.buttons_frame,
-            text='VLANs',
+            text='VLAN Visibility',
             command=lambda: self.defer_popup(show_operator_vlans),
             **button_style
         )
@@ -594,10 +594,13 @@ class NetworkMapGUI:
             self.canvas.bind('<Button-2>', self.create_connection)
             
             # Show configuration mode buttons
-            self.list_view_editor_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.mode_button)
+            self.edit_VLAN_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.mode_button)
+            self.list_view_editor_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.edit_VLAN_button)
             self.edit_connections_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.list_view_editor_button)
-            self.edit_VLAN_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.edit_connections_button)
             self.groups_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.edit_connections_button)
+
+            # Hide operator VLANs button in Configuration mode
+            self.operator_vlans_button.pack_forget()
 
             # Show configuration guidance window
             show_configuration_guidance(self.root, self.center_window_on_screen, self.custom_font)
@@ -617,6 +620,9 @@ class NetworkMapGUI:
             self.edit_VLAN_button.pack_forget()
             self.groups_button.pack_forget()
             self.make_popup_closer("group_editor_window")()
+
+            # Show operator VLANs button in Operator mode, just to the right of the mode button
+            self.operator_vlans_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.mode_button)
   
     def zoom_with_mouse(self, event):
         # Hide any open connection info popups before zooming
