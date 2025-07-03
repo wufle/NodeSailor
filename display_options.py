@@ -2,6 +2,12 @@ import tkinter as tk
 from colors import ColorConfig
 
 def show_display_options_window(gui):
+    # Store state in RAM for session persistence only
+    if not hasattr(gui, "display_options_state"):
+        gui.display_options_state = {}
+
+    state = gui.display_options_state
+
     # Destroy any existing display options window before opening a new one
     if getattr(gui, 'display_options_window', None) and gui.display_options_window.winfo_exists():
         gui.display_options_window.destroy()
@@ -12,6 +18,7 @@ def show_display_options_window(gui):
         gui.legend_window.withdraw()
 
     def close_display_options_window():
+        save_state()
         try:
             gui.display_options_window.grab_release()
         except:
@@ -26,15 +33,23 @@ def show_display_options_window(gui):
     options_frame.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
     # BooleanVars for checkboxes (except VLANs)
-    conn_var = tk.BooleanVar(value=True)
-    conn_label_var = tk.BooleanVar(value=True)
-    notes_var = tk.BooleanVar(value=True)
-    groups_var = tk.BooleanVar(value=True)
+    conn_var = tk.BooleanVar(value=state.get("show_connections", True))
+    conn_label_var = tk.BooleanVar(value=state.get("show_connection_labels", True))
+    notes_var = tk.BooleanVar(value=state.get("show_notes", True))
+    groups_var = tk.BooleanVar(value=state.get("show_groups", True))
 
     # VLAN checkboxes state
     vlan_vars = {}
 
+    def save_state():
+        state["show_connections"] = conn_var.get()
+        state["show_connection_labels"] = conn_label_var.get()
+        state["show_notes"] = notes_var.get()
+        state["show_groups"] = groups_var.get()
+        state["vlans"] = {vlan: var.get() for vlan, var in vlan_vars.items()}
+
     def update_display():
+        save_state()
         # VLANs (nodes): Show node if any checked VLAN matches
         checked_vlans = [vlan for vlan, var in vlan_vars.items() if var.get()]
         for node in getattr(gui, "nodes", []):
@@ -44,9 +59,9 @@ def show_display_options_window(gui):
                     if node.vlans.get(vlan):
                         show = True
                         break
-            state = tk.NORMAL if show else tk.HIDDEN
-            gui.canvas.itemconfigure(node.shape, state=state)
-            gui.canvas.itemconfigure(node.text, state=state)
+            state_ = tk.NORMAL if show else tk.HIDDEN
+            gui.canvas.itemconfigure(node.shape, state=state_)
+            gui.canvas.itemconfigure(node.text, state=state_)
         # Connections
         # Connections: Only show if at least one endpoint node is visible
         for node in getattr(gui, "nodes", []):
@@ -116,12 +131,15 @@ def show_display_options_window(gui):
         # Use custom VLAN order for display
         for i, vlan in enumerate(gui.vlan_label_order):
             row_idx = i + 1  # Offset by 1 to account for header
-            vlan_vars[vlan] = tk.BooleanVar(value=True)
+            vlan_vars[vlan] = tk.BooleanVar(value=state.get("vlans", {}).get(vlan, True))
+            def vlan_callback(vlan_name=vlan):
+                update_display()
+                save_state()
             tk.Checkbutton(
                 vlan_frame,
                 text=gui.vlan_label_names.get(vlan, vlan),
                 variable=vlan_vars[vlan],
-                command=update_display,
+                command=vlan_callback,
                 bg=ColorConfig.current.FRAME_BG,
                 fg=ColorConfig.current.BUTTON_TEXT,
                 selectcolor=ColorConfig.current.FRAME_BG,
