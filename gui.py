@@ -22,7 +22,7 @@ from group_editor import open_group_editor
 from custom_commands import manage_custom_commands
 from gui_help import show_help_window  
 from configurator_vlans import edit_vlan_labels_window
-from operator_vlans import show_operator_vlans_window
+from display_options import show_display_options_window
 
 # Default height for Edit Node window (for 4 VLANs) 
 DEFAULT_NODE_HEIGHT = 360
@@ -239,16 +239,16 @@ class NetworkMapGUI:
         self.edit_VLAN_button.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Operator VLANs button
-        def show_operator_vlans():
-            from operator_vlans import show_operator_vlans_window
-            show_operator_vlans_window(self)
-        self.operator_vlans_button = tk.Button(
+        def show_display_options():
+            from display_options import show_display_options_window
+            show_display_options_window(self)
+        self.display_options_button = tk.Button(
             self.buttons_frame,
             text='VLAN Visibility',
-            command=lambda: self.defer_popup(show_operator_vlans),
+            command=lambda: self.defer_popup(show_display_options),
             **button_style
         )
-        self.operator_vlans_button.pack(side=tk.LEFT, padx=5, pady=5)
+        self.display_options_button.pack(side=tk.LEFT, padx=5, pady=5)
 
         ToolTip(self.edit_VLAN_button, "Edit the VLAN labels and visibility", self,
         bg=lambda: ColorConfig.current.INFO_NOTE_BG,
@@ -600,7 +600,7 @@ class NetworkMapGUI:
             self.groups_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.edit_connections_button)
 
             # Hide operator VLANs button in Configuration mode
-            self.operator_vlans_button.pack_forget()
+            self.display_options_button.pack_forget()
 
             # Show configuration guidance window
             show_configuration_guidance(self.root, self.center_window_on_screen, self.custom_font)
@@ -622,7 +622,7 @@ class NetworkMapGUI:
             self.make_popup_closer("group_editor_window")()
 
             # Show operator VLANs button in Operator mode, just to the right of the mode button
-            self.operator_vlans_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.mode_button)
+            self.display_options_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.mode_button)
   
     def zoom_with_mouse(self, event):
         # Hide any open connection info popups before zooming
