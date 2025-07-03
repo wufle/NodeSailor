@@ -244,7 +244,7 @@ class NetworkMapGUI:
             show_display_options_window(self)
         self.display_options_button = tk.Button(
             self.buttons_frame,
-            text='VLAN Visibility',
+            text='Display Options',
             command=lambda: self.defer_popup(show_display_options),
             **button_style
         )
@@ -600,7 +600,6 @@ class NetworkMapGUI:
             self.groups_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.edit_connections_button)
 
             # Hide operator VLANs button in Configuration mode
-            self.display_options_button.pack_forget()
 
             # Show configuration guidance window
             show_configuration_guidance(self.root, self.center_window_on_screen, self.custom_font)
