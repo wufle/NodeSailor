@@ -48,13 +48,23 @@ def show_display_options_window(gui):
             gui.canvas.itemconfigure(node.shape, state=state)
             gui.canvas.itemconfigure(node.text, state=state)
         # Connections
+        # Connections: Only show if at least one endpoint node is visible
         for node in getattr(gui, "nodes", []):
             for conn in getattr(node, "connections", []):
-                gui.canvas.itemconfigure(conn.line, state=tk.NORMAL if conn_var.get() else tk.HIDDEN)
+                # Determine if either endpoint node is visible
+                def node_visible(n):
+                    if hasattr(n, "vlans"):
+                        for vlan in checked_vlans:
+                            if n.vlans.get(vlan):
+                                return True
+                    return False
+                visible = node_visible(conn.node1) and node_visible(conn.node2)
+                line_state = tk.NORMAL if conn_var.get() and visible else tk.HIDDEN
+                gui.canvas.itemconfigure(conn.line, state=line_state)
                 if hasattr(conn, "label_id") and conn.label_id:
-                    gui.canvas.itemconfigure(conn.label_id, state=tk.NORMAL if conn_label_var.get() and conn_var.get() else tk.HIDDEN)
+                    gui.canvas.itemconfigure(conn.label_id, state=tk.NORMAL if conn_label_var.get() and conn_var.get() and visible else tk.HIDDEN)
                 if hasattr(conn, "label_bg") and conn.label_bg:
-                    gui.canvas.itemconfigure(conn.label_bg, state=tk.NORMAL if conn_label_var.get() and conn_var.get() else tk.HIDDEN)
+                    gui.canvas.itemconfigure(conn.label_bg, state=tk.NORMAL if conn_label_var.get() and conn_var.get() and visible else tk.HIDDEN)
         # Sticky Notes
         for note in getattr(gui, "stickynotes", []):
             note_state = tk.NORMAL if notes_var.get() else tk.HIDDEN
