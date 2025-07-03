@@ -620,8 +620,8 @@ class NetworkMapGUI:
             self.groups_button.pack_forget()
             self.make_popup_closer("group_editor_window")()
 
-            # Show operator VLANs button in Operator mode, just to the right of the mode button
-            self.display_options_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.mode_button)
+        # Always show Display Options button just to the right of the mode button
+        self.display_options_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.mode_button)
   
     def zoom_with_mouse(self, event):
         # Hide any open connection info popups before zooming
