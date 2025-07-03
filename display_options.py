@@ -93,9 +93,19 @@ def show_display_options_window(gui):
             widget.destroy()
         vlan_vars.clear()
 
+        # Add header label before VLAN checkboxes
+        header_label = tk.Label(
+            vlan_frame,
+            text="Toggle VLAN Visibility:",
+            bg=ColorConfig.current.FRAME_BG,
+            fg=ColorConfig.current.BUTTON_TEXT,
+            font=('Helvetica', 11)
+        )
+        header_label.grid(row=0, column=0, padx=10, pady=(10, 1), sticky="w")
+
         # Use custom VLAN order for display
         for i, vlan in enumerate(gui.vlan_label_order):
-            row_idx = i  # No offset needed
+            row_idx = i + 1  # Offset by 1 to account for header
             vlan_vars[vlan] = tk.BooleanVar(value=True)
             tk.Checkbutton(
                 vlan_frame,
