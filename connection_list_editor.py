@@ -58,7 +58,7 @@ def open_connection_list_editor(gui_self):
         for widget in gui_self.connection_list_frame.winfo_children():
             widget.destroy()
 
-        headers = ["From", "To", "Label", "Info", "Delete"]
+        headers = ["From", "To", "Label", "Info", "Waypoints", "Delete"]
         sortable_columns = [0, 1, 2, 3]  # "From", "To", "Label", "Info"
 
         def sort_connections(column_index):
@@ -129,16 +129,40 @@ def open_connection_list_editor(gui_self):
             info_entry.insert(0, conn.connectioninfo or "")
             info_entry.grid(row=row_index, column=3, padx=1, pady=1, sticky="nsew")
 
-            def make_update_callback(c=conn, le=label_entry, ie=info_entry):
+            # --- Waypoints column ---
+            waypoints_str = ""
+            if hasattr(conn, "waypoints") and conn.waypoints:
+                waypoints_str = "; ".join(f"{int(x)},{int(y)}" for x, y in conn.waypoints)
+            waypoints_entry = tk.Entry(gui_self.connection_list_frame, width=30, bg=row_bg, fg=ColorConfig.current.ENTRY_TEXT,
+                                       insertbackground=ColorConfig.current.ENTRY_TEXT, borderwidth=1, relief='solid')
+            waypoints_entry.insert(0, waypoints_str)
+            waypoints_entry.grid(row=row_index, column=4, padx=1, pady=1, sticky="nsew")
+
+            def make_update_callback(c=conn, le=label_entry, ie=info_entry, we=waypoints_entry):
                 def update_fields(event=None):
                     c.label = le.get()
                     c.connectioninfo = ie.get()
+                    # Parse waypoints from entry
+                    wp_text = we.get().strip()
+                    if wp_text:
+                        try:
+                            c.waypoints = []
+                            for pair in wp_text.split(";"):
+                                x, y = map(int, pair.strip().split(","))
+                                c.waypoints.append((x, y))
+                        except Exception:
+                            pass  # Ignore parse errors
+                    else:
+                        c.waypoints = []
                     c.update_label()
+                    if hasattr(c, "draw_line"):
+                        c.draw_line()
                     gui_self.unsaved_changes = True
                 return update_fields
 
             label_entry.bind("<FocusOut>", make_update_callback())
             info_entry.bind("<FocusOut>", make_update_callback())
+            waypoints_entry.bind("<FocusOut>", make_update_callback())
 
             def delete_conn(c=conn):
                 gui_self.canvas.delete(c.line)
@@ -151,7 +175,7 @@ def open_connection_list_editor(gui_self):
                 gui_self.unsaved_changes = True
                 rebuild_editor_content()
 
-            tk.Button(gui_self.connection_list_frame, text="🗑", fg="red", bg=row_bg, borderwidth=1, relief='solid', command=lambda c=conn: delete_conn(c)).grid(row=row_index, column=4, padx=1, pady=1, sticky="nsew")
+            tk.Button(gui_self.connection_list_frame, text="🗑", fg="red", bg=row_bg, borderwidth=1, relief='solid', command=lambda c=conn: delete_conn(c)).grid(row=row_index, column=5, padx=1, pady=1, sticky="nsew")
 
     refresh_btn = tk.Button(button_frame, text="🔄 Refresh List",
                             command=lambda: rebuild_editor_content(),
