@@ -172,6 +172,9 @@ def open_connection_list_editor(gui_self):
                     gui_self.canvas.delete(c.label_bg)
                 c.node1.connections.remove(c)
                 c.node2.connections.remove(c)
+                # Remove from connection_lines list if it exists
+                if hasattr(gui_self, "connection_lines") and c in gui_self.connection_lines:
+                    gui_self.connection_lines.remove(c)
                 gui_self.unsaved_changes = True
                 rebuild_editor_content()
 

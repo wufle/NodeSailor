@@ -91,6 +91,7 @@ class NetworkMapGUI:
         self.unsaved_changes = False
         self.groups_mode_active = False
         self.group_manager = GroupManager(self)
+        self.connection_lines = []
 
         # Buttons Frame
         self.buttons_frame = tk.Frame(root)
@@ -589,7 +590,7 @@ class NetworkMapGUI:
             self.mode_button.config(text='Configuration Mode', bg=ColorConfig.current.BUTTON_CONFIGURATION_MODE)
             # Enable functionalities for Configuration mode
             self.canvas.bind('<Double-1>', self.create_node)
-            self.canvas.bind('<B1-Motion>', self.move_node)
+            self.canvas.bind('<B1-Motion>', self.handle_mouse_drag)  # Use unified handler instead of direct move_node
             self.canvas.bind('<Shift-Double-1>', self.create_sticky_note)
             self.canvas.bind('<Button-2>', self.create_connection)
             
@@ -622,6 +623,12 @@ class NetworkMapGUI:
 
         # Always show Display Options button just to the right of the mode button
         self.display_options_button.pack(side=tk.LEFT, padx=5, pady=5, after=self.mode_button)
+
+        # Update all connection lines to show/hide waypoint handles based on mode
+        if hasattr(self, "connection_lines"):
+            for conn in self.connection_lines:
+                if hasattr(conn, "update_properties"):
+                    conn.update_properties()
   
     def zoom_with_mouse(self, event):
         # Hide any open connection info popups before zooming
@@ -661,6 +668,17 @@ class NetworkMapGUI:
             group_x2 = (group.x2 - x) * factor + x
             group_y2 = (group.y2 - y) * factor + y
             group.update_position(group_x1, group_y1, group_x2, group_y2)
+
+        # Update stored waypoint coordinates
+        if hasattr(self, "connection_lines"):
+            for conn in self.connection_lines:
+                if hasattr(conn, "waypoints") and conn.waypoints:
+                    updated_waypoints = []
+                    for wp_x, wp_y in conn.waypoints:
+                        new_wp_x = (wp_x - x) * factor + x
+                        new_wp_y = (wp_y - y) * factor + y
+                        updated_waypoints.append((new_wp_x, new_wp_y))
+                    conn.waypoints = updated_waypoints
 
         self.zoom_level *= factor
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
@@ -733,6 +751,17 @@ class NetworkMapGUI:
             group_x2 = (group.x2 - center_x) * factor + center_x
             group_y2 = (group.y2 - center_y) * factor + center_y
             group.update_position(group_x1, group_y1, group_x2, group_y2)
+
+        # Update stored waypoint coordinates
+        if hasattr(self, "connection_lines"):
+            for conn in self.connection_lines:
+                if hasattr(conn, "waypoints") and conn.waypoints:
+                    updated_waypoints = []
+                    for wp_x, wp_y in conn.waypoints:
+                        new_wp_x = (wp_x - center_x) * factor + center_x
+                        new_wp_y = (wp_y - center_y) * factor + center_y
+                        updated_waypoints.append((new_wp_x, new_wp_y))
+                    conn.waypoints = updated_waypoints
 
         self.zoom_level *= factor
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
@@ -1193,7 +1222,7 @@ class NetworkMapGUI:
             # Hide banner label
             self.groups_banner_label.pack_forget()
             self.make_popup_closer("group_editor_window")  # Close editor
-            self.canvas.bind('<B1-Motion>', self.move_node)
+            self.canvas.bind('<B1-Motion>', self.handle_mouse_drag)  # Use unified handler
         else:
             self.groups_mode_active = True
             self.groups_button.config(relief=tk.SUNKEN, text="Groups (Active)")
@@ -1217,6 +1246,13 @@ class NetworkMapGUI:
     
     def handle_mouse_drag(self, event):
         """Handle mouse drag events based on the current mode"""
+        # Check if we're dragging a waypoint handle - if so, don't interfere
+        current_item = self.canvas.find_withtag("current")
+        if current_item:
+            item_tags = self.canvas.gettags(current_item[0])
+            if "waypoint_handle" in item_tags or "resize_handle" in item_tags:
+                return  # Let the specific handle drag event take precedence
+        
         if self.groups_mode_active:
             # In groups mode, update the rectangle being drawn
             if not hasattr(self.group_manager, 'drawing') or not self.group_manager.drawing:
@@ -1238,6 +1274,13 @@ class NetworkMapGUI:
             self.deselect_node(event)
     
     def move_node(self, event):
+        # Check if we're on a waypoint handle or resize handle - if so, don't process node movement
+        current_item = self.canvas.find_withtag("current")
+        if current_item:
+            item_tags = self.canvas.gettags(current_item[0])
+            if "waypoint_handle" in item_tags or "resize_handle" in item_tags:
+                return  # Let the specific handle drag event take precedence
+        
         if not event.state & 0x001:
             canvas_x = self.canvas.canvasx(event.x)
             canvas_y = self.canvas.canvasy(event.y)
@@ -1592,6 +1635,10 @@ class NetworkMapGUI:
                             # Remove connection from both nodes
                             connection.node1.connections.remove(connection)
                             connection.node2.connections.remove(connection)
+                            
+                            # Remove from connection_lines list if it exists
+                            if hasattr(self, "connection_lines") and connection in self.connection_lines:
+                                self.connection_lines.remove(connection)
 
                             return  # Exit after removing connection
 
