@@ -654,11 +654,16 @@ class NetworkMapGUI:
 
         # Scale all canvas items visually
         self.canvas.scale("all", x, y, factor, factor)
+        
+        # DEBUG: Log zoom operation details
+        print(f"DEBUG ZOOM: Mouse zoom at ({x:.1f}, {y:.1f}) with factor {factor:.3f}")
 
         # Update stored node coordinates
         for node in self.nodes:
+            old_x, old_y = node.x, node.y
             node.x = (node.x - x) * factor + x
             node.y = (node.y - y) * factor + y
+            print(f"DEBUG ZOOM: Node '{node.name}' moved from ({old_x:.1f}, {old_y:.1f}) to ({node.x:.1f}, {node.y:.1f})")
             node.update_position(node.x, node.y)
 
         # Update stored group rectangle coordinates
@@ -669,16 +674,14 @@ class NetworkMapGUI:
             group_y2 = (group.y2 - y) * factor + y
             group.update_position(group_x1, group_y1, group_x2, group_y2)
 
-        # Update stored waypoint coordinates
-        if hasattr(self, "connection_lines"):
-            for conn in self.connection_lines:
-                if hasattr(conn, "waypoints") and conn.waypoints:
-                    updated_waypoints = []
-                    for wp_x, wp_y in conn.waypoints:
-                        new_wp_x = (wp_x - x) * factor + x
-                        new_wp_y = (wp_y - y) * factor + y
-                        updated_waypoints.append((new_wp_x, new_wp_y))
-                    conn.waypoints = updated_waypoints
+        # Transform waypoint coordinates mathematically (same as nodes)
+        for conn in self.connection_lines:
+            transformed_waypoints = []
+            for wp_x, wp_y in conn.waypoints:
+                new_wp_x = (wp_x - x) * factor + x
+                new_wp_y = (wp_y - y) * factor + y
+                transformed_waypoints.append((new_wp_x, new_wp_y))
+            conn.waypoints = transformed_waypoints
 
         self.zoom_level *= factor
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
@@ -737,11 +740,16 @@ class NetworkMapGUI:
         # Scale all canvas items visually
         self.canvas.scale("all", center_x, center_y, factor, factor)
         self.update_zoom_label()
+        
+        # DEBUG: Log zoom operation details
+        print(f"DEBUG ZOOM: Button zoom at center ({center_x:.1f}, {center_y:.1f}) with factor {factor:.3f}")
 
         # Update stored node coordinates
         for node in self.nodes:
+            old_x, old_y = node.x, node.y
             node.x = (node.x - center_x) * factor + center_x
             node.y = (node.y - center_y) * factor + center_y
+            print(f"DEBUG ZOOM: Node '{node.name}' moved from ({old_x:.1f}, {old_y:.1f}) to ({node.x:.1f}, {node.y:.1f})")
             node.update_position(node.x, node.y)
 
         # Update stored group rectangle coordinates
@@ -752,16 +760,14 @@ class NetworkMapGUI:
             group_y2 = (group.y2 - center_y) * factor + center_y
             group.update_position(group_x1, group_y1, group_x2, group_y2)
 
-        # Update stored waypoint coordinates
-        if hasattr(self, "connection_lines"):
-            for conn in self.connection_lines:
-                if hasattr(conn, "waypoints") and conn.waypoints:
-                    updated_waypoints = []
-                    for wp_x, wp_y in conn.waypoints:
-                        new_wp_x = (wp_x - center_x) * factor + center_x
-                        new_wp_y = (wp_y - center_y) * factor + center_y
-                        updated_waypoints.append((new_wp_x, new_wp_y))
-                    conn.waypoints = updated_waypoints
+        # Transform waypoint coordinates mathematically (same as nodes)
+        for conn in self.connection_lines:
+            transformed_waypoints = []
+            for wp_x, wp_y in conn.waypoints:
+                new_wp_x = (wp_x - center_x) * factor + center_x
+                new_wp_y = (wp_y - center_y) * factor + center_y
+                transformed_waypoints.append((new_wp_x, new_wp_y))
+            conn.waypoints = transformed_waypoints
 
         self.zoom_level *= factor
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))

@@ -48,11 +48,18 @@ class ConnectionLine:
         if active_drag:
             print(f"DEBUG: draw_line() called during active drag of waypoint {getattr(self, '_active_waypoint_handle', 'unknown')}")
         
+        # DEBUG: Log waypoint positions before redraw
+        print(f"DEBUG REDRAW: Connection '{self.label}' redrawing with {len(self.waypoints)} waypoints:")
+        for i, (wx, wy) in enumerate(self.waypoints):
+            print(f"DEBUG REDRAW:   Waypoint {i}: ({wx:.1f}, {wy:.1f})")
+        
         # Remove old line and handles
         if self.line:
             self.canvas.delete(self.line)
         handle_count = len(getattr(self, 'waypoint_handles', []))
-        for handle in getattr(self, 'waypoint_handles', []):
+        print(f"DEBUG WAYPOINT: Deleting {handle_count} existing waypoint handles before redraw")
+        for i, handle in enumerate(getattr(self, 'waypoint_handles', [])):
+            print(f"DEBUG WAYPOINT: Deleting handle {handle} (index {i})")
             self.canvas.delete(handle)
         self.waypoint_handles = []
         
@@ -61,19 +68,23 @@ class ConnectionLine:
 
         # Draw the polyline
         points = [self.node1.x, self.node1.y]
+        print(f"DEBUG REDRAW: Node1 '{self.node1.name}' at ({self.node1.x:.1f}, {self.node1.y:.1f})")
         for wx, wy in self.waypoints:
             points.extend([wx, wy])
         points.extend([self.node2.x, self.node2.y])
+        print(f"DEBUG REDRAW: Node2 '{self.node2.name}' at ({self.node2.x:.1f}, {self.node2.y:.1f})")
         self.line = self.canvas.create_line(*points, width=2, fill=ColorConfig.current.Connections)
 
         # Draw waypoint handles (small circles) only if not in operator mode (i.e., only in Configuration mode)
         # This ensures waypoints are hidden in operator mode
         if self.gui and getattr(self.gui, "mode", "") == "Configuration":
+            print(f"DEBUG WAYPOINT: Creating {len(self.waypoints)} waypoint handles for connection")
             for idx, (wx, wy) in enumerate(self.waypoints):
                 handle = self.canvas.create_oval(
                     wx - 8 // 2, wy - 8 // 2, wx + 8 // 2, wy + 8 // 2,
                     fill="#FFD700", outline="#333", tags="waypoint_handle"
                 )
+                print(f"DEBUG WAYPOINT: Created handle {handle} for waypoint {idx} at ({wx:.1f}, {wy:.1f})")
                 self.canvas.tag_bind(handle, "<Button-1>", lambda e, i=idx: self._on_waypoint_handle_press(e, i))
                 self.canvas.tag_bind(handle, "<B1-Motion>", lambda e, i=idx: self._on_waypoint_handle_drag(e, i))
                 self.canvas.tag_bind(handle, "<ButtonRelease-1>", lambda e, i=idx: self._on_waypoint_handle_release(e, i))
