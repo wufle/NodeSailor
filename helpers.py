@@ -81,6 +81,120 @@ def write_NodeSailor_settings(update):
         # Fail silently or log if needed; fallback is to do nothing
         pass
 
+def _is_settings_file_complete():
+    """
+    Check if the existing settings file contains the expected structure.
+    Returns True if the file is complete with proper sections and comments.
+    Returns False if the file doesn't exist or is incomplete.
+    """
+    if not os.path.exists(NodeSailor_settings_PATH):
+        return False
+    
+    try:
+        with open(NodeSailor_settings_PATH, "r") as f:
+            content = f.read()
+        
+        # Check for essential section headers and comments that indicate a complete file
+        required_elements = [
+            "# NodeSailor Configuration File",
+            "# [FILES] - File Management Settings",
+            "# [USER_INTERFACE] - UI Display Preferences",
+            "# [WINDOW] - Window State and Positioning",
+            "hide_operator_guidance=",
+            "hide_configuration_guidance=",
+            "HIDE_LEGEND="
+        ]
+        
+        # File is considered complete if it contains all required elements
+        for element in required_elements:
+            if element not in content:
+                return False
+        
+        return True
+        
+    except Exception:
+        # If there's any error reading the file, consider it incomplete
+        return False
+
+def create_default_settings_file(force_recreate=False):
+    """
+    Creates a default NodeSailor_settings.ini file with all comments preserved.
+    Only creates the file if it doesn't already exist or is incomplete.
+    Uses default values suitable for new installations.
+    
+    Args:
+        force_recreate (bool): If True, recreate the file even if it exists and is complete
+    """
+    # Check if file exists and is complete (unless force_recreate is True)
+    if not force_recreate and _is_settings_file_complete():
+        return
+    
+    try:
+        # Ensure the directory exists before writing
+        os.makedirs(os.path.dirname(NodeSailor_settings_PATH), exist_ok=True)
+        
+        # Preserve existing values if file exists
+        existing_values = {}
+        if os.path.exists(NodeSailor_settings_PATH):
+            try:
+                with open(NodeSailor_settings_PATH, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            key, value = line.split("=", 1)
+                            existing_values[key.strip()] = value.strip()
+            except Exception:
+                pass  # If reading fails, proceed with defaults
+        
+        # Complete default content with all comments preserved
+        # Use existing values where available, otherwise use defaults
+        last_file_path = existing_values.get("LAST_FILE_PATH", "")
+        hide_operator = existing_values.get("hide_operator_guidance", "0")
+        hide_config = existing_values.get("hide_configuration_guidance", "0")
+        hide_legend = existing_values.get("HIDE_LEGEND", "0")
+        window_geometry = existing_values.get("WINDOW_GEOMETRY", "1200x800+100+100")
+        
+        default_content = f"""# NodeSailor Configuration File
+
+# ==============================================================================
+# [FILES] - File Management Settings
+# ==============================================================================
+
+# Last opened network file path
+# Used to automatically reload the last project when NodeSailor starts
+LAST_FILE_PATH={last_file_path}
+
+# ==============================================================================
+# [USER_INTERFACE] - UI Display Preferences
+# ==============================================================================
+
+# Hide operator guidance window on startup
+hide_operator_guidance={hide_operator}
+
+# Hide configuration guidance window on startup
+hide_configuration_guidance={hide_config}
+
+# Hide legend panel on startup
+HIDE_LEGEND={hide_legend}
+
+# ==============================================================================
+# [WINDOW] - Window State and Positioning
+# ==============================================================================
+
+# Main window geometry (width x height + x_offset + y_offset)
+# Format: WIDTHxHEIGHT+X+Y
+# Example: 1800x900+100+50 means 1800px wide, 900px tall, positioned at (100,50)
+WINDOW_GEOMETRY={window_geometry}
+
+"""
+        
+        with open(NodeSailor_settings_PATH, "w") as f:
+            f.write(default_content)
+            
+    except Exception:
+        # Fail silently if file creation fails
+        pass
+
 def _setup_draggable_titlebar(win, title_bar, title_label):
     def start_drag(event):
         win._x = event.x
