@@ -19,8 +19,13 @@ def read_NodeSailor_settings():
                 for line in f:
                     if "=" in line:
                         k, v = line.strip().split("=", 1)
-                        state[k] = v == "1"
-    except Exception:
+                        # Handle boolean values for backward compatibility
+                        if v in ("0", "1"):
+                            state[k] = v == "1"
+                        else:
+                            # Handle string/path values
+                            state[k] = v
+    except Exception as e:
         # Fallback: return empty state if file is unreadable
         state = {}
     return state

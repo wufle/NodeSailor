@@ -366,6 +366,8 @@ class NetworkMapGUI:
         self.load_NodeSailor_settings()
         if self.hide_legend_on_start.get():
             pass
+        
+        self.load_last_file()
 
 
         root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -655,15 +657,10 @@ class NetworkMapGUI:
         # Scale all canvas items visually
         self.canvas.scale("all", x, y, factor, factor)
         
-        # DEBUG: Log zoom operation details
-        print(f"DEBUG ZOOM: Mouse zoom at ({x:.1f}, {y:.1f}) with factor {factor:.3f}")
-
         # Update stored node coordinates
         for node in self.nodes:
-            old_x, old_y = node.x, node.y
             node.x = (node.x - x) * factor + x
             node.y = (node.y - y) * factor + y
-            print(f"DEBUG ZOOM: Node '{node.name}' moved from ({old_x:.1f}, {old_y:.1f}) to ({node.x:.1f}, {node.y:.1f})")
             node.update_position(node.x, node.y)
 
         # Update stored group rectangle coordinates
@@ -741,15 +738,10 @@ class NetworkMapGUI:
         self.canvas.scale("all", center_x, center_y, factor, factor)
         self.update_zoom_label()
         
-        # DEBUG: Log zoom operation details
-        print(f"DEBUG ZOOM: Button zoom at center ({center_x:.1f}, {center_y:.1f}) with factor {factor:.3f}")
-
         # Update stored node coordinates
         for node in self.nodes:
-            old_x, old_y = node.x, node.y
             node.x = (node.x - center_x) * factor + center_x
             node.y = (node.y - center_y) * factor + center_y
-            print(f"DEBUG ZOOM: Node '{node.name}' moved from ({old_x:.1f}, {old_y:.1f}) to ({node.x:.1f}, {node.y:.1f})")
             node.update_position(node.x, node.y)
 
         # Update stored group rectangle coordinates
@@ -976,11 +968,9 @@ class NetworkMapGUI:
 
     def load_NodeSailor_settings(self):
         try:
-            with open(NodeSailor_settings_PATH, "r") as f:
-                for line in f:
-                    if line.startswith("HIDE_LEGEND="):
-                        value = line.strip().split("=", 1)[1].strip().lower()
-                        self.hide_legend_on_start.set(value == '1' or value == 'true')
+            state = read_NodeSailor_settings()
+            hide_legend = state.get("HIDE_LEGEND", False)
+            self.hide_legend_on_start.set(hide_legend)
         except Exception:
             # Fallback: default to not hiding legend if file is missing/unreadable
             self.hide_legend_on_start.set(False)
@@ -1995,19 +1985,18 @@ class NetworkMapGUI:
             show_operator_guidance(self.root, self.center_window_on_screen, self.custom_font)
 
     def save_last_file_path(self, file_path):
-        with open(get_resource_path('data/last_file_path.ini'), 'w') as f:
-            f.write(file_path)
+        write_NodeSailor_settings({"LAST_FILE_PATH": file_path})
 
     def load_last_file(self):
         try:
-            with open(get_resource_path('data/last_file_path.ini'), 'r') as f:
-                last_file_path = f.read().strip()
-                if os.path.exists(last_file_path):
-                    self.load_network_state_from_path(last_file_path)
-                    if self.legend_window is not None:
-                        self.legend_window.destroy()
-                        self.legend_window = None  # Reset the attribute after destroying the window
-        except FileNotFoundError:
+            state = read_NodeSailor_settings()
+            last_file_path = state.get("LAST_FILE_PATH", "")
+            if last_file_path and os.path.exists(last_file_path):
+                self.load_network_state_from_path(last_file_path)
+                if self.legend_window is not None:
+                    self.legend_window.destroy()
+                    self.legend_window = None  # Reset the attribute after destroying the window
+        except Exception as e:
             pass
         
     def highlight_matching_nodes(self):
@@ -2331,11 +2320,10 @@ class NetworkMapGUI:
 
     def load_window_geometry(self):
         try:
-            with open(NodeSailor_settings_PATH, "r") as f:
-                for line in f:
-                    if line.startswith("WINDOW_GEOMETRY="):
-                        geometry = line.strip().split("=", 1)[1]
-                        self.root.geometry(geometry)
+            state = read_NodeSailor_settings()
+            geometry = state.get("WINDOW_GEOMETRY", "")
+            if geometry:
+                self.root.geometry(geometry)
         except Exception:
             # Fallback: do not set geometry if file is missing/unreadable
             pass

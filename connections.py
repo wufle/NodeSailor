@@ -46,53 +46,37 @@ class ConnectionLine:
         # Check if we're in the middle of a drag operation
         active_drag = getattr(self, "_active_waypoint_handle", None) is not None
         if active_drag:
-            print(f"DEBUG: draw_line() called during active drag of waypoint {getattr(self, '_active_waypoint_handle', 'unknown')}")
-        
-        # DEBUG: Log waypoint positions before redraw
-        print(f"DEBUG REDRAW: Connection '{self.label}' redrawing with {len(self.waypoints)} waypoints:")
-        for i, (wx, wy) in enumerate(self.waypoints):
-            print(f"DEBUG REDRAW:   Waypoint {i}: ({wx:.1f}, {wy:.1f})")
+            pass
         
         # Remove old line and handles
         if self.line:
             self.canvas.delete(self.line)
         handle_count = len(getattr(self, 'waypoint_handles', []))
-        print(f"DEBUG WAYPOINT: Deleting {handle_count} existing waypoint handles before redraw")
-        for i, handle in enumerate(getattr(self, 'waypoint_handles', [])):
-            print(f"DEBUG WAYPOINT: Deleting handle {handle} (index {i})")
+        for handle in getattr(self, 'waypoint_handles', []):
             self.canvas.delete(handle)
+
         self.waypoint_handles = []
-        
-        if active_drag:
-            print(f"DEBUG: Deleted {handle_count} handles during drag - this will break the drag operation!")
 
         # Draw the polyline
         points = [self.node1.x, self.node1.y]
-        print(f"DEBUG REDRAW: Node1 '{self.node1.name}' at ({self.node1.x:.1f}, {self.node1.y:.1f})")
         for wx, wy in self.waypoints:
             points.extend([wx, wy])
         points.extend([self.node2.x, self.node2.y])
-        print(f"DEBUG REDRAW: Node2 '{self.node2.name}' at ({self.node2.x:.1f}, {self.node2.y:.1f})")
         self.line = self.canvas.create_line(*points, width=2, fill=ColorConfig.current.Connections)
 
         # Draw waypoint handles (small circles) only if not in operator mode (i.e., only in Configuration mode)
         # This ensures waypoints are hidden in operator mode
         if self.gui and getattr(self.gui, "mode", "") == "Configuration":
-            print(f"DEBUG WAYPOINT: Creating {len(self.waypoints)} waypoint handles for connection")
             for idx, (wx, wy) in enumerate(self.waypoints):
                 handle = self.canvas.create_oval(
                     wx - 8 // 2, wy - 8 // 2, wx + 8 // 2, wy + 8 // 2,
                     fill="#FFD700", outline="#333", tags="waypoint_handle"
                 )
-                print(f"DEBUG WAYPOINT: Created handle {handle} for waypoint {idx} at ({wx:.1f}, {wy:.1f})")
                 self.canvas.tag_bind(handle, "<Button-1>", lambda e, i=idx: self._on_waypoint_handle_press(e, i))
                 self.canvas.tag_bind(handle, "<B1-Motion>", lambda e, i=idx: self._on_waypoint_handle_drag(e, i))
                 self.canvas.tag_bind(handle, "<ButtonRelease-1>", lambda e, i=idx: self._on_waypoint_handle_release(e, i))
                 self.canvas.tag_bind(handle, "<Button-3>", lambda e, i=idx: self.remove_waypoint(i))
                 self.waypoint_handles.append(handle)
-                
-            if active_drag:
-                print(f"DEBUG: Created {len(self.waypoint_handles)} new handles during drag - event bindings reset!")
 
         # Bind middle-click to add waypoint if in Configuration mode
         if self.gui and getattr(self.gui, "mode", "") == "Configuration":
@@ -128,22 +112,18 @@ class ConnectionLine:
         # Always allow waypoint dragging in Configuration mode, not dependent on resize mode
         if self.gui and getattr(self.gui, "mode", "") != "Configuration":
             return
-        print(f"DEBUG: Starting drag on waypoint {idx}")
         self._active_waypoint_handle = idx
         # Store the original waypoint coordinates and the original event coordinates
         waypoint_x, waypoint_y = self.waypoints[idx]
         self._waypoint_drag_start = (waypoint_x, waypoint_y, event.x, event.y)
-        print(f"DEBUG: Drag start data: waypoint=({waypoint_x}, {waypoint_y}), event=({event.x}, {event.y})")
 
     def _on_waypoint_handle_drag(self, event, idx):
         # Always allow waypoint dragging in Configuration mode, not dependent on resize mode
         if self.gui and getattr(self.gui, "mode", "") != "Configuration":
             return
         if getattr(self, "_active_waypoint_handle", None) is None:
-            print(f"DEBUG: Lost grip - no active waypoint handle")
             return
         if getattr(self, "_waypoint_drag_start", None) is None:
-            print(f"DEBUG: Lost grip - no drag start data")
             return
         # Get original waypoint coordinates and original event coordinates
         orig_waypoint_x, orig_waypoint_y, orig_event_x, orig_event_y = self._waypoint_drag_start
@@ -156,20 +136,18 @@ class ConnectionLine:
         # Update the waypoint
         active_idx = self._active_waypoint_handle
         if 0 <= active_idx < len(self.waypoints):
-            print(f"DEBUG: Efficiently updating waypoint {active_idx} to ({new_x:.1f}, {new_y:.1f}), delta=({dx:.1f}, {dy:.1f})")
             self.waypoints[active_idx] = (new_x, new_y)
             
             # Efficient update: only update line coordinates and handle position without recreating items
             self._update_line_coordinates()
             self._update_waypoint_handle_position(active_idx, new_x, new_y)
         else:
-            print(f"DEBUG: Lost grip - invalid waypoint index {active_idx}")
+            pass
 
     def _on_waypoint_handle_release(self, event, idx):
         # Always allow waypoint dragging in Configuration mode, not dependent on resize mode
         if self.gui and getattr(self.gui, "mode", "") != "Configuration":
             return
-        print(f"DEBUG: Ending drag on waypoint {idx}")
         self._active_waypoint_handle = None
         self._waypoint_drag_start = None
         if self.gui and hasattr(self.gui, 'unsaved_changes'):
