@@ -1350,6 +1350,12 @@ class NetworkMapGUI:
             self.canvas.delete(node.text)
         self.nodes.clear()
 
+        # Clear connection lines list
+        self.connection_lines.clear()
+        
+        # Clear waypoint handles from canvas
+        self.canvas.delete("waypoint_handle")
+
         # Clear all stickynotes
         stickynotes = self.canvas.find_withtag("sticky_note")
         for note in stickynotes:
@@ -1682,6 +1688,9 @@ class NetworkMapGUI:
                     }
                     if conn.connectioninfo:
                         connection_data['connectioninfo'] = conn.connectioninfo  # <-- add this
+                    # Add waypoints if they exist
+                    if conn.waypoints:
+                        connection_data['waypoints'] = [[x, y] for x, y in conn.waypoints]
                     state['connections'].append(connection_data)
                     lines_seen.add(conn)
 
@@ -1861,7 +1870,11 @@ class NetworkMapGUI:
                 node2 = self.nodes[conn_data['to']]
                 label = conn_data.get('label', '')
                 tooltip = conn_data.get('connectioninfo', None)
-                ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip, gui=self)
+                # Load waypoints if they exist, converting from list of [x,y] pairs to list of (x,y) tuples
+                waypoints = None
+                if 'waypoints' in conn_data and conn_data['waypoints']:
+                    waypoints = [(x, y) for x, y in conn_data['waypoints']]
+                ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip, waypoints=waypoints, gui=self)
 
 
             # Load sticky notes
@@ -1959,7 +1972,11 @@ class NetworkMapGUI:
                     node2 = self.nodes[conn_data['to']]
                     label = conn_data.get('label', '')  # Get the label if it exists
                     tooltip = conn_data.get('connectioninfo', None)
-                    ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip, gui=self)
+                    # Load waypoints if they exist, converting from list of [x,y] pairs to list of (x,y) tuples
+                    waypoints = None
+                    if 'waypoints' in conn_data and conn_data['waypoints']:
+                        waypoints = [(x, y) for x, y in conn_data['waypoints']]
+                    ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip, waypoints=waypoints, gui=self)
                 
                 # Load groups
                 self.group_manager.groups = []
