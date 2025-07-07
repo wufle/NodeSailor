@@ -632,6 +632,10 @@ class NetworkMapGUI:
                 if hasattr(conn, "update_properties"):
                     conn.update_properties()
   
+        # Ensure nodes are always above connection lines after toggling mode
+        if hasattr(self, "raise_all_nodes"):
+            self.raise_all_nodes()
+
     def zoom_with_mouse(self, event):
         # Hide any open connection info popups before zooming
         for node in self.nodes:
