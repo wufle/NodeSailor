@@ -1661,7 +1661,10 @@ class NetworkMapGUI:
             'vlan_labels': self.vlan_label_names,
             'vlan_label_order': getattr(self, 'vlan_label_order', []),
             'stickynotes': [],
-            'groups': []
+            'groups': [],
+            'zoom_level': getattr(self, 'zoom_level', 1.0),
+            'canvas_xview': self.canvas.xview()[0] if hasattr(self, 'canvas') else 0.0,
+            'canvas_yview': self.canvas.yview()[0] if hasattr(self, 'canvas') else 0.0
         }
 
         # Gather node data
@@ -1900,13 +1903,27 @@ class NetworkMapGUI:
             for node in self.nodes:
                 node.raise_node()
 
-        # Save this file path for "load last file" feature
-        self.save_last_file_path(file_path)
+            # Restore zoom level if present
+            if 'zoom_level' in state:
+                self.zoom_level = state['zoom_level']
+                if hasattr(self, 'apply_zoom'):
+                    self.apply_zoom(self.zoom_level)
+            # Restore canvas scroll position after all drawing and zoom logic
+            # (Moved below, after all drawing and raising nodes)
+            # Restore canvas scroll position after all drawing and zoom logic
+            if 'canvas_xview' in state:
+                self.canvas.xview_moveto(state['canvas_xview'])
+            if 'canvas_yview' in state:
+                self.canvas.yview_moveto(state['canvas_yview'])
 
-        # Optional: if you want the legend window to close after loading
-        if self.legend_window is not None and self.legend_window.winfo_exists():
-            self.legend_window.destroy()
-            self.legend_window = None
+            # Save this file path for "load last file" feature
+            self.save_last_file_path(file_path)
+
+            # Optional: if you want the legend window to close after loading
+            if self.legend_window is not None and self.legend_window.winfo_exists():
+                self.legend_window.destroy()
+                self.legend_window = None
+
         
     def load_network_state(self):
         file_path = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
@@ -2000,6 +2017,12 @@ class NetworkMapGUI:
             self.save_last_file_path(file_path)  # Save the last file path
             if self.legend_window is not None:
                 self.legend_window.destroy()  # Close the legend window
+
+        # Restore canvas scroll position after all drawing and zoom logic
+        if 'canvas_xview' in state:
+            self.canvas.xview_moveto(state['canvas_xview'])
+        if 'canvas_yview' in state:
+            self.canvas.yview_moveto(state['canvas_yview'])
 
         # Show operator guidance window if in Operator mode
         if self.mode == "Operator":
