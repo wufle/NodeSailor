@@ -177,6 +177,9 @@ class ConnectionLine:
         self.draw_line()
         if self.label_id:
             self.update_label()  # Update label position
+        # Ensure nodes are always visible on top of connection lines
+        if self.gui and hasattr(self.gui, 'raise_all_nodes'):
+            self.gui.raise_all_nodes()
 
     def update_label(self):
         if self.label_id:
