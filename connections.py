@@ -223,12 +223,6 @@ class ConnectionLine:
             # Fallback: end of last segment
             label_x, label_y = points[-1]
 
-        # --- Debug output for label placement ---
-        print(
-            f"[DEBUG] update_label: label_pos={self.label_pos}, "
-            f"label drawn at ({label_x:.2f}, {label_y:.2f})"
-        )
-
         # --- Draw label text ---
         self.label_id = self.canvas.create_text(
             label_x, label_y,
@@ -277,9 +271,6 @@ class ConnectionLine:
             self.canvas.bind("<ButtonRelease-1>", on_label_release)
 
         def on_label_drag(event):
-            # Debug: Mouse coordinates
-            print(f"[DEBUG] Label drag event: mouse=({event.x}, {event.y})")
-
             # Use the initial label_pos and mouse position to compute offset
             if not hasattr(self, '_drag_label_start'):
                 return
@@ -325,15 +316,12 @@ class ConnectionLine:
                 proj_x = x0 + dx_seg * t
                 proj_y = y0 + dy_seg * t
                 d = math.hypot(px - proj_x, py - proj_y)
-                # Debug: Projected point on path for each segment
-                print(f"[DEBUG] Projected point: ({proj_x:.2f}, {proj_y:.2f}), distance={d:.2f}, segment={i}")
+
                 if d < min_dist:
                     min_dist = d
                     best_pos = (accum + seg_len * t) / total_length if total_length > 0 else 0
                 accum += seg_len
             self.label_pos = best_pos
-            # Debug: Calculated label_pos
-            print(f"[DEBUG] Calculated label_pos: {self.label_pos:.4f}")
             self.update_label()
 
         def on_label_release(event):
