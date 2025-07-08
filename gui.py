@@ -658,35 +658,10 @@ class NetworkMapGUI:
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
 
-        # Scale all canvas items visually
-        self.canvas.scale("all", x, y, factor, factor)
-        
-        # Update stored node coordinates
-        for node in self.nodes:
-            node.x = (node.x - x) * factor + x
-            node.y = (node.y - y) * factor + y
-            node.update_position(node.x, node.y)
-
-        # Update stored group rectangle coordinates
-        for group in self.group_manager.groups:
-            group_x1 = (group.x1 - x) * factor + x
-            group_y1 = (group.y1 - y) * factor + y
-            group_x2 = (group.x2 - x) * factor + x
-            group_y2 = (group.y2 - y) * factor + y
-            group.update_position(group_x1, group_y1, group_x2, group_y2)
-
-        # Transform waypoint coordinates mathematically (same as nodes)
-        for conn in self.connection_lines:
-            transformed_waypoints = []
-            for wp_x, wp_y in conn.waypoints:
-                new_wp_x = (wp_x - x) * factor + x
-                new_wp_y = (wp_y - y) * factor + y
-                transformed_waypoints.append((new_wp_x, new_wp_y))
-            conn.waypoints = transformed_waypoints
-
-        self.zoom_level *= factor
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        # Use the unified apply_zoom method for all zooming
+        self.apply_zoom(factor, x, y)
         self.update_zoom_label()
+
     def zoom_in(self, event=None):
         bbox = self.canvas.bbox("all")
         if bbox:
