@@ -10,7 +10,7 @@ import customtkinter as ctk  # Added for CTk window
 from utils import get_ip_addresses
 from colors import ColorConfig
 from tooltip import ToolTip
-from helpers import show_operator_guidance, show_configuration_guidance, read_NodeSailor_settings, write_NodeSailor_settings, NodeSailor_settings_PATH
+from helpers import show_operator_guidance, show_configuration_guidance, read_NodeSailor_settings, write_NodeSailor_settings, NodeSailor_settings_PATH, create_default_settings_file
 from nodes import NetworkNode
 from connections import ConnectionLine
 from notes import StickyNote
@@ -23,6 +23,9 @@ from custom_commands import manage_custom_commands
 from gui_help import show_help_window  
 from configurator_vlans import edit_vlan_labels_window
 from display_options import show_display_options_window
+
+# Ensure settings file exists with comments
+create_default_settings_file()
 
 # Default height for Edit Node window (for 4 VLANs) 
 DEFAULT_NODE_HEIGHT = 360
