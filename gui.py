@@ -1361,6 +1361,14 @@ class NetworkMapGUI:
         self.group_manager.groups.clear()
         self.group_manager.selected_group = None
             
+        # Reset zoom and pan to defaults
+        self.zoom_level = 1.0
+        self.canvas.scale("all", 0, 0, 1, 1)  # Reset scaling
+        self.canvas.xview_moveto(0)
+        self.canvas.yview_moveto(0)
+        self.update_zoom_label()
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
     def clear_node_status(self):
         # Set the node color of all nodes to NODE_DEFAULT.
         for node in self.nodes:
@@ -1917,6 +1925,15 @@ class NetworkMapGUI:
             if self.legend_window is not None and self.legend_window.winfo_exists():
                 self.legend_window.destroy()
                 self.legend_window = None
+
+            # Force canvas redraw to fix visibility bug after loading
+            self.canvas.update_idletasks()
+            self.canvas.update()
+            # Raise all items to ensure visibility
+            self.canvas.tag_raise("all")
+            self.canvas.lift()
+            # Generate an expose event to force redraw
+            self.canvas.event_generate("<Expose>")
 
         
     def load_network_state(self):
