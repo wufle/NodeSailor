@@ -1934,6 +1934,9 @@ class NetworkMapGUI:
             self.canvas.lift()
             # Generate an expose event to force redraw
             self.canvas.event_generate("<Expose>")
+            # If no zoom level was saved, reset zoom to fit all items
+            if 'zoom_level' not in state:
+                self.reset_zoom()
 
         
     def load_network_state(self):
@@ -2039,6 +2042,10 @@ class NetworkMapGUI:
                         node.y = (node.y - center_y) * zl + center_y
                         node.update_position(node.x, node.y)
                     node.raise_node()
+            # Explicitly set scrollregion to fit all items
+            bbox = self.canvas.bbox("all")
+            if bbox:
+                self.canvas.config(scrollregion=bbox)
             self.save_last_file_path(file_path)  # Save the last file path
             if self.legend_window is not None:
                 self.legend_window.destroy()  # Close the legend window
