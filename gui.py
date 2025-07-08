@@ -367,10 +367,18 @@ class NetworkMapGUI:
         self.toggle_mode() # sets to Operator mode on startup
         self.hide_legend_on_start = tk.BooleanVar(value=False)
         self.load_NodeSailor_settings()
+        # Override with environment variable if present
+        hide_legend_env = os.environ.get("HIDE_LEGEND")
+        if hide_legend_env is not None:
+            # Accept "0" or "False" (case-insensitive) as False, anything else as True
+            if hide_legend_env.strip().lower() in ("0", "false"):
+                self.hide_legend_on_start.set(False)
+            else:
+                self.hide_legend_on_start.set(True)
         if self.hide_legend_on_start.get():
-            pass
-        
-        self.load_last_file()
+            self.load_last_file()
+        else:
+            self.display_legend()
 
 
         root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -2154,8 +2162,11 @@ class NetworkMapGUI:
             
             outer_frame.config(bg=ColorConfig.current.BORDER_COLOR)
             title_bar.config(bg=ColorConfig.current.FRAME_BG)
-            title_bar.winfo_children()[0].config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)  # title_label
-            title_bar.winfo_children()[1].config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)  # close_button
+            children = title_bar.winfo_children()
+            if len(children) > 0:
+                children[0].config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)  # title_label
+            if len(children) > 1:
+                children[1].config(bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)  # close_button
             content_frame.config(bg=ColorConfig.current.FRAME_BG)
             
             for widget in content_frame.winfo_children():
