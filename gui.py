@@ -1850,12 +1850,18 @@ class NetworkMapGUI:
             for conn_data in state.get('connections', []):
                 node1 = self.nodes[conn_data['from']]
                 node2 = self.nodes[conn_data['to']]
-                label = conn_data.get('label', '')
+                label = conn_data.get('label', '')  # Get the label if it exists
                 tooltip = conn_data.get('connectioninfo', None)
                 # Load waypoints if they exist, converting from list of [x,y] pairs to list of (x,y) tuples
                 waypoints = None
                 if 'waypoints' in conn_data and conn_data['waypoints']:
                     waypoints = [(x, y) for x, y in conn_data['waypoints']]
+                # If zoom_level is not 1.0, scale waypoints to match current zoom
+                if waypoints and getattr(self, 'zoom_level', 1.0) != 1.0:
+                    zl = self.zoom_level
+                    center_x = self.canvas.winfo_width() / 2
+                    center_y = self.canvas.winfo_height() / 2
+                    waypoints = [((x - center_x) * zl + center_x, (y - center_y) * zl + center_y) for x, y in waypoints]
                 ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip, waypoints=waypoints, gui=self)
 
 
@@ -1972,6 +1978,12 @@ class NetworkMapGUI:
                     waypoints = None
                     if 'waypoints' in conn_data and conn_data['waypoints']:
                         waypoints = [(x, y) for x, y in conn_data['waypoints']]
+                    # If zoom_level is not 1.0, scale waypoints to match current zoom
+                    if waypoints and getattr(self, 'zoom_level', 1.0) != 1.0:
+                        zl = self.zoom_level
+                        center_x = self.canvas.winfo_width() / 2
+                        center_y = self.canvas.winfo_height() / 2
+                        waypoints = [((x - center_x) * zl + center_x, (y - center_y) * zl + center_y) for x, y in waypoints]
                     ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip, waypoints=waypoints, gui=self)
                 
                 # Load groups
@@ -1988,6 +2000,14 @@ class NetworkMapGUI:
                 
                 # Raise all nodes after creating connections to ensure they appear on top
                 for node in self.nodes:
+                    # If zoom_level is not 1.0, scale node positions to match current zoom
+                    if getattr(self, 'zoom_level', 1.0) != 1.0:
+                        zl = self.zoom_level
+                        center_x = self.canvas.winfo_width() / 2
+                        center_y = self.canvas.winfo_height() / 2
+                        node.x = (node.x - center_x) * zl + center_x
+                        node.y = (node.y - center_y) * zl + center_y
+                        node.update_position(node.x, node.y)
                     node.raise_node()
             self.save_last_file_path(file_path)  # Save the last file path
             if self.legend_window is not None:
