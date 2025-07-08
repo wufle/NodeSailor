@@ -260,6 +260,9 @@ class ConnectionLine:
 
         # --- Add drag logic for label ---
         def on_label_press(event):
+            # Only allow label drag in Configuration mode
+            if not (self.gui and getattr(self.gui, "mode", "") == "Configuration"):
+                return
             self._dragging_label = True
             self.canvas.itemconfig(self.label_id, fill=ColorConfig.current.NODE_HIGHLIGHT)
             if hasattr(self, 'label_bg') and self.label_bg:
