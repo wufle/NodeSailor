@@ -2,7 +2,7 @@ import tkinter as tk
 from colors import ColorConfig
 
 class ConnectionLine:
-    def __init__(self, canvas, node1, node2, label='', connectioninfo=None, gui=None, waypoints=None):
+    def __init__(self, canvas, node1, node2, label='', connectioninfo=None, gui=None, waypoints=None, label_pos=0.5):
         self.canvas = canvas
         self.node1 = node1
         self.node2 = node2
@@ -14,6 +14,7 @@ class ConnectionLine:
         self.waypoint_handles = []  # Canvas IDs for waypoint circles
         self.line = None
         self._dragging_waypoint = None  # Track which waypoint is being dragged
+        self.label_pos = label_pos  # Float between 0 and 1, position of label along the connection
         self.draw_line()
         if label:
             self.update_label()
@@ -187,17 +188,56 @@ class ConnectionLine:
             if hasattr(self, 'label_bg') and self.label_bg:
                 self.canvas.delete(self.label_bg)
 
-        # Calculate midpoint for the label
-        if self.waypoints:
-            # Use the middle waypoint for the label if available
-            mid_idx = len(self.waypoints) // 2
-            mid_x, mid_y = self.waypoints[mid_idx]
-        else:
-            mid_x = (self.node1.x + self.node2.x) / 2
-            mid_y = (self.node1.y + self.node2.y) / 2
+        # --- Compute label position along the polyline using label_pos ---
+        # Gather all points along the connection (start, waypoints, end)
+        points = [(self.node1.x, self.node1.y)]
+        points.extend(self.waypoints)
+        points.append((self.node2.x, self.node2.y))
 
-        # Create a text object similar to StickyNote
-        self.label_id = self.canvas.create_text(mid_x, mid_y, text=self.label, font=('Helvetica', '12'), fill=ColorConfig.current.INFO_TEXT, tags="connection_label", anchor="center")
+        # Calculate total length of the polyline
+        import math
+        def dist(a, b):
+            return math.hypot(b[0] - a[0], b[1] - a[1])
+
+        seg_lengths = []
+        total_length = 0
+        for i in range(len(points) - 1):
+            l = dist(points[i], points[i+1])
+            seg_lengths.append(l)
+            total_length += l
+
+        # Find the segment and position for label_pos
+        target = self.label_pos * total_length
+        accum = 0
+        label_x, label_y = points[0]
+        for i, seg_len in enumerate(seg_lengths):
+            if accum + seg_len >= target:
+                ratio = (target - accum) / seg_len if seg_len > 0 else 0
+                x0, y0 = points[i]
+                x1, y1 = points[i+1]
+                label_x = x0 + (x1 - x0) * ratio
+                label_y = y0 + (y1 - y0) * ratio
+                break
+            accum += seg_len
+        else:
+            # Fallback: end of last segment
+            label_x, label_y = points[-1]
+
+        # --- Debug output for label placement ---
+        print(
+            f"[DEBUG] update_label: label_pos={self.label_pos}, "
+            f"label drawn at ({label_x:.2f}, {label_y:.2f})"
+        )
+
+        # --- Draw label text ---
+        self.label_id = self.canvas.create_text(
+            label_x, label_y,
+            text=self.label,
+            font=('Helvetica', '12'),
+            fill=ColorConfig.current.INFO_TEXT,
+            tags="connection_label",
+            anchor="center"
+        )
 
         self.info_popup = None
 
@@ -223,13 +263,104 @@ class ConnectionLine:
 
         # Always allow right-click editing, regardless of connectioninfo
         self.canvas.tag_bind(self.label_id, "<Button-3>", lambda event: self.gui.create_connection(event=None, edit_connection=self))
-     
-        # Recreate a background similar to StickyNote
+
+        # --- Add drag logic for label ---
+        def on_label_press(event):
+            self._dragging_label = True
+            self.canvas.itemconfig(self.label_id, fill=ColorConfig.current.NODE_HIGHLIGHT)
+            if hasattr(self, 'label_bg') and self.label_bg:
+                self.canvas.itemconfig(self.label_bg, fill=ColorConfig.current.NODE_HIGHLIGHT)
+            # Store initial label_pos and mouse position for smooth dragging
+            self._drag_label_start = (self.label_pos, event.x, event.y)
+            # Bind drag and release to canvas so drag continues outside label area
+            self.canvas.bind("<B1-Motion>", on_label_drag)
+            self.canvas.bind("<ButtonRelease-1>", on_label_release)
+
+        def on_label_drag(event):
+            # Debug: Mouse coordinates
+            print(f"[DEBUG] Label drag event: mouse=({event.x}, {event.y})")
+
+            # Use the initial label_pos and mouse position to compute offset
+            if not hasattr(self, '_drag_label_start'):
+                return
+            orig_label_pos, orig_x, orig_y = self._drag_label_start
+            dx = event.x - orig_x
+            dy = event.y - orig_y
+
+            # Find the point along the polyline corresponding to the original label_pos
+            if total_length == 0:
+                return
+            target = orig_label_pos * total_length
+            accum = 0
+            for i in range(len(points) - 1):
+                x0, y0 = points[i]
+                x1, y1 = points[i+1]
+                seg_len = seg_lengths[i]
+                if accum + seg_len >= target:
+                    t = (target - accum) / seg_len if seg_len > 0 else 0
+                    label_x = x0 + (x1 - x0) * t
+                    label_y = y0 + (y1 - y0) * t
+                    break
+                accum += seg_len
+            else:
+                label_x, label_y = points[-1]
+
+            # Apply mouse delta to label's original position
+            px = label_x + dx
+            py = label_y + dy
+
+            # Project new (px, py) onto the polyline to get new label_pos
+            min_dist = float('inf')
+            best_pos = 0
+            accum = 0
+            for i in range(len(points) - 1):
+                x0, y0 = points[i]
+                x1, y1 = points[i+1]
+                dx_seg, dy_seg = x1 - x0, y1 - y0
+                seg_len = seg_lengths[i]
+                if seg_len == 0:
+                    continue
+                t = ((px - x0) * dx_seg + (py - y0) * dy_seg) / (seg_len ** 2)
+                t = max(0, min(1, t))
+                proj_x = x0 + dx_seg * t
+                proj_y = y0 + dy_seg * t
+                d = math.hypot(px - proj_x, py - proj_y)
+                # Debug: Projected point on path for each segment
+                print(f"[DEBUG] Projected point: ({proj_x:.2f}, {proj_y:.2f}), distance={d:.2f}, segment={i}")
+                if d < min_dist:
+                    min_dist = d
+                    best_pos = (accum + seg_len * t) / total_length if total_length > 0 else 0
+                accum += seg_len
+            self.label_pos = best_pos
+            # Debug: Calculated label_pos
+            print(f"[DEBUG] Calculated label_pos: {self.label_pos:.4f}")
+            self.update_label()
+
+        def on_label_release(event):
+            self._dragging_label = False
+            self.canvas.itemconfig(self.label_id, fill=ColorConfig.current.INFO_TEXT)
+            if hasattr(self, 'label_bg') and self.label_bg:
+                self.canvas.itemconfig(self.label_bg, fill=ColorConfig.current.INFO_NOTE_BG)
+            # Unbind drag and release from canvas after drag ends
+            self.canvas.unbind("<B1-Motion>")
+            self.canvas.unbind("<ButtonRelease-1>")
+            # label_pos is now updated and will be persisted by existing logic
+
+        self.canvas.tag_bind(self.label_id, "<Button-1>", on_label_press)
+        # Drag and release events will be bound to the canvas on press
+
+        # --- Draw label background ---
         bbox = self.canvas.bbox(self.label_id)
         if bbox:
             padding = 2
-            self.label_bg = self.canvas.create_rectangle(bbox[0]-padding, bbox[1]-padding, bbox[2]+padding, bbox[3]+padding, fill=ColorConfig.current.INFO_NOTE_BG, outline='')
+            self.label_bg = self.canvas.create_rectangle(
+                bbox[0]-padding, bbox[1]-padding, bbox[2]+padding, bbox[3]+padding,
+                fill=ColorConfig.current.INFO_NOTE_BG, outline=''
+            )
             self.canvas.tag_lower(self.label_bg, self.label_id)  # Ensure the background is behind the text
+            # Also bind drag events to the background for easier grabbing
+            self.canvas.tag_bind(self.label_bg, "<Button-1>", on_label_press)
+            # Drag and release events will be bound to the canvas on press
 
     def set_label(self, label):
         self.label = label

@@ -1666,7 +1666,8 @@ class NetworkMapGUI:
                     connection_data = {
                         'from': self.nodes.index(conn.node1),
                         'to': self.nodes.index(conn.node2),
-                        'label': conn.label
+                        'label': conn.label,
+                        'label_pos': getattr(conn, 'label_pos', 0.5)
                     }
                     if conn.connectioninfo:
                         connection_data['connectioninfo'] = conn.connectioninfo  # <-- add this
@@ -1862,7 +1863,8 @@ class NetworkMapGUI:
                     center_x = self.canvas.winfo_width() / 2
                     center_y = self.canvas.winfo_height() / 2
                     waypoints = [((x - center_x) * zl + center_x, (y - center_y) * zl + center_y) for x, y in waypoints]
-                ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip, waypoints=waypoints, gui=self)
+                label_pos = conn_data.get('label_pos', 0.5)
+                ConnectionLine(self.canvas, node1, node2, label=label, connectioninfo=tooltip, waypoints=waypoints, gui=self, label_pos=label_pos)
 
 
             # Load sticky notes
