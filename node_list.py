@@ -277,6 +277,8 @@ def open_node_list_editor(gui):
                 indicator_label = tk.Label(header_frame, text=indicator, font=('Helvetica', 10, 'bold'),
                                           bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT)
                 indicator_label.pack(side=tk.RIGHT, padx=2)
+                # Make indicator clickable for sorting
+                indicator_label.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
 
             # Make header clickable (sorting only, not resizing)
             header_label.bind("<Button-1>", lambda e, i=col_index: sort_nodes(i))
