@@ -335,6 +335,10 @@ class ConnectionLine:
             # Unbind drag and release from canvas after drag ends
             self.canvas.unbind("<B1-Motion>")
             self.canvas.unbind("<ButtonRelease-1>")
+            # Restore normal canvas drag/release handlers for node movement
+            if self.gui and getattr(self.gui, "mode", "") == "Configuration":
+                self.canvas.bind("<B1-Motion>", self.gui.handle_mouse_drag)
+                self.canvas.bind("<ButtonRelease-1>", self.gui.handle_mouse_release)
             # label_pos is now updated and will be persisted by existing logic
 
         self.canvas.tag_bind(self.label_id, "<Button-1>", on_label_press)
