@@ -15,6 +15,17 @@ def open_node_list_editor(gui):
         gui.node_list_editor.lift()
         return
 
+    def ensure_editor_can_fit():
+        gui.node_list_editor.update_idletasks()          # sizes are now real
+        need_px  = gui.node_list_frame.winfo_reqwidth() + 20   # + margin
+        have_px  = gui.node_list_editor.winfo_width()
+        print(f"[DEBUG] ensure_editor_can_fit: need_px={need_px}, have_px={have_px}")
+        if need_px != have_px:  # allow both grow and shrink
+            h_px = gui.node_list_editor.winfo_height()
+            x, y = gui.node_list_editor.winfo_x(), gui.node_list_editor.winfo_y()
+            print(f"[DEBUG] ensure_editor_can_fit: resizing to {need_px}x{h_px}+{x}+{y}")
+            gui.node_list_editor.geometry(f"{need_px}x{h_px}+{x}+{y}")
+
     def close_editor():
         try:
             gui.node_list_editor.grab_release()
@@ -491,15 +502,6 @@ def open_node_list_editor(gui):
                     rebuild_editor_content()
                 return delete
 
-            def ensure_editor_can_fit():
-                gui.node_list_editor.update_idletasks()          # sizes are now real
-                need_px  = gui.node_list_frame.winfo_reqwidth() + 20   # + margin
-                have_px  = gui.node_list_editor.winfo_width()
-                if need_px > have_px:                             # grow only – never shrink
-                    h_px = gui.node_list_editor.winfo_height()
-                    x, y = gui.node_list_editor.winfo_x(), gui.node_list_editor.winfo_y()
-                    gui.node_list_editor.geometry(f"{need_px}x{h_px}+{x}+{y}")
-
             # ── add delete button ──   
             del_btn = tk.Button(
                 gui.node_list_frame,
@@ -588,6 +590,17 @@ def open_node_list_editor(gui):
     # Add button to create new node
     # Initial build of the editor content
     rebuild_editor_content()
+    # Ensure canvas is wide enough to fit the frame on initial build, after all geometry is updated
+    def adjust_canvas_width():
+        frame_reqwidth = gui.node_list_frame.winfo_reqwidth()
+        canvas_width = canvas.winfo_width()
+        print(f"[DEBUG] adjust_canvas_width: frame_reqwidth={frame_reqwidth}, canvas_width={canvas_width}")
+        canvas.itemconfig(inner_window, width=frame_reqwidth)
+        canvas.configure(scrollregion=canvas.bbox("all"))
+        ensure_editor_can_fit()
+    gui.node_list_frame.after_idle(adjust_canvas_width)
+    # Schedule a second adjustment after a short delay to ensure geometry is finalized
+    gui.node_list_frame.after(50, adjust_canvas_width)
     # Focus the first "add new node" entry after a short delay, if present
     if getattr(gui, "new_node_entries", None) and gui.new_node_entries:
         win.after(100, lambda: gui.new_node_entries[0].focus_set())
