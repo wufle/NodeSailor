@@ -94,7 +94,23 @@ def open_node_list_editor(gui):
     gui.list_editor_xy_fields = {}
 
     def rebuild_editor_content():
-        # Use persistent column widths if available, else initialize
+        # Clear all widgets in the header row to force indicator update
+        for widget in gui.node_list_frame.grid_slaves(row=4):
+            widget.destroy()
+        # Always sort gui.nodes according to current sort settings
+        if hasattr(gui, 'sort_column') and gui.sort_column is not None:
+            attr = fields[gui.sort_column][1]
+            def get_sort_key(node):
+                if hasattr(node, "vlans") and attr in node.vlans:
+                    value = node.vlans.get(attr, "")
+                else:
+                    value = getattr(node, attr, "")
+                if attr in ("x", "y"):
+                    return float(value) if value else 0
+                return str(value).lower() if value else ""
+            gui.nodes = sorted(gui.nodes, key=get_sort_key, reverse=gui.sort_reverse)
+        else:
+            gui.nodes = sorted(gui.nodes, key=lambda n: n.name.lower())
         if not hasattr(gui, "column_widths") or not isinstance(gui.column_widths, dict):
             gui.column_widths = {}
         column_widths = gui.column_widths
@@ -332,23 +348,8 @@ def open_node_list_editor(gui):
         gui.node_list_frame.grid_columnconfigure(len(fields), weight=0, minsize=80)
 
         # Use the current sort order
-        if getattr(gui, 'sort_column', None) is not None:
-            attr = fields[gui.sort_column][1]
-            def get_sort_key(node):
-                if attr.startswith("VLAN_"):
-                    vlan_id = int(attr[5:])
-                    value = node.vlans.get(vlan_id, "")
-                else:
-                    value = getattr(node, attr, "")
-                if attr in ("x", "y"):
-                    return float(value) if value else 0
-                return str(value).lower() if value else ""
-            sorted_nodes = sorted(gui.nodes, key=get_sort_key, reverse=gui.sort_reverse)
-        else:
-            # Default sort by name
-            sorted_nodes = sorted(gui.nodes, key=lambda n: n.name.lower())
-
-        for row_index, node in enumerate(sorted_nodes, start=5):
+        # Use the current sorted gui.nodes list
+        for row_index, node in enumerate(gui.nodes, start=5):
             xy_fields = []
             for col_index, (label, attr) in enumerate(fields):
                 # Fetch VLAN value from node.vlans mapping if present
@@ -569,11 +570,11 @@ def open_node_list_editor(gui):
             gui.sort_reverse = False
 
         def get_sort_key(node):
-            if attr.startswith("VLAN_"):
-                vlan_id = int(attr[5:])
-                value = node.vlans.get(vlan_id, "")
+            # Handle VLAN columns by attribute key
+            if hasattr(node, "vlans") and attr in node.vlans:
+                value = node.vlans.get(attr, "")
             else:
-                value = getattr(node, attr)
+                value = getattr(node, attr, "")
             if attr in ("x", "y"):
                 return float(value) if value else 0
             return str(value).lower() if value else ""
