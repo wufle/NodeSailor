@@ -99,8 +99,29 @@ class ConnectionLine:
                 self.gui.unsaved_changes = True
 
     def add_waypoint(self, canvas_x, canvas_y):
-        # Waypoint coordinates are already in canvas coordinates
-        self.waypoints.append((canvas_x, canvas_y))
+        # Insert the waypoint at the segment closest to the click
+        points = [ (self.node1.x, self.node1.y) ] + self.waypoints + [ (self.node2.x, self.node2.y) ]
+        min_dist = None
+        insert_idx = 0
+        px, py = canvas_x, canvas_y
+
+        def point_to_segment_distance(x, y, x1, y1, x2, y2):
+            # Compute the distance from (x, y) to the segment (x1, y1)-(x2, y2)
+            dx, dy = x2 - x1, y2 - y1
+            if dx == dy == 0:
+                return ((x - x1) ** 2 + (y - y1) ** 2) ** 0.5
+            t = max(0, min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy)))
+            proj_x = x1 + t * dx
+            proj_y = y1 + t * dy
+            return ((x - proj_x) ** 2 + (y - proj_y) ** 2) ** 0.5
+
+        for i in range(len(points) - 1):
+            dist = point_to_segment_distance(px, py, *points[i], *points[i+1])
+            if min_dist is None or dist < min_dist:
+                min_dist = dist
+                insert_idx = i
+
+        self.waypoints.insert(insert_idx, (canvas_x, canvas_y))
         self.draw_line()
         if self.gui:
             self.gui.raise_all_nodes()
