@@ -280,6 +280,8 @@ class ConnectionLine:
             label_x, label_y = points[-1]
 
         # --- Draw label text ---
+        if not self.label or not self.label.strip():
+            return
         self.label_id = self.canvas.create_text(
             label_x, label_y,
             text=self.label,
