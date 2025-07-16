@@ -102,11 +102,15 @@ class ConnectionLine:
         # Waypoint coordinates are already in canvas coordinates
         self.waypoints.append((canvas_x, canvas_y))
         self.draw_line()
+        if self.gui:
+            self.gui.raise_all_nodes()
 
     def remove_waypoint(self, idx):
         if 0 <= idx < len(self.waypoints):
             self.waypoints.pop(idx)
             self.draw_line()
+            if self.gui:
+                self.gui.raise_all_nodes()
 
     # --- Waypoint Handle Drag Logic (mirroring group resizer handle logic) ---
     def _on_waypoint_handle_press(self, event, idx):
@@ -144,6 +148,8 @@ class ConnectionLine:
             self._update_waypoint_handle_position(active_idx, new_x, new_y)
         else:
             pass
+        if self.gui:
+            self.gui.raise_all_nodes()
 
     def _on_waypoint_handle_release(self, event, idx):
         # Always allow waypoint dragging in Configuration mode, not dependent on resize mode
