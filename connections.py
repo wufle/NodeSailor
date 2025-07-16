@@ -44,10 +44,11 @@ class ConnectionLine:
         self.draw_line()
 
     def draw_line(self):
-        # Only draw if both endpoint nodes are visible
+        # Only draw if both endpoint nodes are visible and show_connections is enabled
         node1_visible = self.canvas.itemcget(self.node1.shape, "state") != "hidden"
         node2_visible = self.canvas.itemcget(self.node2.shape, "state") != "hidden"
-        if not (node1_visible and node2_visible):
+        show_connections = getattr(self.gui, "show_connections", True)
+        if not (node1_visible and node2_visible and show_connections):
             # Remove old line and handles if present, then skip drawing
             if self.line:
                 self.canvas.delete(self.line)
@@ -227,10 +228,12 @@ class ConnectionLine:
             self.gui.raise_all_nodes()
 
     def update_label(self):
-        # Only show label if both endpoint nodes are visible
+        # Only show label if both endpoint nodes are visible and show_connection_labels is enabled
         node1_visible = self.canvas.itemcget(self.node1.shape, "state") != "hidden"
         node2_visible = self.canvas.itemcget(self.node2.shape, "state") != "hidden"
-        if not (node1_visible and node2_visible):
+        show_labels = getattr(self.gui, "show_connection_labels", True)
+        show_connections = getattr(self.gui, "show_connections", True)
+        if not (node1_visible and node2_visible and show_labels and show_connections):
             if self.label_id:
                 self.canvas.itemconfigure(self.label_id, state="hidden")
             if hasattr(self, 'label_bg') and self.label_bg:

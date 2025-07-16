@@ -50,6 +50,9 @@ def show_display_options_window(gui):
 
     def update_display():
         save_state()
+        # Sync GUI toggles for connection and label visibility
+        gui.show_connections = conn_var.get()
+        gui.show_connection_labels = conn_label_var.get()
         # VLANs (nodes): Show node if any checked VLAN matches
         checked_vlans = [vlan for vlan, var in vlan_vars.items() if var.get()]
         for node in getattr(gui, "nodes", []):
@@ -62,29 +65,16 @@ def show_display_options_window(gui):
             state_ = tk.NORMAL if show else tk.HIDDEN
             gui.canvas.itemconfigure(node.shape, state=state_)
             gui.canvas.itemconfigure(node.text, state=state_)
-        # Connections
-        # Connections: Only show if at least one endpoint node is visible
+        # Connections: Redraw all connections to ensure correct visibility
         for node in getattr(gui, "nodes", []):
             for conn in getattr(node, "connections", []):
-                # Determine if either endpoint node is visible
-                def node_visible(n):
-                    if hasattr(n, "vlans"):
-                        for vlan in checked_vlans:
-                            if n.vlans.get(vlan):
-                                return True
-                    return False
-                visible = node_visible(conn.node1) and node_visible(conn.node2)
-                line_state = tk.NORMAL if conn_var.get() and visible else tk.HIDDEN
-                gui.canvas.itemconfigure(conn.line, state=line_state)
-                # Toggle waypoint handles visibility to match connection line
-                if hasattr(conn, "waypoint_handles"):
-                    for handle in conn.waypoint_handles:
-                        gui.canvas.itemconfigure(handle, state=line_state)
-                if hasattr(conn, "label_id") and conn.label_id:
-                    gui.canvas.itemconfigure(conn.label_id, state=tk.NORMAL if conn_label_var.get() and conn_var.get() and visible else tk.HIDDEN)
-                if hasattr(conn, "label_bg") and conn.label_bg:
-                    gui.canvas.itemconfigure(conn.label_bg, state=tk.NORMAL if conn_label_var.get() and conn_var.get() and visible else tk.HIDDEN)
+                conn.draw_line()
+                conn.update_label()
         # Sticky Notes
+
+        # Ensure nodes are always on top after redraw
+        if hasattr(gui, "raise_all_nodes"):
+            gui.raise_all_nodes()
         for note in getattr(gui, "stickynotes", []):
             note_state = tk.NORMAL if notes_var.get() else tk.HIDDEN
             gui.canvas.itemconfigure(note.note, state=note_state)
