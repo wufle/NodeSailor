@@ -76,6 +76,10 @@ def show_display_options_window(gui):
                 visible = node_visible(conn.node1) and node_visible(conn.node2)
                 line_state = tk.NORMAL if conn_var.get() and visible else tk.HIDDEN
                 gui.canvas.itemconfigure(conn.line, state=line_state)
+                # Toggle waypoint handles visibility to match connection line
+                if hasattr(conn, "waypoint_handles"):
+                    for handle in conn.waypoint_handles:
+                        gui.canvas.itemconfigure(handle, state=line_state)
                 if hasattr(conn, "label_id") and conn.label_id:
                     gui.canvas.itemconfigure(conn.label_id, state=tk.NORMAL if conn_label_var.get() and conn_var.get() and visible else tk.HIDDEN)
                 if hasattr(conn, "label_bg") and conn.label_bg:
