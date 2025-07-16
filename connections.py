@@ -44,6 +44,23 @@ class ConnectionLine:
         self.draw_line()
 
     def draw_line(self):
+        # Only draw if both endpoint nodes are visible
+        node1_visible = self.canvas.itemcget(self.node1.shape, "state") != "hidden"
+        node2_visible = self.canvas.itemcget(self.node2.shape, "state") != "hidden"
+        if not (node1_visible and node2_visible):
+            # Remove old line and handles if present, then skip drawing
+            if self.line:
+                self.canvas.delete(self.line)
+            for handle in getattr(self, 'waypoint_handles', []):
+                self.canvas.delete(handle)
+            self.waypoint_handles = []
+            # Hide label and label background if present
+            if hasattr(self, "label_id") and self.label_id:
+                self.canvas.itemconfigure(self.label_id, state="hidden")
+            if hasattr(self, "label_bg") and self.label_bg:
+                self.canvas.itemconfigure(self.label_bg, state="hidden")
+            return
+
         # Check if we're in the middle of a drag operation
         active_drag = getattr(self, "_active_waypoint_handle", None) is not None
         if active_drag:
@@ -210,6 +227,15 @@ class ConnectionLine:
             self.gui.raise_all_nodes()
 
     def update_label(self):
+        # Only show label if both endpoint nodes are visible
+        node1_visible = self.canvas.itemcget(self.node1.shape, "state") != "hidden"
+        node2_visible = self.canvas.itemcget(self.node2.shape, "state") != "hidden"
+        if not (node1_visible and node2_visible):
+            if self.label_id:
+                self.canvas.itemconfigure(self.label_id, state="hidden")
+            if hasattr(self, 'label_bg') and self.label_bg:
+                self.canvas.itemconfigure(self.label_bg, state="hidden")
+            return
         if self.label_id:
             self.canvas.delete(self.label_id)
             if hasattr(self, 'label_bg') and self.label_bg:

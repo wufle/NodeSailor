@@ -75,6 +75,8 @@ class NetworkMapGUI:
             'VLAN_4': 'VLAN_4'
         }
         self.vlan_label_order = list(self.vlan_label_names.keys())
+        # VLAN visibility state for each VLAN (default: visible)
+        self.vlan_visibility = {vlan: tk.BooleanVar(value=True) for vlan in self.vlan_label_names}
         # Setup custom scrollbar styles for current theme
         self._setup_scrollbar_styles()
         self.info_value_style = {'font': ('Helvetica', 10),
@@ -1287,6 +1289,48 @@ class NetworkMapGUI:
 
     def deselect_node(self, event=None):
         self.selected_node = None
+
+    def update_display_from_state(self):
+        # Update node visibility based on VLAN checkboxes
+        checked_vlans = [vlan for vlan, var in self.vlan_visibility.items() if var.get()]
+        for node in getattr(self, "nodes", []):
+            show = True  # Default to visible if no VLANs
+            if hasattr(node, "vlans") and node.vlans:
+                show = False
+                for vlan in checked_vlans:
+                    if node.vlans.get(vlan):
+                        show = True
+                        break
+            state_ = tk.NORMAL if show else tk.HIDDEN
+            self.canvas.itemconfigure(node.shape, state=state_)
+            self.canvas.itemconfigure(node.text, state=state_)
+        # Connections: Only show if both endpoint nodes are visible
+        for node in getattr(self, "nodes", []):
+            for conn in getattr(node, "connections", []):
+                def node_visible(n):
+                    if hasattr(n, "vlans"):
+                        for vlan in checked_vlans:
+                            if n.vlans.get(vlan):
+                                return True
+                    return False
+                visible = node_visible(conn.node1) and node_visible(conn.node2)
+                # Assume self.show_connections and self.show_connection_labels are BooleanVars
+                line_state = tk.NORMAL if getattr(self, "show_connections", lambda: True)() and visible else tk.HIDDEN
+                self.canvas.itemconfigure(conn.line, state=line_state)
+                if hasattr(conn, "waypoint_handles"):
+                    for handle in conn.waypoint_handles:
+                        self.canvas.itemconfigure(handle, state=line_state)
+                if hasattr(conn, "label_id") and conn.label_id:
+                    label_state = tk.NORMAL if getattr(self, "show_connection_labels", lambda: True)() and getattr(self, "show_connections", lambda: True)() and visible else tk.HIDDEN
+                    self.canvas.itemconfigure(conn.label_id, state=label_state)
+                if hasattr(conn, "label_bg") and conn.label_bg:
+                    label_bg_state = tk.NORMAL if getattr(self, "show_connection_labels", lambda: True)() and getattr(self, "show_connections", lambda: True)() and visible else tk.HIDDEN
+                    self.canvas.itemconfigure(conn.label_bg, state=label_bg_state)
+        # Sticky Notes (optional, if you have self.stickynotes and a show_notes var)
+        if hasattr(self, "stickynotes") and hasattr(self, "show_notes"):
+            for note in getattr(self, "stickynotes", []):
+                note_state = tk.NORMAL if self.show_notes.get() else tk.HIDDEN
+                self.canvas.itemconfigure(note.note, state=note_state)
 
     def remove_node(self, node):
         if self.mode == "Configuration":

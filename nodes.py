@@ -123,6 +123,8 @@ class NetworkNode:
 
     def adjust_node_size(self):
         bbox = self.canvas.bbox(self.text)  # Get the bounding box of the text
+        if bbox is None:
+            return
         width = bbox[2] - bbox[0]
         height = bbox[3] - bbox[1]
         pad = 10  # Padding around the text
