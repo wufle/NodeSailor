@@ -648,6 +648,9 @@ class NetworkMapGUI:
         # Ensure nodes are always above connection lines after toggling mode
         if hasattr(self, "raise_all_nodes"):
             self.raise_all_nodes()
+        # Ensure connection labels are always above connection lines after toggling mode
+        if hasattr(self, "raise_all_connection_labels"):
+            self.raise_all_connection_labels()
 
     def zoom_with_mouse(self, event):
         # Hide any open connection info popups before zooming
@@ -1372,6 +1375,16 @@ class NetworkMapGUI:
             self.canvas.tag_raise(node.shape)
             self.canvas.tag_raise(node.text)
 
+    def raise_all_connection_labels(self):
+        """Raise all connection labels (and backgrounds) above connection lines."""
+        if hasattr(self, "connection_lines"):
+            for conn in self.connection_lines:
+                # Raise label background first (if present), then label itself
+                if hasattr(conn, "label_bg") and conn.label_bg:
+                    self.canvas.tag_raise(conn.label_bg)
+                if hasattr(conn, "label_id") and conn.label_id:
+                    self.canvas.tag_raise(conn.label_id)
+    
     def clear_current_loaded(self): # for clearing the current nodes on the canvas before loading a new one
         for node in self.nodes:
             for connection in node.connections:
