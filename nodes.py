@@ -198,6 +198,26 @@ class NetworkNode:
             btn.bind("<Enter>", lambda e, b=btn: b.config(bg=ColorConfig.current.BUTTON_ACTIVE_BG))
             btn.bind("<Leave>", lambda e, b=btn: b.config(bg=ColorConfig.current.BUTTON_BG))
 
+        # Ensure menu is fully visible within the window
+        context_menu.update_idletasks()
+        menu_height = context_menu.winfo_height()
+        menu_width = context_menu.winfo_width()
+        screen_height = context_menu.winfo_screenheight()
+        screen_width = context_menu.winfo_screenwidth()
+        y = event.y_root
+        x = event.x_root
+
+        # Add tolerance to avoid clipping by taskbar or borders
+        tolerance = 40  # pixels
+        # If menu would go off bottom, show above cursor
+        if y + menu_height > screen_height - tolerance:
+            y = max(0, y - menu_height)
+        # If menu would go off right edge, shift left
+        if x + menu_width > screen_width:
+            x = max(0, screen_width - menu_width)
+
+        context_menu.wm_geometry(f"+{x}+{y}")
+
         self.canvas.bind("<Button-1>", lambda e: destroy_menu(), add="+")
         context_menu.bind("<Escape>", lambda e: destroy_menu())
 
