@@ -1721,7 +1721,8 @@ class NetworkMapGUI:
             'groups': [],
             'zoom_level': getattr(self, 'zoom_level', 1.0),
             'canvas_xview': self.canvas.xview()[0] if hasattr(self, 'canvas') else 0.0,
-            'canvas_yview': self.canvas.yview()[0] if hasattr(self, 'canvas') else 0.0
+            'canvas_yview': self.canvas.yview()[0] if hasattr(self, 'canvas') else 0.0,
+            'display_options': getattr(self, 'display_options_state', {}).copy() if hasattr(self, 'display_options_state') else {}
         }
 
         # Gather node data
@@ -2011,7 +2012,10 @@ class NetworkMapGUI:
                 state = json.load(f)
                 if state is not None:
                     self.validate_and_fix_vlans(state, file_path)
-                
+
+                    # Restore display options if present
+                    self.display_options_state = state.get("display_options", {}).copy() if "display_options" in state else {}
+
                 # Reset custom commands file to empty if not present in state
                 if "custom_commands" not in state or not state["custom_commands"]:
                     # No longer reset custom_commands.json file; just clear in-memory
