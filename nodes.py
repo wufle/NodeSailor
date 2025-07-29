@@ -8,7 +8,7 @@ import webbrowser
 import threading
 
 class NetworkNode:
-    def __init__(self, canvas, name, x, y, vlans=None, remote_desktop_address='', file_path='', web_config_url=''):
+    def __init__(self, canvas, name, x, y, vlans=None, remote_desktop_address='', file_path='', web_config_url='', font_size=None):
         self.canvas = canvas
         self.name = name
         self.vlans = vlans if vlans is not None else {}
@@ -18,7 +18,9 @@ class NetworkNode:
         self.x = x
         self.y = y
         unique_node_tag = f"node_{id(self)}"
-        self.font = font.Font(family="Helvetica", size=12) 
+        if font_size is None:
+            font_size = 14  # Default to 14 for consistency with display options
+        self.font = font.Font(family="Helvetica", size=font_size)
         self.shape = canvas.create_rectangle(
             x - 15, y - 15, x + 15, y + 15,
             fill=ColorConfig.current.NODE_DEFAULT, outline=ColorConfig.current.NODE_OUTLINE_DEFAULT, width=2,  # Adjust width for a bolder outline

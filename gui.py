@@ -1176,7 +1176,8 @@ class NetworkMapGUI:
                         vlans=vlan_ips,
                         remote_desktop_address=remote,
                         file_path=path,
-                        web_config_url=web
+                        web_config_url=web,
+                        font_size=self.display_options_state.get("node_size", 14)
                     )
                     self.nodes.append(new_node)
                     self.on_node_select(new_node)
@@ -1918,7 +1919,8 @@ class NetworkMapGUI:
                     vlans=vlans,
                     remote_desktop_address=node_data.get('remote_desktop_address', ''),
                     file_path=node_data.get('file_path', ''),
-                    web_config_url=node_data.get('web_config_url', '')
+                    web_config_url=node_data.get('web_config_url', ''),
+                    font_size=self.display_options_state.get("node_size", 14)
                 )
                 self.nodes.append(node)
             self.highlight_matching_nodes()
@@ -2052,7 +2054,8 @@ class NetworkMapGUI:
                         vlans=vlans,
                         remote_desktop_address=node_data.get('remote_desktop_address', ''),
                         file_path=node_data.get('file_path', ''),
-                        web_config_url=node_data.get('web_config_url', '')
+                        web_config_url=node_data.get('web_config_url', ''),
+                        font_size=self.display_options_state.get("node_size", 14)
                     )
                     self.nodes.append(node)
                     self.highlight_matching_nodes()

@@ -38,6 +38,9 @@ def show_display_options_window(gui):
     notes_var = tk.BooleanVar(value=state.get("show_notes", True))
     groups_var = tk.BooleanVar(value=state.get("show_groups", True))
 
+    # Node/Text size slider state
+    node_size_var = tk.IntVar(value=state.get("node_size", 14))  # Default size 14
+
     # VLAN checkboxes state
     vlan_vars = {}
 
@@ -53,6 +56,17 @@ def show_display_options_window(gui):
         # Sync GUI toggles for connection and label visibility
         gui.show_connections = conn_var.get()
         gui.show_connection_labels = conn_label_var.get()
+
+        # Update node and text size
+        node_size = node_size_var.get()
+        state["node_size"] = node_size
+        for node in getattr(gui, "nodes", []):
+            try:
+                node.font.configure(size=node_size)
+                node.adjust_node_size()
+            except Exception:
+                pass
+
         # VLANs (nodes): Show node if any checked VLAN matches
         checked_vlans = [vlan for vlan, var in vlan_vars.items() if var.get()]
         for node in getattr(gui, "nodes", []):
@@ -93,9 +107,28 @@ def show_display_options_window(gui):
     tk.Checkbutton(options_frame, text="Show Sticky Notes", variable=notes_var, command=update_display, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG).grid(row=2, column=0, sticky="w", padx=10, pady=5, columnspan=2)
     tk.Checkbutton(options_frame, text="Show Groups", variable=groups_var, command=update_display, bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT, selectcolor=ColorConfig.current.FRAME_BG).grid(row=3, column=0, sticky="w", padx=10, pady=5, columnspan=2)
 
+    # Node/Text Size Slider
+    tk.Label(options_frame, text="Node/Text Size", bg=ColorConfig.current.FRAME_BG, fg=ColorConfig.current.BUTTON_TEXT).grid(row=4, column=0, sticky="w", padx=10, pady=(10, 0), columnspan=2)
+    node_size_slider = tk.Scale(
+        options_frame,
+        from_=8, to=32, orient=tk.HORIZONTAL,
+        variable=node_size_var,
+        command=lambda v: update_display(),
+        bg=ColorConfig.current.FRAME_BG,
+        fg=ColorConfig.current.BUTTON_TEXT,
+        troughcolor=ColorConfig.current.BUTTON_BG,
+        highlightbackground=ColorConfig.current.FRAME_BG,
+        activebackground=ColorConfig.current.BUTTON_ACTIVE_BG,
+        sliderrelief=tk.RAISED,
+        length=180,
+        showvalue=True,
+        resolution=1
+    )
+    node_size_slider.grid(row=5, column=0, columnspan=2, sticky="ew", padx=10, pady=(0, 10))
+
     # VLAN section (checkboxes for each VLAN)
     vlan_frame = tk.Frame(options_frame, bg=ColorConfig.current.FRAME_BG)
-    vlan_frame.grid(row=4, column=0, columnspan=3, sticky="nsew")
+    vlan_frame.grid(row=6, column=0, columnspan=3, sticky="nsew")
 
     def update_vlan_window_height():
         min_height = 100
