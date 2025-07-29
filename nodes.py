@@ -17,6 +17,7 @@ class NetworkNode:
         self.web_config_url = web_config_url
         self.x = x
         self.y = y
+        self.node_pad = 10  # Default padding, will be updated by adjust_node_size
         unique_node_tag = f"node_{id(self)}"
         if font_size is None:
             font_size = 14  # Default to 14 for consistency with display options
@@ -130,9 +131,9 @@ class NetworkNode:
         width = bbox[2] - bbox[0]
         height = bbox[3] - bbox[1]
         if node_size is not None:
-            pad = max(2, int(node_size * 0.3))
-        else:
-            pad = 10  # Default padding
+            self.node_pad = max(2, int(node_size * 0.3))
+        # Always use self.node_pad for sizing
+        pad = self.node_pad
         # Resize the rectangle based on the text size plus padding
         self.canvas.coords(self.shape, self.x - width/2 - pad, self.y - height/2 - pad,
                            self.x + width/2 + pad, self.y + height/2 + pad)
