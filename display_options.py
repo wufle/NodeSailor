@@ -63,7 +63,7 @@ def show_display_options_window(gui):
         for node in getattr(gui, "nodes", []):
             try:
                 node.font.configure(size=node_size)
-                node.adjust_node_size()
+                node.adjust_node_size(node_size)
             except Exception:
                 pass
 

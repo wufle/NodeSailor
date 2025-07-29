@@ -123,15 +123,18 @@ class NetworkNode:
     def update_shape_color(self, color):
         self.canvas.itemconfig(self.shape, fill=color)
 
-    def adjust_node_size(self):
+    def adjust_node_size(self, node_size=None):
         bbox = self.canvas.bbox(self.text)  # Get the bounding box of the text
         if bbox is None:
             return
         width = bbox[2] - bbox[0]
         height = bbox[3] - bbox[1]
-        pad = 10  # Padding around the text
+        if node_size is not None:
+            pad = max(2, int(node_size * 0.3))
+        else:
+            pad = 10  # Default padding
         # Resize the rectangle based on the text size plus padding
-        self.canvas.coords(self.shape, self.x - width/2 - pad, self.y - height/2 - pad, 
+        self.canvas.coords(self.shape, self.x - width/2 - pad, self.y - height/2 - pad,
                            self.x + width/2 + pad, self.y + height/2 + pad)
 
     # Class variable to track the globally open context menu
