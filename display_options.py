@@ -133,7 +133,7 @@ def show_display_options_window(gui):
     def update_vlan_window_height():
         min_height = 100
         max_height = 1000
-        base_height = 140  # space for controls/buttons
+        base_height = 300 
         per_vlan = 36      # per VLAN row
         n = len(gui.vlan_label_order)
         height = min(max(min_height, base_height + per_vlan * n), max_height)
@@ -178,6 +178,6 @@ def show_display_options_window(gui):
     update_vlan_window_height()
     gui.display_options_window.deiconify()
     gui.display_options_window.update_idletasks()
-    gui.display_options_window.minsize(250, 400)
+    gui.display_options_window.minsize(250, 450)
     final_height = gui.display_options_window.winfo_height()
     gui.display_options_window.after(1, lambda: gui.display_options_window.geometry(f"250x{final_height}"))

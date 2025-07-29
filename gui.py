@@ -2016,6 +2016,15 @@ class NetworkMapGUI:
                     # Restore display options if present
                     self.display_options_state = state.get("display_options", {}).copy() if "display_options" in state else {}
 
+                    # Apply display options to GUI attributes for immediate effect
+                    self.show_connections = self.display_options_state.get("show_connections", True)
+                    self.show_connection_labels = self.display_options_state.get("show_connection_labels", True)
+                    self.show_notes = self.display_options_state.get("show_notes", True)
+                    self.show_groups = self.display_options_state.get("show_groups", True)
+                    # Redraw or refresh canvas to apply changes
+                    if hasattr(self, "redraw_all"):
+                        self.redraw_all()
+
                 # Reset custom commands file to empty if not present in state
                 if "custom_commands" not in state or not state["custom_commands"]:
                     # No longer reset custom_commands.json file; just clear in-memory
