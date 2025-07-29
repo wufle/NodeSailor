@@ -57,6 +57,11 @@ class NetworkMapGUI:
     def __init__(self, root):
         # Ensure gui.nodes always references the main node list
         self.gui = self
+        # Initialize display options state with default node size
+        if not hasattr(self, "display_options_state"):
+            self.display_options_state = {}
+        if "node_size" not in self.display_options_state:
+            self.display_options_state["node_size"] = 14
         # root should be created with ctk.CTk() for CustomTkinter support
         self.root = root
         self.sticky_note_popup = None
