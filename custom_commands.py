@@ -37,13 +37,12 @@ def manage_custom_commands(gui_self):
             cmd_entry.insert("1.0", cmd)
             if applicable_nodes is None:
                 applicability_var.set(True)
-                node_select_listbox.selection_clear(0, tk.END)
+                for n in node_names:
+                    node_vars[n].set(False)
             else:
                 applicability_var.set(False)
-                node_select_listbox.selection_clear(0, tk.END)
-                for idx, n in enumerate(node_names):
-                    if n in applicable_nodes:
-                        node_select_listbox.selection_set(idx)
+                for n in node_names:
+                    node_vars[n].set(n in applicable_nodes)
 
     listbox.bind("<<ListboxSelect>>", on_command_select)
 
@@ -72,22 +71,65 @@ def manage_custom_commands(gui_self):
     )
     applicability_chk.grid(row=2, column=0, sticky='w', pady=(8, 0), columnspan=2)
     
-    # Node selection listbox (hidden by default)
+    # Node selection scrollable frame (hidden by default)
     node_names = [n.name for n in getattr(gui_self, "nodes", [])]
+    node_vars = {n: tk.BooleanVar(value=False) for n in node_names}
     node_select_label = tk.Label(frame, text="Select applicable nodes:", **label_args)
-    node_select_listbox = tk.Listbox(frame, selectmode=tk.MULTIPLE, width=40, height=6, exportselection=False,
-                                     bg=ColorConfig.current.ENTRY_FOCUS_BG, fg=ColorConfig.current.ENTRY_TEXT,
-                                     font=('Helvetica', 10))
-    for name in node_names:
-        node_select_listbox.insert(tk.END, name)
+
+    node_select_canvas = tk.Canvas(frame, width=320, height=120, bg=ColorConfig.current.ENTRY_FOCUS_BG, highlightthickness=0)
+    node_select_scrollbar = tk.Scrollbar(
+        frame,
+        orient="vertical",
+        command=node_select_canvas.yview,
+        bg=ColorConfig.current.FRAME_BG,  # scrollbar background
+        troughcolor=ColorConfig.current.ENTRY_FOCUS_BG,  # trough color
+        activebackground=ColorConfig.current.FRAME_BG,  # slider active color
+        highlightbackground=ColorConfig.current.BORDER_COLOR,  # border color
+        highlightcolor=ColorConfig.current.BORDER_COLOR,  # border color when focused
+        borderwidth=2  # slightly thicker border for dark mode
+    )
+    node_select_inner_frame = tk.Frame(node_select_canvas, bg=ColorConfig.current.ENTRY_FOCUS_BG)
+    node_select_inner_frame_id = node_select_canvas.create_window((0, 0), window=node_select_inner_frame, anchor="nw")
+    node_select_canvas.configure(yscrollcommand=node_select_scrollbar.set)
+
+    # Mouse wheel support for Canvas scrolling
+    def _on_mousewheel(event):
+        if event.delta:
+            node_select_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        elif event.num == 4:  # Linux scroll up
+            node_select_canvas.yview_scroll(-1, "units")
+        elif event.num == 5:  # Linux scroll down
+            node_select_canvas.yview_scroll(1, "units")
+
+    node_select_canvas.bind_all("<MouseWheel>", _on_mousewheel)      # Windows/macOS
+    node_select_canvas.bind_all("<Button-4>", _on_mousewheel)        # Linux scroll up
+    node_select_canvas.bind_all("<Button-5>", _on_mousewheel)        # Linux scroll down
+
+    node_vars = {}
+    for idx, name in enumerate(node_names):
+        var = tk.BooleanVar(value=False)
+        node_vars[name] = var
+        cb = tk.Checkbutton(node_select_inner_frame, text=name, variable=var,
+                            bg=ColorConfig.current.ENTRY_FOCUS_BG, fg=ColorConfig.current.ENTRY_TEXT,
+                            font=('Helvetica', 10), anchor="w", selectcolor=ColorConfig.current.FRAME_BG)
+        cb.pack(fill="x", padx=2, pady=1)
+
+    def _on_frame_configure(event):
+        node_select_canvas.configure(scrollregion=node_select_canvas.bbox("all"))
+    node_select_inner_frame.bind("<Configure>", _on_frame_configure)
     
     def toggle_node_select(*_):
+        print(f"[DEBUG] toggle_node_select: applicability_var={applicability_var.get()}")
         if applicability_var.get():
+            print("[DEBUG] Node selection panel hidden")
             node_select_label.grid_remove()
-            node_select_listbox.grid_remove()
+            node_select_canvas.grid_remove()
+            node_select_scrollbar.grid_remove()
         else:
+            print("[DEBUG] Node selection panel shown")
             node_select_label.grid(row=3, column=0, sticky='nw')
-            node_select_listbox.grid(row=3, column=1, padx=5, pady=5, sticky='ew')
+            node_select_canvas.grid(row=3, column=1, padx=(5,0), pady=5, sticky='ew')
+            node_select_scrollbar.grid(row=3, column=2, sticky='ns', padx=(0,5), pady=5)
     
     applicability_var.trace_add("write", toggle_node_select)
     toggle_node_select()
@@ -114,7 +156,7 @@ def manage_custom_commands(gui_self):
         if applicability_var.get():
             applicable_nodes = None
         else:
-            applicable_nodes = [node_names[i] for i in node_select_listbox.curselection()]
+            applicable_nodes = [n for n in node_names if node_vars[n].get()]
         if name and cmd:
             gui_self.custom_commands[name] = {
                 "template": cmd,
