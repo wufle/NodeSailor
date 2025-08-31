@@ -77,16 +77,38 @@ def manage_custom_commands(gui_self):
     node_select_label = tk.Label(frame, text="Select applicable nodes:", **label_args)
 
     node_select_canvas = tk.Canvas(frame, width=320, height=120, bg=ColorConfig.current.ENTRY_FOCUS_BG, highlightthickness=0)
-    node_select_scrollbar = tk.Scrollbar(
+    # Explicitly set dark colors for scrollbar if in dark mode
+    from tkinter import ttk
+
+    scrollbar_style = "NodeSelect.Vertical.TScrollbar"
+    if ColorConfig.current == getattr(ColorConfig, "Dark", None):
+        style = ttk.Style()
+        style.theme_use("clam")
+        style.configure(
+            scrollbar_style,
+            background=ColorConfig.current.FRAME_BG,
+            troughcolor=ColorConfig.current.ENTRY_FOCUS_BG,
+            bordercolor=ColorConfig.current.BORDER_COLOR,
+            arrowcolor=ColorConfig.current.FRAME_BG,
+            gripcount=0
+        )
+        # Ensure scrollbar remains dark on hover and active
+        style.map(
+            scrollbar_style,
+            background=[
+                ("active", ColorConfig.current.FRAME_BG),
+                ("hover", ColorConfig.current.FRAME_BG)
+            ],
+            troughcolor=[
+                ("active", ColorConfig.current.ENTRY_FOCUS_BG),
+                ("hover", ColorConfig.current.ENTRY_FOCUS_BG)
+            ]
+        )
+    node_select_scrollbar = ttk.Scrollbar(
         frame,
         orient="vertical",
         command=node_select_canvas.yview,
-        bg=ColorConfig.current.FRAME_BG,  # scrollbar background
-        troughcolor=ColorConfig.current.ENTRY_FOCUS_BG,  # trough color
-        activebackground=ColorConfig.current.FRAME_BG,  # slider active color
-        highlightbackground=ColorConfig.current.BORDER_COLOR,  # border color
-        highlightcolor=ColorConfig.current.BORDER_COLOR,  # border color when focused
-        borderwidth=2  # slightly thicker border for dark mode
+        style=scrollbar_style if ColorConfig.current == getattr(ColorConfig, "Dark", None) else None
     )
     node_select_inner_frame = tk.Frame(node_select_canvas, bg=ColorConfig.current.ENTRY_FOCUS_BG)
     node_select_inner_frame_id = node_select_canvas.create_window((0, 0), window=node_select_inner_frame, anchor="nw")
