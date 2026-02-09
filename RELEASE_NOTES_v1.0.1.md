@@ -33,15 +33,7 @@
 
 ## 📦 Installation
 
-Download the installer for your platform:
-- **Windows**: `NodeSailor_1.0.1_x64_en-US.msi`
-- **macOS (Apple Silicon)**: `NodeSailor_aarch64.dmg`
-- **macOS (Intel)**: `NodeSailor_x64.dmg`
-- **Linux**: `node-sailor_1.0.1_amd64.deb` or `.AppImage`
-
-## 🙏 Acknowledgments
-
-Special thanks to Claude Sonnet 4.5 for development assistance.
+Download the installer for your platform below.
 
 ---
 
