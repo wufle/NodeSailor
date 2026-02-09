@@ -1,9 +1,11 @@
 <script lang="ts">
   import {
     isDark,
+    currentTheme,
     showStartMenu,
     activeDialog,
   } from "../../lib/stores/uiStore";
+  import type { ThemeName } from "../../lib/stores/uiStore";
   import { getThemeColors } from "../../lib/theme/colors";
   import {
     loadFile,
@@ -12,7 +14,8 @@
   } from "../../lib/actions/fileActions";
   import { settings } from "../../lib/stores/settingsStore";
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
+  let isIronclad = $derived($currentTheme === "ironclad");
 
   function close() {
     showStartMenu.set(false);
@@ -33,8 +36,14 @@
     close();
   }
 
-  function toggleTheme() {
-    isDark.update((d) => !d);
+  const themeOptions: { name: ThemeName; label: string }[] = [
+    { name: "light", label: "Light" },
+    { name: "dark", label: "Dark" },
+    { name: "ironclad", label: "Ironclad" },
+  ];
+
+  function setTheme(t: ThemeName) {
+    currentTheme.set(t);
   }
 
   function openConfigMenu() {
@@ -105,14 +114,23 @@
       Load
     </button>
 
-    <button
-      class={buttonClass}
-      style:background-color={colors.BUTTON_BG}
-      style:color={colors.BUTTON_TEXT}
-      onclick={toggleTheme}
-    >
-      {$isDark ? "Light Mode" : "Dark Mode"}
-    </button>
+    <!-- Theme Selector -->
+    <div class="flex gap-1">
+      {#each themeOptions as opt}
+        <button
+          class="{buttonClass} {isIronclad ? 'ironclad-btn' : ''}"
+          style:background-color={$currentTheme === opt.name
+            ? colors.BUTTON_ACTIVE_BG
+            : colors.BUTTON_BG}
+          style:color={$currentTheme === opt.name
+            ? colors.BUTTON_ACTIVE_TEXT
+            : colors.BUTTON_TEXT}
+          onclick={() => setTheme(opt.name)}
+        >
+          {opt.label}
+        </button>
+      {/each}
+    </div>
 
     <button
       class={buttonClass}

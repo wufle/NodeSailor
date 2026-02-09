@@ -1,10 +1,17 @@
 <script lang="ts">
   import DialogWrapper from "../dialogs/DialogWrapper.svelte";
-  import { isDark, activeDialog } from "../../lib/stores/uiStore";
+  import { currentTheme, activeDialog } from "../../lib/stores/uiStore";
+  import type { ThemeName } from "../../lib/stores/uiStore";
   import { getThemeColors, lightTheme, darkTheme } from "../../lib/theme/colors";
   import type { ThemeColors } from "../../lib/theme/colors";
 
-  let colors = $derived(getThemeColors($isDark));
+  const themeOptions: { name: ThemeName; label: string }[] = [
+    { name: "light", label: "Light" },
+    { name: "dark", label: "Dark" },
+    { name: "ironclad", label: "Ironclad" },
+  ];
+
+  let colors = $derived(getThemeColors($currentTheme));
 
   function close() {
     activeDialog.set(null);
@@ -23,26 +30,18 @@
 >
   <div class="space-y-1">
     <div class="flex gap-2 mb-3">
-      <button
-        class="px-3 py-1.5 text-xs rounded"
-        style:background-color={$isDark
-          ? colors.BUTTON_ACTIVE_BG
-          : colors.BUTTON_BG}
-        style:color={colors.BUTTON_TEXT}
-        onclick={() => isDark.set(true)}
-      >
-        Dark
-      </button>
-      <button
-        class="px-3 py-1.5 text-xs rounded"
-        style:background-color={!$isDark
-          ? colors.BUTTON_ACTIVE_BG
-          : colors.BUTTON_BG}
-        style:color={colors.BUTTON_TEXT}
-        onclick={() => isDark.set(false)}
-      >
-        Light
-      </button>
+      {#each themeOptions as opt}
+        <button
+          class="px-3 py-1.5 text-xs rounded"
+          style:background-color={$currentTheme === opt.name
+            ? colors.BUTTON_ACTIVE_BG
+            : colors.BUTTON_BG}
+          style:color={colors.BUTTON_TEXT}
+          onclick={() => currentTheme.set(opt.name)}
+        >
+          {opt.label}
+        </button>
+      {/each}
     </div>
 
     {#each themeKeys as key}

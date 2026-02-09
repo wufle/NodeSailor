@@ -3,7 +3,7 @@
   import {
     contextMenu,
     mode,
-    isDark,
+    currentTheme,
     activeDialog,
   } from "../../lib/stores/uiStore";
   import {
@@ -21,7 +21,7 @@
   } from "../../lib/actions/systemActions";
   import type { CustomCommand } from "../../lib/types/network";
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
 
   function close() {
     contextMenu.set({

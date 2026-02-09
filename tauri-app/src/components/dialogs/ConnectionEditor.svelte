@@ -1,6 +1,6 @@
 <script lang="ts">
   import DialogWrapper from "./DialogWrapper.svelte";
-  import { isDark, activeDialog } from "../../lib/stores/uiStore";
+  import { currentTheme, activeDialog } from "../../lib/stores/uiStore";
   import {
     connections,
     addConnection,
@@ -8,7 +8,7 @@
   } from "../../lib/stores/networkStore";
   import { getThemeColors } from "../../lib/theme/colors";
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
 
   let editIndex: number | null =
     (window as any).__editConnectionIndex ?? null;

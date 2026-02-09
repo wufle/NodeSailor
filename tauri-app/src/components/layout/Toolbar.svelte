@@ -2,6 +2,7 @@
   import {
     mode,
     isDark,
+    currentTheme,
     groupsModeActive,
     activeDialog,
     showStartMenu,
@@ -11,12 +12,18 @@
   import { getLocalIps } from "../../lib/actions/systemActions";
   import { nodes, pingResults } from "../../lib/stores/networkStore";
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
+  let isIronclad = $derived($currentTheme === "ironclad");
+  let valveTurning = $state(false);
 
   function toggleMode() {
     mode.update((m) => (m === "Operator" ? "Configuration" : "Operator"));
     if ($groupsModeActive) {
       groupsModeActive.set(false);
+    }
+    if (isIronclad) {
+      valveTurning = true;
+      setTimeout(() => (valveTurning = false), 300);
     }
   }
 
@@ -44,11 +51,14 @@
     }
   }
 
-  let buttonClass = "px-3 py-1.5 text-xs font-medium rounded transition-colors";
+  let buttonClass = $derived(
+    "px-3 py-1.5 text-xs font-medium rounded transition-colors" +
+    (isIronclad ? " ironclad-btn" : "")
+  );
 </script>
 
 <div
-  class="flex items-center gap-1 px-2 py-1 flex-wrap"
+  class="flex items-center gap-1 px-2 py-1 flex-wrap {isIronclad ? 'ironclad-panel' : ''}"
   style:background-color={colors.FRAME_BG}
   style:border-bottom="1px solid {colors.BORDER_COLOR}"
 >
@@ -71,6 +81,9 @@
     style:color={colors.BUTTON_TEXT}
     onclick={toggleMode}
   >
+    {#if isIronclad}
+      <span class="inline-block {valveTurning ? 'valve-turning' : ''}" style="margin-right: 4px;">&#9881;</span>
+    {/if}
     {$mode} Mode
   </button>
 

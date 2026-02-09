@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { isDark, mode, showStartMenu, unsavedChanges, activeDialog } from "./lib/stores/uiStore";
+  import { isDark, currentTheme, mode, showStartMenu, unsavedChanges, activeDialog } from "./lib/stores/uiStore";
+  import type { ThemeName } from "./lib/stores/uiStore";
   import { getThemeColors } from "./lib/theme/colors";
   import TopologyCanvas from "./components/canvas/TopologyCanvas.svelte";
   import Toolbar from "./components/layout/Toolbar.svelte";
@@ -26,12 +27,18 @@
 
   // Reactive theme application
   $effect(() => {
-    if ($isDark) {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("light");
-    } else {
-      document.documentElement.classList.add("light");
-      document.documentElement.classList.remove("dark");
+    const el = document.documentElement;
+    el.classList.remove("light", "dark", "theme-ironclad");
+    switch ($currentTheme) {
+      case "ironclad":
+        el.classList.add("theme-ironclad");
+        break;
+      case "dark":
+        el.classList.add("dark");
+        break;
+      default:
+        el.classList.add("light");
+        break;
     }
   });
 
@@ -43,7 +50,11 @@
 
     if (e.ctrlKey && e.shiftKey && e.key === "C") {
       e.preventDefault();
-      isDark.update((d) => !d);
+      const cycle: ThemeName[] = ["dark", "ironclad", "light"];
+      currentTheme.update((t) => {
+        const idx = cycle.indexOf(t);
+        return cycle[(idx + 1) % cycle.length];
+      });
     } else if (e.ctrlKey && e.key === "s") {
       e.preventDefault();
       saveFile();
@@ -65,7 +76,7 @@
     }
   });
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
 </script>
 
 <svelte:window onkeydown={handleKeydown} />

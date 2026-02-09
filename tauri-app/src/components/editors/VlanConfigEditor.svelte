@@ -1,6 +1,6 @@
 <script lang="ts">
   import DialogWrapper from "../dialogs/DialogWrapper.svelte";
-  import { isDark, activeDialog } from "../../lib/stores/uiStore";
+  import { currentTheme, activeDialog } from "../../lib/stores/uiStore";
   import {
     vlanLabels,
     vlanLabelOrder,
@@ -9,7 +9,7 @@
   } from "../../lib/stores/networkStore";
   import { getThemeColors } from "../../lib/theme/colors";
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
 
   function close() {
     activeDialog.set(null);

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -44,6 +45,28 @@
   --color-group-text: #a3c2ff;
 }
 
+.theme-ironclad {
+  --color-node-default: #1b3a5c;
+  --color-frame-bg: #2b2d31;
+  --color-info-bg: #232529;
+  --color-info-text: #a8adb5;
+  --color-button-bg: #383b41;
+  --color-button-text: #d4d7dc;
+  --color-border: #4a4d52;
+  --color-connections: #5a6068;
+  --color-node-outline: #4a4d52;
+  --color-node-highlight: #c77a3c;
+  --color-node-host: #4a7c59;
+  --color-ping-success: #2d7d46;
+  --color-ping-partial: #c77a3c;
+  --color-ping-failure: #8b2e2e;
+  --color-config-mode: #c77a3c;
+  --color-group-default-bg: #1e2a38;
+  --color-group-outline: #3a5c7c;
+  --color-group-selected: #c77a3c;
+  --color-group-text: #8fa8c8;
+}
+
 html, body, #app {
   margin: 0;
   padding: 0;
@@ -53,6 +76,13 @@ html, body, #app {
   background-color: var(--color-frame-bg);
   font-family: 'Helvetica', 'Arial', sans-serif;
   color: var(--color-button-text);
+}
+
+/* Ironclad font override */
+.theme-ironclad,
+.theme-ironclad body,
+.theme-ironclad #app {
+  font-family: 'DM Sans', 'Helvetica', 'Arial', sans-serif;
 }
 
 /* Custom scrollbar */
@@ -72,4 +102,87 @@ html, body, #app {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-border);
+}
+
+/* === Ironclad Decorative Styles === */
+
+/* Bolt corner decorations */
+.ironclad-panel {
+  position: relative;
+}
+.ironclad-panel::before,
+.ironclad-panel::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5a6068;
+  box-shadow: 0 0 0 1px #3e4147;
+  pointer-events: none;
+  z-index: 10;
+}
+.ironclad-panel::before {
+  top: 4px;
+  left: 4px;
+  box-shadow:
+    0 0 0 1px #3e4147,
+    calc(100% - 14px) 0 0 0 #5a6068,
+    calc(100% - 14px) 0 0 1px #3e4147;
+}
+.ironclad-panel::after {
+  bottom: 4px;
+  left: 4px;
+  box-shadow:
+    0 0 0 1px #3e4147,
+    calc(100% - 14px) 0 0 0 #5a6068,
+    calc(100% - 14px) 0 0 1px #3e4147;
+}
+
+/* Metal plate buttons */
+.ironclad-btn {
+  background: linear-gradient(180deg, #454850 0%, #383b41 100%) !important;
+  border: 1px solid #4a4d52 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.ironclad-btn:hover {
+  background: linear-gradient(180deg, #4e5158 0%, #3e4147 100%) !important;
+}
+.ironclad-btn:active {
+  background: linear-gradient(180deg, #353840 0%, #2b2d31 100%) !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Valve-turn toggle animation */
+@keyframes valve-turn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(180deg); }
+}
+.valve-turning {
+  animation: valve-turn 0.3s ease-in-out;
+}
+
+/* Pressure-gauge tooltip */
+.ironclad-tooltip {
+  background: #232529;
+  border: 2px solid #4a4d52;
+  border-radius: 8px;
+  padding: 8px 12px;
+  position: relative;
+  color: #a8adb5;
+}
+.ironclad-tooltip::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  width: 8px;
+  height: 2px;
+  background: #c77a3c;
+  transform: translateY(-50%);
+}
+
+/* Ironclad metallic title bar gradient */
+.ironclad-titlebar {
+  background: linear-gradient(180deg, #3a3d42 0%, #2b2d31 100%);
 }

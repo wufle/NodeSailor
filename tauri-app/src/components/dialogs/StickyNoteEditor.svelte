@@ -1,10 +1,10 @@
 <script lang="ts">
   import DialogWrapper from "./DialogWrapper.svelte";
-  import { isDark, activeDialog } from "../../lib/stores/uiStore";
+  import { currentTheme, activeDialog } from "../../lib/stores/uiStore";
   import { addStickyNote } from "../../lib/stores/networkStore";
   import { getThemeColors } from "../../lib/theme/colors";
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
   let text = $state("");
 
   let position: { x: number; y: number } =

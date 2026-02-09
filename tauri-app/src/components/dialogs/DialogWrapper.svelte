@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { isDark, activeDialog } from "../../lib/stores/uiStore";
+  import { isDark, currentTheme, activeDialog } from "../../lib/stores/uiStore";
   import { getThemeColors } from "../../lib/theme/colors";
   import type { Snippet } from "svelte";
 
@@ -15,7 +15,8 @@
     children: Snippet;
   } = $props();
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
+  let isIronclad = $derived($currentTheme === "ironclad");
 
   // Drag state
   let isDragging = $state(false);
@@ -85,7 +86,7 @@
 <!-- Dialog -->
 <div
   bind:this={dialogEl}
-  class="fixed z-50 rounded shadow-xl overflow-hidden"
+  class="fixed z-50 rounded shadow-xl overflow-hidden {isIronclad ? 'ironclad-panel' : ''}"
   style:left="{posX}px"
   style:top="{posY}px"
   style:width="{width}px"
@@ -96,8 +97,8 @@
   <!-- Title bar -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="flex items-center justify-between px-3 py-2 cursor-move select-none"
-    style:background-color={colors.FRAME_BG}
+    class="flex items-center justify-between px-3 py-2 cursor-move select-none {isIronclad ? 'ironclad-titlebar' : ''}"
+    style:background-color={isIronclad ? undefined : colors.FRAME_BG}
     style:border-bottom="1px solid {colors.BORDER_COLOR}"
     onmousedown={onTitleMouseDown}
   >

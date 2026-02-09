@@ -6,6 +6,7 @@
     panY,
     mode,
     isDark,
+    currentTheme,
     selectedNodeIndex,
     previousSelectedNodeIndex,
     groupsModeActive,
@@ -67,7 +68,7 @@
   let isDraggingStickyNote = $state(false);
   let dragStickyIndex: number | null = null;
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
 
   /** Convert screen coordinates to world (SVG) coordinates */
   function screenToWorld(

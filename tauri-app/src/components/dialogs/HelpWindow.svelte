@@ -1,9 +1,9 @@
 <script lang="ts">
   import DialogWrapper from "./DialogWrapper.svelte";
-  import { isDark, activeDialog } from "../../lib/stores/uiStore";
+  import { currentTheme, activeDialog } from "../../lib/stores/uiStore";
   import { getThemeColors } from "../../lib/theme/colors";
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
 
   function close() {
     activeDialog.set(null);

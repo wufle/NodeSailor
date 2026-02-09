@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { groupsModeActive, isDark } from "../../lib/stores/uiStore";
+  import { groupsModeActive, currentTheme } from "../../lib/stores/uiStore";
   import { getThemeColors } from "../../lib/theme/colors";
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
 </script>
 
 {#if $groupsModeActive}

@@ -2,6 +2,7 @@
   import {
     selectedNodeIndex,
     isDark,
+    currentTheme,
   } from "../../lib/stores/uiStore";
   import {
     nodes,
@@ -12,7 +13,8 @@
   import { getThemeColors } from "../../lib/theme/colors";
   import { getPopulatedVlans } from "../../lib/utils/vlanUtils";
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
+  let isIronclad = $derived($currentTheme === "ironclad");
 
   let selectedNode = $derived(
     $selectedNodeIndex !== null ? $nodes[$selectedNodeIndex] : null
@@ -41,7 +43,7 @@
 
 {#if selectedNode}
   <div
-    class="absolute top-2 right-2 p-3 rounded shadow-lg min-w-[180px]"
+    class="absolute top-2 right-2 p-3 rounded shadow-lg min-w-[180px] {isIronclad ? 'ironclad-panel' : ''}"
     style:background-color={colors.INFO_NOTE_BG}
     style:color={colors.INFO_TEXT}
     style:border="1px solid {colors.BORDER_COLOR}"

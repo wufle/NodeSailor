@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { zoom, panX, panY, isDark, zoomPercent } from "../../lib/stores/uiStore";
+  import { zoom, panX, panY, isDark, currentTheme, zoomPercent } from "../../lib/stores/uiStore";
   import { getThemeColors } from "../../lib/theme/colors";
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
+  let isIronclad = $derived($currentTheme === "ironclad");
 
   function zoomIn() {
     zoom.update((z) => z * 1.1);
@@ -26,19 +27,19 @@
   style:border="1px solid {colors.BORDER_COLOR}"
 >
   <button
-    class="px-2 py-0.5 text-sm cursor-pointer hover:opacity-70"
+    class="px-2 py-0.5 text-sm cursor-pointer hover:opacity-70 {isIronclad ? 'ironclad-btn rounded' : ''}"
     onclick={zoomIn}
   >
     +
   </button>
   <button
-    class="px-2 py-0.5 text-sm cursor-pointer hover:opacity-70 min-w-[3rem] text-center"
+    class="px-2 py-0.5 text-sm cursor-pointer hover:opacity-70 min-w-[3rem] text-center {isIronclad ? 'ironclad-btn rounded' : ''}"
     onclick={resetZoom}
   >
     {$zoomPercent}%
   </button>
   <button
-    class="px-2 py-0.5 text-sm cursor-pointer hover:opacity-70"
+    class="px-2 py-0.5 text-sm cursor-pointer hover:opacity-70 {isIronclad ? 'ironclad-btn rounded' : ''}"
     onclick={zoomOut}
   >
     &ndash;

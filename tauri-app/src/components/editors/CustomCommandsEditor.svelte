@@ -1,6 +1,6 @@
 <script lang="ts">
   import DialogWrapper from "../dialogs/DialogWrapper.svelte";
-  import { isDark, activeDialog } from "../../lib/stores/uiStore";
+  import { currentTheme, activeDialog } from "../../lib/stores/uiStore";
   import {
     customCommands,
     nodes,
@@ -8,7 +8,7 @@
   import { getThemeColors } from "../../lib/theme/colors";
   import type { CustomCommand } from "../../lib/types/network";
 
-  let colors = $derived(getThemeColors($isDark));
+  let colors = $derived(getThemeColors($currentTheme));
 
   let selectedCommand = $state<string | null>(null);
   let editName = $state("");
