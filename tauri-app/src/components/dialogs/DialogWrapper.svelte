@@ -86,11 +86,11 @@
 <!-- Dialog -->
 <div
   bind:this={dialogEl}
-  class="fixed z-50 rounded shadow-xl overflow-hidden {isIronclad ? 'ironclad-panel' : ''}"
+  class="fixed z-50 rounded shadow-xl {isIronclad ? 'ironclad-panel' : 'overflow-hidden'}"
   style:left="{posX}px"
   style:top="{posY}px"
   style:width="{width}px"
-  style:border="2px solid {colors.BORDER_COLOR}"
+  style:border={isIronclad ? "2px solid #555a62" : `2px solid ${colors.BORDER_COLOR}`}
   style:background-color={colors.FRAME_BG}
   onclick={(e) => e.stopPropagation()}
 >
@@ -109,9 +109,9 @@
       {title}
     </span>
     <button
-      class="text-sm px-2 py-0.5 rounded hover:opacity-70"
+      class="text-sm px-2 py-0.5 rounded hover:opacity-70 {isIronclad ? 'ironclad-btn' : ''}"
       style:color={colors.BUTTON_TEXT}
-      style:background-color={colors.FRAME_BG}
+      style:background-color={isIronclad ? undefined : colors.FRAME_BG}
       onclick={close}
     >
       X

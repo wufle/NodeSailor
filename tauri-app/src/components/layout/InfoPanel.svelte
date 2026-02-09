@@ -43,10 +43,10 @@
 
 {#if selectedNode}
   <div
-    class="absolute top-2 right-2 p-3 rounded shadow-lg min-w-[180px] {isIronclad ? 'ironclad-panel' : ''}"
+    class="absolute top-2 right-2 p-3 rounded min-w-[180px] {isIronclad ? 'ironclad-info-panel' : 'shadow-lg'}"
     style:background-color={colors.INFO_NOTE_BG}
     style:color={colors.INFO_TEXT}
-    style:border="1px solid {colors.BORDER_COLOR}"
+    style:border={isIronclad ? undefined : `1px solid ${colors.BORDER_COLOR}`}
   >
     <div class="text-sm font-medium mb-2">
       <span class="opacity-60">Name:</span>

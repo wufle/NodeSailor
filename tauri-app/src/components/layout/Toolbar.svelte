@@ -58,9 +58,9 @@
 </script>
 
 <div
-  class="flex items-center gap-1 px-2 py-1 flex-wrap {isIronclad ? 'ironclad-panel' : ''}"
-  style:background-color={colors.FRAME_BG}
-  style:border-bottom="1px solid {colors.BORDER_COLOR}"
+  class="flex items-center gap-1 px-2 py-1.5 flex-wrap {isIronclad ? 'ironclad-toolbar' : ''}"
+  style:background-color={isIronclad ? undefined : colors.FRAME_BG}
+  style:border-bottom={isIronclad ? undefined : `1px solid ${colors.BORDER_COLOR}`}
 >
   <!-- Start Menu -->
   <button

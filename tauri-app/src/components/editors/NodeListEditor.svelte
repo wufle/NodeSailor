@@ -12,6 +12,7 @@
   import { getThemeColors } from "../../lib/theme/colors";
 
   let colors = $derived(getThemeColors($currentTheme));
+  let isIronclad = $derived($currentTheme === "ironclad");
 
   function close() {
     activeDialog.set(null);
@@ -224,8 +225,8 @@
 
   <div class="mt-3">
     <button
-      class="px-3 py-1.5 text-xs rounded"
-      style:background-color={colors.BUTTON_BG}
+      class="px-3 py-1.5 text-xs rounded {isIronclad ? 'ironclad-btn' : ''}"
+      style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
       style:color={colors.BUTTON_TEXT}
       onclick={handleAddNode}
     >

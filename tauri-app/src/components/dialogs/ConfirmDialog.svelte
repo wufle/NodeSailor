@@ -4,6 +4,7 @@
   import { getThemeColors } from "../../lib/theme/colors";
 
   let colors = $derived(getThemeColors($currentTheme));
+  let isIronclad = $derived($currentTheme === "ironclad");
 
   let message: string =
     (window as any).__confirmMessage ?? "Are you sure?";
@@ -37,24 +38,24 @@
     </p>
     <div class="flex justify-center gap-3">
       <button
-        class="px-4 py-1.5 text-sm rounded"
-        style:background-color={colors.BUTTON_BG}
+        class="px-4 py-1.5 text-sm rounded {isIronclad ? 'ironclad-btn' : ''}"
+        style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
         style:color={colors.BUTTON_TEXT}
         onclick={handleYes}
       >
         Yes
       </button>
       <button
-        class="px-4 py-1.5 text-sm rounded"
-        style:background-color={colors.BUTTON_BG}
+        class="px-4 py-1.5 text-sm rounded {isIronclad ? 'ironclad-btn' : ''}"
+        style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
         style:color={colors.BUTTON_TEXT}
         onclick={handleNo}
       >
         No
       </button>
       <button
-        class="px-4 py-1.5 text-sm rounded"
-        style:background-color={colors.BUTTON_BG}
+        class="px-4 py-1.5 text-sm rounded {isIronclad ? 'ironclad-btn' : ''}"
+        style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
         style:color={colors.BUTTON_TEXT}
         onclick={close}
       >

@@ -56,8 +56,10 @@
     activeDialog.set("help");
   }
 
-  let buttonClass =
-    "w-full py-2 text-sm rounded hover:opacity-80 transition-opacity";
+  let buttonClass = $derived(
+    "w-full py-2 text-sm rounded hover:opacity-80 transition-opacity" +
+    (isIronclad ? " ironclad-btn" : "")
+  );
 </script>
 
 <!-- Backdrop -->
@@ -70,17 +72,17 @@
 
 <!-- Menu -->
 <div
-  class="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] rounded-lg shadow-xl overflow-hidden"
-  style:border="2px solid {colors.BORDER_COLOR}"
-  style:background-color={colors.FRAME_BG}
+  class="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] rounded-lg overflow-hidden {isIronclad ? 'ironclad-start-menu' : 'shadow-xl'}"
+  style:border={isIronclad ? undefined : `2px solid ${colors.BORDER_COLOR}`}
+  style:background-color={isIronclad ? undefined : colors.FRAME_BG}
   onclick={(e) => e.stopPropagation()}
 >
   <!-- Logo placeholder -->
   <div class="flex justify-center py-4">
     <div
-      class="w-20 h-20 rounded-lg flex items-center justify-center text-2xl font-bold"
-      style:background-color={colors.BUTTON_BG}
-      style:color={colors.BUTTON_TEXT}
+      class="w-20 h-20 rounded-lg flex items-center justify-center text-2xl font-bold {isIronclad ? 'ironclad-logo' : ''}"
+      style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
+      style:color={isIronclad ? "#e09240" : colors.BUTTON_TEXT}
     >
       NS
     </div>

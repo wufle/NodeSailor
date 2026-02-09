@@ -12,6 +12,7 @@
   ];
 
   let colors = $derived(getThemeColors($currentTheme));
+  let isIronclad = $derived($currentTheme === "ironclad");
 
   function close() {
     activeDialog.set(null);
@@ -32,11 +33,12 @@
     <div class="flex gap-2 mb-3">
       {#each themeOptions as opt}
         <button
-          class="px-3 py-1.5 text-xs rounded"
-          style:background-color={$currentTheme === opt.name
+          class="px-3 py-1.5 text-xs rounded {isIronclad ? 'ironclad-btn' : ''}"
+          style:background-color={isIronclad ? undefined : ($currentTheme === opt.name
             ? colors.BUTTON_ACTIVE_BG
-            : colors.BUTTON_BG}
+            : colors.BUTTON_BG)}
           style:color={colors.BUTTON_TEXT}
+          style:border-color={$currentTheme === opt.name && isIronclad ? "#e09240" : undefined}
           onclick={() => currentTheme.set(opt.name)}
         >
           {opt.label}

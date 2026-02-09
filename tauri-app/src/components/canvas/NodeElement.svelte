@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { NetworkNode } from "../../lib/types/network";
+  import { currentTheme } from "../../lib/stores/uiStore";
 
   let {
     node,
@@ -20,6 +21,8 @@
     fontSize: number;
     onMouseDown: (e: MouseEvent) => void;
   } = $props();
+
+  let isIronclad = $derived($currentTheme === "ironclad");
 
   // Approximate text width for sizing the rectangle
   let textEl: SVGTextElement;
@@ -74,7 +77,7 @@
     text-anchor="middle"
     dominant-baseline="central"
     fill={textColor}
-    font-family="Helvetica, Arial, sans-serif"
+    font-family={isIronclad ? "DM Sans, Helvetica, Arial, sans-serif" : "Helvetica, Arial, sans-serif"}
     font-size={fontSize}
     pointer-events="none"
   >

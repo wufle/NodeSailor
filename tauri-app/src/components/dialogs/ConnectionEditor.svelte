@@ -9,6 +9,7 @@
   import { getThemeColors } from "../../lib/theme/colors";
 
   let colors = $derived(getThemeColors($currentTheme));
+  let isIronclad = $derived($currentTheme === "ironclad");
 
   let editIndex: number | null =
     (window as any).__editConnectionIndex ?? null;
@@ -90,8 +91,8 @@
     </div>
 
     <button
-      class="w-full py-2 text-sm rounded"
-      style:background-color={colors.BUTTON_BG}
+      class="w-full py-2 text-sm rounded {isIronclad ? 'ironclad-btn' : ''}"
+      style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
       style:color={colors.BUTTON_TEXT}
       onclick={save}
     >

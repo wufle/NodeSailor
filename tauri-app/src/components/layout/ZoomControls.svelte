@@ -21,10 +21,10 @@
 </script>
 
 <div
-  class="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded shadow"
-  style:background-color={colors.FRAME_BG}
+  class="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded {isIronclad ? 'ironclad-zoom' : 'shadow'}"
+  style:background-color={isIronclad ? undefined : colors.FRAME_BG}
   style:color={colors.BUTTON_TEXT}
-  style:border="1px solid {colors.BORDER_COLOR}"
+  style:border={isIronclad ? undefined : `1px solid ${colors.BORDER_COLOR}`}
 >
   <button
     class="px-2 py-0.5 text-sm cursor-pointer hover:opacity-70 {isIronclad ? 'ironclad-btn rounded' : ''}"

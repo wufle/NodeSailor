@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import { currentTheme } from "../../lib/stores/uiStore";
 
   let {
     text,
@@ -9,6 +10,7 @@
     children: Snippet;
   } = $props();
 
+  let isIronclad = $derived($currentTheme === "ironclad");
   let show = $state(false);
   let x = $state(0);
   let y = $state(0);
@@ -34,7 +36,7 @@
 
 {#if show}
   <div
-    class="fixed z-50 px-2 py-1 text-xs rounded shadow bg-gray-800 text-white pointer-events-none"
+    class="fixed z-50 px-2 py-1 text-xs rounded pointer-events-none {isIronclad ? 'ironclad-tooltip' : 'shadow bg-gray-800 text-white'}"
     style:left="{x}px"
     style:top="{y}px"
   >

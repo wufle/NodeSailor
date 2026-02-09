@@ -9,6 +9,7 @@
   import type { CustomCommand } from "../../lib/types/network";
 
   let colors = $derived(getThemeColors($currentTheme));
+  let isIronclad = $derived($currentTheme === "ironclad");
 
   let selectedCommand = $state<string | null>(null);
   let editName = $state("");
@@ -99,19 +100,20 @@
     <div class="w-1/3 space-y-1">
       {#each Object.keys($customCommands) as name}
         <button
-          class="w-full text-left px-2 py-1 text-xs rounded"
-          style:background-color={selectedCommand === name
+          class="w-full text-left px-2 py-1 text-xs rounded {isIronclad ? 'ironclad-btn' : ''}"
+          style:background-color={isIronclad ? undefined : (selectedCommand === name
             ? colors.BUTTON_ACTIVE_BG
-            : colors.BUTTON_BG}
+            : colors.BUTTON_BG)}
           style:color={colors.BUTTON_TEXT}
+          style:border-color={selectedCommand === name && isIronclad ? "#e09240" : undefined}
           onclick={() => selectCommand(name)}
         >
           {name}
         </button>
       {/each}
       <button
-        class="w-full text-left px-2 py-1 text-xs rounded mt-2"
-        style:background-color={colors.BUTTON_BG}
+        class="w-full text-left px-2 py-1 text-xs rounded mt-2 {isIronclad ? 'ironclad-btn' : ''}"
+        style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
         style:color={colors.BUTTON_TEXT}
         onclick={addCommand}
       >
@@ -195,16 +197,16 @@
 
           <div class="flex gap-2">
             <button
-              class="px-3 py-1.5 text-xs rounded"
-              style:background-color={colors.BUTTON_BG}
+              class="px-3 py-1.5 text-xs rounded {isIronclad ? 'ironclad-btn' : ''}"
+              style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
               style:color={colors.BUTTON_TEXT}
               onclick={saveCommand}
             >
               Save
             </button>
             <button
-              class="px-3 py-1.5 text-xs rounded text-red-500"
-              style:background-color={colors.BUTTON_BG}
+              class="px-3 py-1.5 text-xs rounded text-red-500 {isIronclad ? 'ironclad-btn' : ''}"
+              style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
               onclick={deleteCommand}
             >
               Delete

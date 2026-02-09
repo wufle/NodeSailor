@@ -5,6 +5,7 @@
   import { getThemeColors } from "../../lib/theme/colors";
 
   let colors = $derived(getThemeColors($currentTheme));
+  let isIronclad = $derived($currentTheme === "ironclad");
   let text = $state("");
 
   let position: { x: number; y: number } =
@@ -41,16 +42,16 @@
     />
     <div class="flex gap-2 justify-center">
       <button
-        class="px-4 py-1.5 text-sm rounded"
-        style:background-color={colors.BUTTON_BG}
+        class="px-4 py-1.5 text-sm rounded {isIronclad ? 'ironclad-btn' : ''}"
+        style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
         style:color={colors.BUTTON_TEXT}
         onclick={save}
       >
         OK
       </button>
       <button
-        class="px-4 py-1.5 text-sm rounded"
-        style:background-color={colors.BUTTON_BG}
+        class="px-4 py-1.5 text-sm rounded {isIronclad ? 'ironclad-btn' : ''}"
+        style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
         style:color={colors.BUTTON_TEXT}
         onclick={close}
       >

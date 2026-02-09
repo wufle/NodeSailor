@@ -22,6 +22,7 @@
   import type { CustomCommand } from "../../lib/types/network";
 
   let colors = $derived(getThemeColors($currentTheme));
+  let isIronclad = $derived($currentTheme === "ironclad");
 
   function close() {
     contextMenu.set({
@@ -83,11 +84,11 @@
 {#if $contextMenu.visible}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed z-50 shadow-lg rounded overflow-hidden"
+    class="fixed z-50 rounded overflow-hidden {isIronclad ? 'ironclad-context-menu' : 'shadow-lg'}"
     style:left="{$contextMenu.x}px"
     style:top="{$contextMenu.y}px"
-    style:background-color={colors.BUTTON_BG}
-    style:border="1px solid {colors.BORDER_COLOR}"
+    style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
+    style:border={isIronclad ? undefined : `1px solid ${colors.BORDER_COLOR}`}
     onclick={(e) => e.stopPropagation()}
   >
     {#if $contextMenu.nodeIndex !== null}
