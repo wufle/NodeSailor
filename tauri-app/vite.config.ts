@@ -7,6 +7,9 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig({
   plugins: [tailwindcss(), svelte()],
   clearScreen: false,
+  resolve: {
+    extensions: [".ts", ".js", ".svelte"],
+  },
   server: {
     port: 1420,
     strictPort: true,
