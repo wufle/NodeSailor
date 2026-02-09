@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     selectedNodeIndex,
+    hoveredNodeIndex,
     isDark,
     currentTheme,
   } from "../../lib/stores/uiStore";
@@ -16,8 +17,13 @@
   let colors = $derived(getThemeColors($currentTheme));
   let isIronclad = $derived($currentTheme === "ironclad");
 
+  // Show hovered node if hovering, otherwise show selected node
+  let displayNodeIndex = $derived(
+    $hoveredNodeIndex !== null ? $hoveredNodeIndex : $selectedNodeIndex
+  );
+
   let selectedNode = $derived(
-    $selectedNodeIndex !== null ? $nodes[$selectedNodeIndex] : null
+    displayNodeIndex !== null ? $nodes[displayNodeIndex] : null
   );
 
   let vlans = $derived(
@@ -27,8 +33,8 @@
   );
 
   let nodeResults = $derived(
-    $selectedNodeIndex !== null
-      ? $pingResults[$selectedNodeIndex]
+    displayNodeIndex !== null
+      ? $pingResults[displayNodeIndex]
       : undefined
   );
 

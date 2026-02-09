@@ -71,6 +71,9 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <g data-type="connection" data-index={index}>
+  {#if connection.connectioninfo}
+    <title>{connection.connectioninfo}</title>
+  {/if}
   {#if showLine}
     <!-- Hit area (wider invisible line for easier clicking) -->
     <polyline

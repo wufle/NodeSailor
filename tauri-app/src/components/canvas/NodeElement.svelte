@@ -12,6 +12,8 @@
     textColor,
     fontSize,
     onMouseDown,
+    onMouseEnter,
+    onMouseLeave,
   }: {
     node: NetworkNode;
     index: number;
@@ -21,6 +23,8 @@
     textColor: string;
     fontSize: number;
     onMouseDown: (e: MouseEvent) => void;
+    onMouseEnter?: () => void;
+    onMouseLeave?: () => void;
   } = $props();
 
   let isIronclad = $derived($currentTheme === "ironclad");
@@ -60,6 +64,8 @@
   data-index={index}
   style:cursor="pointer"
   onmousedown={onMouseDown}
+  onmouseenter={onMouseEnter}
+  onmouseleave={onMouseLeave}
 >
   {#if isIronclad}
     <defs>

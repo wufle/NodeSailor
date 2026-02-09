@@ -8,6 +8,7 @@
     isDark,
     currentTheme,
     selectedNodeIndex,
+    hoveredNodeIndex,
     previousSelectedNodeIndex,
     groupsModeActive,
     connectionStartNodeIndex,
@@ -249,6 +250,14 @@
   }
 
   // Node event handlers (called from NodeElement)
+  function handleNodeMouseEnter(index: number) {
+    hoveredNodeIndex.set(index);
+  }
+
+  function handleNodeMouseLeave() {
+    hoveredNodeIndex.set(null);
+  }
+
   function handleNodeMouseDown(e: MouseEvent, index: number) {
     if (e.button === 0) {
       // Left click: select + start drag in config mode
@@ -512,6 +521,8 @@
           textColor={colors.BUTTON_TEXT}
           fontSize={$displayOptions.node_size ?? 14}
           onMouseDown={(e) => handleNodeMouseDown(e, i)}
+          onMouseEnter={() => handleNodeMouseEnter(i)}
+          onMouseLeave={handleNodeMouseLeave}
         />
       {/each}
     </g>
