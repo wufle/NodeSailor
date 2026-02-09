@@ -73,7 +73,9 @@ export async function loadFile(filePath?: string): Promise<void> {
   }
 
   const content: string = await invoke("load_file", { path });
-  const data = JSON.parse(content);
+  // Replace NaN values with null to handle legacy/malformed JSON files
+  const sanitizedContent = content.replace(/:\s*NaN\b/g, ': null');
+  const data = JSON.parse(sanitizedContent);
 
   nodes.set(parseNodes(data.nodes ?? []));
   connections.set(data.connections ?? []);

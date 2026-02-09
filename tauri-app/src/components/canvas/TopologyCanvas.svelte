@@ -457,7 +457,7 @@
       {/if}
     </g>
 
-    <!-- Connections layer -->
+    <!-- Connections layer (lines only) -->
     <g id="connections-layer">
       {#if $displayOptions.show_connections !== false}
         {#each $connections as conn, i}
@@ -470,7 +470,7 @@
               lineColor={colors.Connections}
               textColor={colors.INFO_TEXT}
               labelBgColor={colors.INFO_NOTE_BG}
-              showLabels={$displayOptions.show_connection_labels !== false}
+              showLabels={false}
               showHandles={$mode === "Configuration"}
               onMiddleClick={(e) =>
                 handleConnectionMiddleClick(e, i)}
@@ -513,6 +513,31 @@
           onMouseDown={(e) => handleNodeMouseDown(e, i)}
         />
       {/each}
+    </g>
+
+    <!-- Connection labels layer (on top of nodes) -->
+    <g id="connection-labels-layer">
+      {#if $displayOptions.show_connections !== false && $displayOptions.show_connection_labels !== false}
+        {#each $connections as conn, i}
+          {#if $nodes[conn.from] && $nodes[conn.to]}
+            <ConnectionLine
+              connection={conn}
+              index={i}
+              fromNode={$nodes[conn.from]}
+              toNode={$nodes[conn.to]}
+              lineColor="transparent"
+              textColor={colors.INFO_TEXT}
+              labelBgColor={colors.INFO_NOTE_BG}
+              showLabels={true}
+              showHandles={false}
+              onMiddleClick={(e) =>
+                handleConnectionMiddleClick(e, i)}
+              onRightClick={(e) =>
+                handleConnectionRightClick(e, i)}
+            />
+          {/if}
+        {/each}
+      {/if}
     </g>
 
     <!-- Handles layer -->
