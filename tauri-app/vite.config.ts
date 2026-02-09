@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [tailwindcss(), svelte()],
   clearScreen: false,
   resolve: {
-    extensions: [".ts", ".js", ".svelte"],
+    extensions: [".mjs", ".js", ".mts", ".ts", ".jsx", ".tsx", ".json", ".svelte"],
   },
   server: {
     port: 1420,

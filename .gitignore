@@ -1,6 +1,6 @@
-Include/
-Lib/
-Scripts/
+/Include/
+/Lib/
+/Scripts/
 pyenv.cfg
 run.cmd
 last_file_path.ini
