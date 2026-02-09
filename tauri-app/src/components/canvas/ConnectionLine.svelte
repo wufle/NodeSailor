@@ -99,8 +99,8 @@
   {#if showLabels && connection.label && connection.label.trim()}
     <!-- Label background -->
     <rect
-      x={labelXY[0] - labelWidth / 2 - 2}
-      y={labelXY[1] - labelHeight / 2 - 2}
+      x={labelXY.x - labelWidth / 2 - 2}
+      y={labelXY.y - labelHeight / 2 - 2}
       width={labelWidth + 4}
       height={labelHeight + 4}
       fill={labelBgColor}
@@ -109,8 +109,8 @@
     />
     <text
       bind:this={labelTextEl}
-      x={labelXY[0]}
-      y={labelXY[1]}
+      x={labelXY.x}
+      y={labelXY.y}
       text-anchor="middle"
       dominant-baseline="central"
       fill={textColor}
