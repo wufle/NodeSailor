@@ -46,30 +46,34 @@
 }
 
 .theme-ironclad {
-  --color-node-default: #1a3d62;
-  --color-frame-bg: #1a1c20;
-  --color-info-bg: #1e2024;
-  --color-info-text: #bcc2ca;
-  --color-button-bg: #2e3138;
-  --color-button-text: #dce0e5;
-  --color-border: #555a62;
-  --color-connections: #68717a;
-  --color-node-outline: #586068;
-  --color-node-highlight: #e09240;
-  --color-node-host: #3d8a56;
-  --color-ping-success: #2a9050;
-  --color-ping-partial: #e09240;
-  --color-ping-failure: #a83232;
-  --color-config-mode: #e09240;
-  --color-group-default-bg: #162232;
-  --color-group-outline: #3a6a94;
-  --color-group-selected: #e09240;
-  --color-group-text: #8fb4d8;
-  --color-copper: #e09240;
-  --color-copper-glow: rgba(224, 146, 64, 0.3);
-  --color-copper-dim: #a06828;
-  --color-plate-highlight: rgba(255, 255, 255, 0.06);
-  --color-plate-shadow: rgba(0, 0, 0, 0.4);
+  --color-node-default: #14466e;
+  --color-frame-bg: #111316;
+  --color-info-bg: #161920;
+  --color-info-text: #c8cdd4;
+  --color-button-bg: #282c34;
+  --color-button-text: #e4e8ec;
+  --color-border: #5c6370;
+  --color-connections: #7a838e;
+  --color-node-outline: #6a7280;
+  --color-node-highlight: #f0a030;
+  --color-node-host: #28a050;
+  --color-ping-success: #20b858;
+  --color-ping-partial: #f0a030;
+  --color-ping-failure: #cc3333;
+  --color-config-mode: #f0a030;
+  --color-group-default-bg: #0e1e30;
+  --color-group-outline: #3080b8;
+  --color-group-selected: #f0a030;
+  --color-group-text: #80c0f0;
+  --color-copper: #f0a030;
+  --color-copper-bright: #ffb840;
+  --color-copper-glow: rgba(240, 160, 48, 0.4);
+  --color-copper-glow-strong: rgba(240, 160, 48, 0.6);
+  --color-copper-dim: #b07020;
+  --color-plate-light: #363a44;
+  --color-plate-dark: #1a1e24;
+  --color-plate-highlight: rgba(255, 255, 255, 0.08);
+  --color-plate-shadow: rgba(0, 0, 0, 0.6);
 }
 
 html, body, #app {
@@ -88,20 +92,27 @@ html, body, #app {
 .theme-ironclad body,
 .theme-ironclad #app {
   font-family: 'DM Sans', 'Helvetica', 'Arial', sans-serif;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
 }
 
-/* Ironclad scrollbar */
+/* Ironclad scrollbar - industrial */
+.theme-ironclad ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
 .theme-ironclad ::-webkit-scrollbar-track {
-  background: #141618;
+  background: #0a0c0e;
+  border-left: 1px solid #333840;
 }
 .theme-ironclad ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #3a3d44 0%, #2a2d32 100%);
-  border: 1px solid #444850;
+  background: linear-gradient(180deg, #484c56 0%, #2a2e34 100%);
+  border: 1px solid #5c6370;
+  border-radius: 2px;
 }
 .theme-ironclad ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #484c54 0%, #353840 100%);
-  border-color: var(--color-copper-dim);
+  background: linear-gradient(180deg, #585e68 0%, #3a3e46 100%);
+  border-color: var(--color-copper, #f0a030);
+  box-shadow: 0 0 6px var(--color-copper-glow);
 }
 
 /* Custom scrollbar */
@@ -123,77 +134,78 @@ html, body, #app {
   background: var(--color-border);
 }
 
-/* === Ironclad Decorative Styles === */
+/* === IRONCLAD INDUSTRIAL THEME === */
 
-/* Bolt corner decorations - larger, copper-tinted rivets */
+/* Riveted panel - heavy plate with corner bolts */
 .ironclad-panel {
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.04),
-    inset 0 -1px 0 rgba(0,0,0,0.3),
-    0 2px 8px rgba(0,0,0,0.4);
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    inset 0 -1px 0 rgba(0,0,0,0.5),
+    0 4px 16px rgba(0,0,0,0.7);
+  border: 2px solid #5c6370 !important;
 }
 .ironclad-panel::before,
 .ironclad-panel::after {
   content: '';
   position: absolute;
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #78808a, #4a5058);
+  background: radial-gradient(circle at 30% 30%, #8a9098, #50585e);
   box-shadow:
-    0 0 0 1.5px #3a3e44,
-    0 1px 2px rgba(0,0,0,0.5),
-    inset 0 1px 1px rgba(255,255,255,0.15);
+    0 0 0 2px #3a3e44,
+    0 2px 3px rgba(0,0,0,0.7),
+    inset 0 1px 2px rgba(255,255,255,0.25);
   pointer-events: none;
   z-index: 10;
 }
 .ironclad-panel::before {
-  top: 5px;
-  left: 5px;
+  top: 6px;
+  left: 6px;
   box-shadow:
-    0 0 0 1.5px #3a3e44,
-    0 1px 2px rgba(0,0,0,0.5),
-    inset 0 1px 1px rgba(255,255,255,0.15),
-    calc(100% - 18px) 0 0 0 #68707a,
-    calc(100% - 18px) 0 0 1.5px #3a3e44;
+    0 0 0 2px #3a3e44, 0 2px 3px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.25),
+    calc(100% - 22px) 0 0 0 #78808a,
+    calc(100% - 22px) 0 0 2px #3a3e44;
 }
 .ironclad-panel::after {
-  bottom: 5px;
-  left: 5px;
+  bottom: 6px;
+  left: 6px;
   box-shadow:
-    0 0 0 1.5px #3a3e44,
-    0 1px 2px rgba(0,0,0,0.5),
-    inset 0 1px 1px rgba(255,255,255,0.15),
-    calc(100% - 18px) 0 0 0 #68707a,
-    calc(100% - 18px) 0 0 1.5px #3a3e44;
+    0 0 0 2px #3a3e44, 0 2px 3px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.25),
+    calc(100% - 22px) 0 0 0 #78808a,
+    calc(100% - 22px) 0 0 2px #3a3e44;
 }
 
-/* Metal plate buttons - pronounced metallic gradient */
+/* HEAVY METAL BUTTONS */
 .ironclad-btn {
-  background: linear-gradient(180deg, #42464e 0%, #2e3138 50%, #282b30 100%) !important;
-  border: 1px solid #555a62 !important;
+  background: linear-gradient(180deg, #4a505a 0%, #363a42 30%, #282c34 70%, #1e2228 100%) !important;
+  border: 2px solid #5c6370 !important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.08),
-    inset 0 -1px 0 rgba(0,0,0,0.2),
-    0 1px 3px rgba(0,0,0,0.3);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-  transition: all 0.15s ease;
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    inset 0 -1px 0 rgba(0,0,0,0.4),
+    0 2px 4px rgba(0,0,0,0.5);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  transition: all 0.12s ease;
+  font-weight: 500;
 }
 .ironclad-btn:hover {
-  background: linear-gradient(180deg, #505560 0%, #383c44 50%, #303338 100%) !important;
-  border-color: var(--color-copper-dim, #a06828) !important;
+  background: linear-gradient(180deg, #5a616c 0%, #444a54 30%, #363a42 70%, #282c34 100%) !important;
+  border-color: var(--color-copper, #f0a030) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.1),
-    inset 0 -1px 0 rgba(0,0,0,0.2),
-    0 0 8px var(--color-copper-glow, rgba(224, 146, 64, 0.3)),
-    0 2px 4px rgba(0,0,0,0.3);
+    inset 0 1px 0 rgba(255,255,255,0.15),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 0 12px var(--color-copper-glow, rgba(240, 160, 48, 0.4)),
+    0 0 24px rgba(240, 160, 48, 0.15),
+    0 2px 6px rgba(0,0,0,0.4);
+  color: var(--color-copper-bright, #ffb840) !important;
 }
 .ironclad-btn:active {
-  background: linear-gradient(180deg, #222528 0%, #1a1c20 100%) !important;
+  background: linear-gradient(180deg, #1a1e24 0%, #111316 100%) !important;
+  border-color: var(--color-copper-dim, #b07020) !important;
   box-shadow:
-    inset 0 2px 6px rgba(0,0,0,0.5),
-    0 0 4px var(--color-copper-glow, rgba(224, 146, 64, 0.2));
-  border-color: #444 !important;
+    inset 0 3px 8px rgba(0,0,0,0.7),
+    0 0 8px var(--color-copper-glow, rgba(240, 160, 48, 0.3));
+  transform: translateY(1px);
 }
 
 /* Valve-turn toggle animation */
@@ -205,191 +217,214 @@ html, body, #app {
   animation: valve-turn 0.3s ease-in-out;
 }
 
-/* Copper pulse for active states */
+/* Copper pulse for active/live states */
 @keyframes copper-pulse {
-  0%, 100% { box-shadow: 0 0 4px var(--color-copper-glow, rgba(224, 146, 64, 0.2)); }
-  50% { box-shadow: 0 0 12px var(--color-copper-glow, rgba(224, 146, 64, 0.4)); }
+  0%, 100% { box-shadow: 0 0 6px rgba(240, 160, 48, 0.3); }
+  50% { box-shadow: 0 0 18px rgba(240, 160, 48, 0.6); }
 }
 
-/* Pressure-gauge tooltip - bolder, with copper accents */
+/* Tooltip - industrial gauge readout */
 .ironclad-tooltip {
-  background: linear-gradient(180deg, #252830 0%, #1e2024 100%);
-  border: 2px solid #555a62;
-  border-left: 3px solid var(--color-copper, #e09240);
-  border-radius: 4px;
+  background: linear-gradient(180deg, #22262e 0%, #161920 100%);
+  border: 2px solid #5c6370;
+  border-left: 4px solid var(--color-copper, #f0a030);
+  border-radius: 2px;
   padding: 8px 14px;
-  position: relative;
-  color: #bcc2ca;
+  color: #e4e8ec;
+  font-weight: 500;
   box-shadow:
-    0 4px 12px rgba(0,0,0,0.5),
-    inset 0 1px 0 rgba(255,255,255,0.04);
+    0 6px 20px rgba(0,0,0,0.7),
+    inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
-/* Ironclad metallic title bar - dramatic forged gradient with copper accent */
+/* Title bar - forged steel plate with hot copper stripe */
 .ironclad-titlebar {
-  background: linear-gradient(180deg, #3a3e46 0%, #2a2d34 60%, #222528 100%);
-  border-bottom: 2px solid var(--color-copper, #e09240) !important;
+  background: linear-gradient(180deg, #3e4450 0%, #2a2e36 40%, #1e2228 100%) !important;
+  border-bottom: 3px solid var(--color-copper, #f0a030) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.06),
-    0 2px 4px rgba(0,0,0,0.3);
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 4px 8px rgba(0,0,0,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
 }
 
-/* Ironclad context menu */
+/* Context menu - industrial dropdown */
 .ironclad-context-menu {
-  background: linear-gradient(180deg, #2a2d34 0%, #1e2024 100%);
-  border: 1px solid #555a62;
-  border-top: 2px solid var(--color-copper-dim, #a06828);
+  background: linear-gradient(180deg, #282c34 0%, #1a1e24 100%);
+  border: 2px solid #5c6370;
+  border-top: 3px solid var(--color-copper, #f0a030);
   box-shadow:
-    0 4px 16px rgba(0,0,0,0.5),
-    inset 0 1px 0 rgba(255,255,255,0.04);
+    0 8px 24px rgba(0,0,0,0.7),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.ironclad-context-menu button {
+  border-bottom: 1px solid rgba(92, 99, 112, 0.3);
+  transition: all 0.1s ease;
 }
 .ironclad-context-menu button:hover {
-  background: linear-gradient(90deg, rgba(224, 146, 64, 0.12) 0%, transparent 100%) !important;
+  background: linear-gradient(90deg, rgba(240, 160, 48, 0.2) 0%, rgba(240, 160, 48, 0.05) 100%) !important;
+  padding-left: 20px !important;
+  color: var(--color-copper-bright, #ffb840) !important;
 }
 
-/* Ironclad divider - copper accent line */
-.ironclad-divider {
-  border-color: #444850;
-  position: relative;
-}
-.ironclad-divider::after {
-  content: '';
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  top: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-copper-dim, #a06828), transparent);
-}
-
-/* Ironclad info panel with stamped plate effect */
+/* Info panel - stamped steel readout plate */
 .ironclad-info-panel {
-  position: relative;
-  border-left: 3px solid var(--color-copper, #e09240) !important;
+  border: 2px solid #5c6370 !important;
+  border-left: 4px solid var(--color-copper, #f0a030) !important;
+  background: linear-gradient(135deg, #1a1e24 0%, #161920 100%) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.04),
-    inset 0 -1px 0 rgba(0,0,0,0.3),
-    0 2px 12px rgba(0,0,0,0.5);
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 -1px 0 rgba(0,0,0,0.5),
+    0 4px 16px rgba(0,0,0,0.7);
 }
 
-/* Ironclad banner */
+/* Mode banner - warning stripe */
 .ironclad-banner {
-  background: linear-gradient(180deg, #252830 0%, #1a1c20 100%);
-  border-bottom: 2px solid var(--color-copper, #e09240);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  background: repeating-linear-gradient(
+    -45deg,
+    #1a1e24,
+    #1a1e24 10px,
+    #1e2228 10px,
+    #1e2228 20px
+  );
+  border-bottom: 3px solid var(--color-copper, #f0a030);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
 }
 
-/* Ironclad start menu / logo area */
+/* Start menu - heavy control panel */
 .ironclad-start-menu {
-  background: linear-gradient(180deg, #252830 0%, #1a1c20 100%);
-  border: 2px solid #555a62;
+  background: linear-gradient(180deg, #22262e 0%, #161920 50%, #111316 100%);
+  border: 3px solid #5c6370;
+  border-top: 4px solid var(--color-copper, #f0a030);
   box-shadow:
-    0 8px 32px rgba(0,0,0,0.6),
-    inset 0 1px 0 rgba(255,255,255,0.04);
+    0 12px 48px rgba(0,0,0,0.8),
+    0 0 30px rgba(240, 160, 48, 0.1),
+    inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .ironclad-start-menu .ironclad-logo {
-  background: linear-gradient(135deg, #2a3040 0%, #1a2030 100%);
-  border: 2px solid var(--color-copper, #e09240);
+  background: linear-gradient(135deg, #1e2838 0%, #0e1620 100%);
+  border: 3px solid var(--color-copper, #f0a030);
   box-shadow:
-    0 0 16px var(--color-copper-glow, rgba(224, 146, 64, 0.3)),
-    inset 0 1px 0 rgba(255,255,255,0.05);
+    0 0 24px rgba(240, 160, 48, 0.4),
+    0 0 48px rgba(240, 160, 48, 0.15),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+  font-weight: 700;
+  letter-spacing: 0.1em;
 }
 
-/* Ironclad zoom controls */
+/* Zoom controls - gauge cluster */
 .ironclad-zoom {
-  background: linear-gradient(180deg, #252830 0%, #1e2024 100%);
-  border: 1px solid #555a62;
-  border-top: 2px solid var(--color-copper-dim, #a06828);
+  background: linear-gradient(180deg, #282c34 0%, #1a1e24 100%);
+  border: 2px solid #5c6370;
+  border-top: 3px solid var(--color-copper, #f0a030);
   box-shadow:
-    0 2px 8px rgba(0,0,0,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.04);
+    0 4px 12px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
-/* Ironclad input fields */
+/* Input fields - recessed gauge wells */
 .theme-ironclad input[type="text"],
 .theme-ironclad input[type="number"],
 .theme-ironclad textarea,
 .theme-ironclad select {
-  background: #141618 !important;
-  border: 1px solid #555a62 !important;
-  color: #dce0e5 !important;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  background: #0a0c0e !important;
+  border: 2px solid #4a505a !important;
+  color: #e4e8ec !important;
+  border-radius: 3px;
+  box-shadow:
+    inset 0 3px 6px rgba(0,0,0,0.5),
+    inset 0 0 0 1px rgba(0,0,0,0.2);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .theme-ironclad input[type="text"]:focus,
 .theme-ironclad input[type="number"]:focus,
 .theme-ironclad textarea:focus,
 .theme-ironclad select:focus {
-  border-color: var(--color-copper, #e09240) !important;
+  border-color: var(--color-copper, #f0a030) !important;
   box-shadow:
-    inset 0 2px 4px rgba(0,0,0,0.3),
-    0 0 6px var(--color-copper-glow, rgba(224, 146, 64, 0.25));
+    inset 0 3px 6px rgba(0,0,0,0.5),
+    0 0 10px var(--color-copper-glow, rgba(240, 160, 48, 0.4)),
+    0 0 20px rgba(240, 160, 48, 0.1);
   outline: none;
 }
 
-/* Ironclad checkboxes */
+/* Checkboxes - industrial toggle switches */
 .theme-ironclad input[type="checkbox"] {
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  min-height: 16px;
-  background: #141618 !important;
-  border: 1.5px solid #555a62 !important;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  background: #0a0c0e !important;
+  border: 2px solid #5c6370 !important;
   border-radius: 3px;
   cursor: pointer;
   position: relative;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
-  transition: all 0.15s ease;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  transition: all 0.12s ease;
   display: inline-block;
   vertical-align: middle;
   flex-shrink: 0;
 }
 .theme-ironclad input[type="checkbox"]:checked {
-  background: linear-gradient(180deg, #e09240 0%, #b87430 100%) !important;
-  border-color: #c07830 !important;
+  background: linear-gradient(180deg, #ffb840 0%, #f0a030 50%, #d08820 100%) !important;
+  border-color: #e09030 !important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.2),
-    0 0 6px var(--color-copper-glow, rgba(224, 146, 64, 0.3));
+    inset 0 1px 0 rgba(255,255,255,0.3),
+    0 0 10px rgba(240, 160, 48, 0.5),
+    0 0 20px rgba(240, 160, 48, 0.2);
 }
 .theme-ironclad input[type="checkbox"]:checked::after {
   content: '';
   position: absolute;
-  left: 4px;
+  left: 5px;
   top: 1px;
   width: 5px;
-  height: 9px;
-  border: solid #1a1c20;
-  border-width: 0 2px 2px 0;
+  height: 10px;
+  border: solid #111316;
+  border-width: 0 2.5px 2.5px 0;
   transform: rotate(45deg);
 }
 
-/* Ironclad range slider */
+/* Range slider - industrial gauge */
 .theme-ironclad input[type="range"] {
+  -webkit-appearance: none;
   appearance: none;
-  height: 6px;
-  background: linear-gradient(180deg, #1a1c20 0%, #252830 100%);
-  border: 1px solid #444850;
-  border-radius: 3px;
+  height: 8px;
+  background: linear-gradient(180deg, #0a0c0e 0%, #1a1e24 100%);
+  border: 2px solid #4a505a;
+  border-radius: 4px;
   outline: none;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
 }
 .theme-ironclad input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #e09240 0%, #b87430 100%);
-  border: 2px solid #8a5820;
-  box-shadow: 0 0 6px var(--color-copper-glow, rgba(224, 146, 64, 0.3));
+  background: radial-gradient(circle at 35% 35%, #ffcc60, #f0a030 50%, #c08020 100%);
+  border: 2px solid #906010;
+  box-shadow:
+    0 0 10px rgba(240, 160, 48, 0.5),
+    0 0 20px rgba(240, 160, 48, 0.2),
+    inset 0 1px 2px rgba(255,255,255,0.3);
   cursor: pointer;
 }
 
-/* Ironclad toolbar - heavy plate with copper underline */
+/* Toolbar - HEAVY forged plate with hot copper pipe */
 .ironclad-toolbar {
-  background: linear-gradient(180deg, #2a2d34 0%, #1e2024 100%) !important;
-  border-bottom: 2px solid var(--color-copper, #e09240) !important;
+  background: linear-gradient(180deg, #32363e 0%, #22262e 40%, #1a1e24 100%) !important;
+  border-bottom: 3px solid var(--color-copper, #f0a030) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.04),
-    0 3px 8px rgba(0,0,0,0.4);
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 4px 12px rgba(0,0,0,0.6),
+    0 1px 0 rgba(240, 160, 48, 0.1);
 }
