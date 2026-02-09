@@ -43,7 +43,9 @@
   import StickyNoteEl from "./StickyNote.svelte";
   import GroupRect from "./GroupRect.svelte";
   import WaypointHandle from "./WaypointHandle.svelte";
+  import ironGripUrl from "../../assets/textures/iron-grip.png";
 
+  let isIronclad = $derived($currentTheme === "ironclad");
   let svgEl: SVGSVGElement;
 
   // Pan state
@@ -423,6 +425,14 @@
   ondblclick={onDblClick}
   oncontextmenu={onContextMenu}
 >
+  {#if isIronclad}
+    <defs>
+      <pattern id="ironclad-canvas-texture" patternUnits="userSpaceOnUse" width="300" height="301">
+        <image href={ironGripUrl} width="300" height="301" opacity="0.15" />
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#ironclad-canvas-texture)" />
+  {/if}
   <g
     id="world"
     transform="translate({$panX},{$panY}) scale({$zoom})"

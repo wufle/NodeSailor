@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { NetworkNode } from "../../lib/types/network";
   import { currentTheme } from "../../lib/stores/uiStore";
+  import squaredMetalUrl from "../../assets/textures/squared-metal.png";
 
   let {
     node,
@@ -60,6 +61,14 @@
   style:cursor="pointer"
   onmousedown={onMouseDown}
 >
+  {#if isIronclad}
+    <defs>
+      <pattern id="node-texture-{index}" patternUnits="userSpaceOnUse" width="132" height="132">
+        <image href={squaredMetalUrl} width="132" height="132" opacity="0.12" />
+      </pattern>
+    </defs>
+  {/if}
+  <!-- Main node rect -->
   <rect
     x={node.x - halfW}
     y={node.y - halfH}
@@ -67,9 +76,42 @@
     height={halfH * 2}
     fill={fillColor}
     stroke={outlineColor}
-    stroke-width={outlineWidth}
-    rx="2"
+    stroke-width={isIronclad ? Math.max(outlineWidth, 2) : outlineWidth}
+    rx={isIronclad ? 3 : 2}
   />
+  {#if isIronclad}
+    <!-- Texture overlay on node -->
+    <rect
+      x={node.x - halfW}
+      y={node.y - halfH}
+      width={halfW * 2}
+      height={halfH * 2}
+      fill="url(#node-texture-{index})"
+      stroke="none"
+      rx="3"
+      pointer-events="none"
+    />
+    <!-- Top highlight edge -->
+    <line
+      x1={node.x - halfW + 3}
+      y1={node.y - halfH + 1}
+      x2={node.x + halfW - 3}
+      y2={node.y - halfH + 1}
+      stroke="rgba(255,255,255,0.15)"
+      stroke-width="1"
+      pointer-events="none"
+    />
+    <!-- Bottom shadow edge -->
+    <line
+      x1={node.x - halfW + 3}
+      y1={node.y + halfH - 1}
+      x2={node.x + halfW - 3}
+      y2={node.y + halfH - 1}
+      stroke="rgba(0,0,0,0.4)"
+      stroke-width="1"
+      pointer-events="none"
+    />
+  {/if}
   <text
     bind:this={textEl}
     x={node.x}
@@ -79,6 +121,7 @@
     fill={textColor}
     font-family={isIronclad ? "DM Sans, Helvetica, Arial, sans-serif" : "Helvetica, Arial, sans-serif"}
     font-size={fontSize}
+    font-weight={isIronclad ? "500" : "normal"}
     pointer-events="none"
   >
     {node.name}
