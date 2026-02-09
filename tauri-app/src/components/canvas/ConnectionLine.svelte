@@ -14,6 +14,7 @@
     textColor,
     labelBgColor,
     showLabels,
+    showLine = true,
     showHandles,
     onMiddleClick,
     onRightClick,
@@ -26,6 +27,7 @@
     textColor: string;
     labelBgColor: string;
     showLabels: boolean;
+    showLine?: boolean;
     showHandles: boolean;
     onMiddleClick: (e: MouseEvent) => void;
     onRightClick: (e: MouseEvent) => void;
@@ -69,27 +71,29 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <g data-type="connection" data-index={index}>
-  <!-- Hit area (wider invisible line for easier clicking) -->
-  <polyline
-    points={pointsStr}
-    fill="none"
-    stroke="transparent"
-    stroke-width="10"
-    style:cursor="pointer"
-    onmousedown={onMiddleClick}
-    oncontextmenu={(e) => {
-      e.preventDefault();
-      onRightClick(e);
-    }}
-  />
-  <!-- Visible line -->
-  <polyline
-    points={pointsStr}
-    fill="none"
-    stroke={lineColor}
-    stroke-width="2"
-    pointer-events="none"
-  />
+  {#if showLine}
+    <!-- Hit area (wider invisible line for easier clicking) -->
+    <polyline
+      points={pointsStr}
+      fill="none"
+      stroke="transparent"
+      stroke-width="10"
+      style:cursor="pointer"
+      onmousedown={onMiddleClick}
+      oncontextmenu={(e) => {
+        e.preventDefault();
+        onRightClick(e);
+      }}
+    />
+    <!-- Visible line -->
+    <polyline
+      points={pointsStr}
+      fill="none"
+      stroke={lineColor}
+      stroke-width="2"
+      pointer-events="none"
+    />
+  {/if}
 
   <!-- Label -->
   {#if showLabels && connection.label && connection.label.trim()}

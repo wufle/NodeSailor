@@ -471,6 +471,7 @@
               textColor={colors.INFO_TEXT}
               labelBgColor={colors.INFO_NOTE_BG}
               showLabels={false}
+              showLine={true}
               showHandles={$mode === "Configuration"}
               onMiddleClick={(e) =>
                 handleConnectionMiddleClick(e, i)}
@@ -525,10 +526,11 @@
               index={i}
               fromNode={$nodes[conn.from]}
               toNode={$nodes[conn.to]}
-              lineColor="transparent"
+              lineColor={colors.Connections}
               textColor={colors.INFO_TEXT}
               labelBgColor={colors.INFO_NOTE_BG}
               showLabels={true}
+              showLine={false}
               showHandles={false}
               onMiddleClick={(e) =>
                 handleConnectionMiddleClick(e, i)}
