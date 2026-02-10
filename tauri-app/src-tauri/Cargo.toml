@@ -1,6 +1,6 @@
 [package]
 name = "nodesailor"
-version = "1.0.1"
+version = "1.0.2"
 description = "NodeSailor - Network Topology Mapper"
 authors = ["NodeSailor"]
 license = ""
