@@ -92,13 +92,16 @@
   onclick={(e) => e.stopPropagation()}
 >
   <!-- Logo placeholder -->
-  <div class="flex justify-center py-4">
+  <div class="flex flex-col items-center py-4 gap-2">
     <div
       class="w-20 h-20 rounded-lg flex items-center justify-center text-2xl font-bold {isIronclad ? 'ironclad-logo' : ''}"
       style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
       style:color={isIronclad ? "#e09240" : colors.BUTTON_TEXT}
     >
       NS
+    </div>
+    <div class="text-xs opacity-60" style:color={colors.BUTTON_TEXT}>
+      Version 1.0.2
     </div>
   </div>
 

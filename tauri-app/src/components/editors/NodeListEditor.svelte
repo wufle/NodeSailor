@@ -14,6 +14,68 @@
   let colors = $derived(getThemeColors($currentTheme));
   let isIronclad = $derived($currentTheme === "ironclad");
 
+  let sortColumn = $state<string | null>(null);
+  let sortDirection = $state<'asc' | 'desc'>('asc');
+
+  let sortedNodesWithIndex = $derived.by(() => {
+    const nodesWithIndex = $nodes.map((node, index) => ({ node, index }));
+
+    if (!sortColumn) return nodesWithIndex;
+
+    const sorted = [...nodesWithIndex];
+    sorted.sort((a, b) => {
+      const nodeA = a.node;
+      const nodeB = b.node;
+      let aVal: any;
+      let bVal: any;
+
+      if (sortColumn === 'name') {
+        aVal = nodeA.name.toLowerCase();
+        bVal = nodeB.name.toLowerCase();
+      } else if (sortColumn === 'x') {
+        aVal = nodeA.x;
+        bVal = nodeB.x;
+      } else if (sortColumn === 'y') {
+        aVal = nodeA.y;
+        bVal = nodeB.y;
+      } else if (sortColumn.startsWith('VLAN_')) {
+        aVal = (nodeA.vlans[sortColumn] || '').toLowerCase();
+        bVal = (nodeB.vlans[sortColumn] || '').toLowerCase();
+      } else if (sortColumn === 'rdp') {
+        aVal = nodeA.remote_desktop_address.toLowerCase();
+        bVal = nodeB.remote_desktop_address.toLowerCase();
+      } else if (sortColumn === 'file') {
+        aVal = nodeA.file_path.toLowerCase();
+        bVal = nodeB.file_path.toLowerCase();
+      } else if (sortColumn === 'web') {
+        aVal = nodeA.web_config_url.toLowerCase();
+        bVal = nodeB.web_config_url.toLowerCase();
+      } else {
+        return 0;
+      }
+
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  });
+
+  function handleSort(column: string) {
+    if (sortColumn === column) {
+      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortColumn = column;
+      sortDirection = 'asc';
+    }
+  }
+
+  function getSortIndicator(column: string): string {
+    if (sortColumn !== column) return '';
+    return sortDirection === 'asc' ? ' ▲' : ' ▼';
+  }
+
   function close() {
     activeDialog.set(null);
   }
@@ -71,42 +133,49 @@
       <thead>
         <tr>
           <th
-            class="sticky top-0 px-2 py-1 text-left"
+            class="sticky top-0 px-2 py-1 text-left cursor-pointer hover:opacity-80"
             style:background-color={colors.HEADER_BG}
             style:color={colors.HEADER_TEXT}
-          >Name</th>
+            onclick={() => handleSort('name')}
+          >Name{getSortIndicator('name')}</th>
           <th
-            class="sticky top-0 px-2 py-1 text-left"
+            class="sticky top-0 px-2 py-1 text-left cursor-pointer hover:opacity-80"
             style:background-color={colors.HEADER_BG}
             style:color={colors.HEADER_TEXT}
-          >X</th>
+            onclick={() => handleSort('x')}
+          >X{getSortIndicator('x')}</th>
           <th
-            class="sticky top-0 px-2 py-1 text-left"
+            class="sticky top-0 px-2 py-1 text-left cursor-pointer hover:opacity-80"
             style:background-color={colors.HEADER_BG}
             style:color={colors.HEADER_TEXT}
-          >Y</th>
+            onclick={() => handleSort('y')}
+          >Y{getSortIndicator('y')}</th>
           {#each $vlanLabelOrder as vk}
             <th
-              class="sticky top-0 px-2 py-1 text-left"
+              class="sticky top-0 px-2 py-1 text-left cursor-pointer hover:opacity-80"
               style:background-color={colors.HEADER_BG}
               style:color={colors.HEADER_TEXT}
-            >{$vlanLabels[vk] ?? vk}</th>
+              onclick={() => handleSort(vk)}
+            >{$vlanLabels[vk] ?? vk}{getSortIndicator(vk)}</th>
           {/each}
           <th
-            class="sticky top-0 px-2 py-1 text-left"
+            class="sticky top-0 px-2 py-1 text-left cursor-pointer hover:opacity-80"
             style:background-color={colors.HEADER_BG}
             style:color={colors.HEADER_TEXT}
-          >RDP</th>
+            onclick={() => handleSort('rdp')}
+          >RDP{getSortIndicator('rdp')}</th>
           <th
-            class="sticky top-0 px-2 py-1 text-left"
+            class="sticky top-0 px-2 py-1 text-left cursor-pointer hover:opacity-80"
             style:background-color={colors.HEADER_BG}
             style:color={colors.HEADER_TEXT}
-          >File</th>
+            onclick={() => handleSort('file')}
+          >File{getSortIndicator('file')}</th>
           <th
-            class="sticky top-0 px-2 py-1 text-left"
+            class="sticky top-0 px-2 py-1 text-left cursor-pointer hover:opacity-80"
             style:background-color={colors.HEADER_BG}
             style:color={colors.HEADER_TEXT}
-          >Web</th>
+            onclick={() => handleSort('web')}
+          >Web{getSortIndicator('web')}</th>
           <th
             class="sticky top-0 px-2 py-1"
             style:background-color={colors.HEADER_BG}
@@ -115,9 +184,9 @@
         </tr>
       </thead>
       <tbody>
-        {#each $nodes as node, i}
+        {#each sortedNodesWithIndex as { node, index }, displayIndex}
           <tr
-            style:background-color={i % 2 === 0
+            style:background-color={displayIndex % 2 === 0
               ? colors.ROW_BG_EVEN
               : colors.ROW_BG_ODD}
           >
@@ -132,7 +201,7 @@
                 style:color={colors.ENTRY_TEXT}
                 style:border-color={colors.CELL_BORDER}
                 onchange={(e) =>
-                  handleFieldChange(i, "name", (e.target as HTMLInputElement).value)}
+                  handleFieldChange(index, "name", (e.target as HTMLInputElement).value)}
               />
             </td>
             <td class="px-1 py-0.5" style:border="1px solid {colors.CELL_BORDER}">
@@ -144,7 +213,7 @@
                 style:color={colors.ENTRY_TEXT}
                 style:border-color={colors.CELL_BORDER}
                 onchange={(e) =>
-                  handleFieldChange(i, "x", (e.target as HTMLInputElement).value)}
+                  handleFieldChange(index, "x", (e.target as HTMLInputElement).value)}
               />
             </td>
             <td class="px-1 py-0.5" style:border="1px solid {colors.CELL_BORDER}">
@@ -156,7 +225,7 @@
                 style:color={colors.ENTRY_TEXT}
                 style:border-color={colors.CELL_BORDER}
                 onchange={(e) =>
-                  handleFieldChange(i, "y", (e.target as HTMLInputElement).value)}
+                  handleFieldChange(index, "y", (e.target as HTMLInputElement).value)}
               />
             </td>
             {#each $vlanLabelOrder as vk}
@@ -169,7 +238,7 @@
                   style:color={colors.ENTRY_TEXT}
                   style:border-color={colors.CELL_BORDER}
                   onchange={(e) =>
-                    handleFieldChange(i, vk, (e.target as HTMLInputElement).value)}
+                    handleFieldChange(index, vk, (e.target as HTMLInputElement).value)}
                 />
               </td>
             {/each}
@@ -182,7 +251,7 @@
                 style:color={colors.ENTRY_TEXT}
                 style:border-color={colors.CELL_BORDER}
                 onchange={(e) =>
-                  handleFieldChange(i, "rdp", (e.target as HTMLInputElement).value)}
+                  handleFieldChange(index, "rdp", (e.target as HTMLInputElement).value)}
               />
             </td>
             <td class="px-1 py-0.5" style:border="1px solid {colors.CELL_BORDER}">
@@ -194,7 +263,7 @@
                 style:color={colors.ENTRY_TEXT}
                 style:border-color={colors.CELL_BORDER}
                 onchange={(e) =>
-                  handleFieldChange(i, "file", (e.target as HTMLInputElement).value)}
+                  handleFieldChange(index, "file", (e.target as HTMLInputElement).value)}
               />
             </td>
             <td class="px-1 py-0.5" style:border="1px solid {colors.CELL_BORDER}">
@@ -206,13 +275,13 @@
                 style:color={colors.ENTRY_TEXT}
                 style:border-color={colors.CELL_BORDER}
                 onchange={(e) =>
-                  handleFieldChange(i, "web", (e.target as HTMLInputElement).value)}
+                  handleFieldChange(index, "web", (e.target as HTMLInputElement).value)}
               />
             </td>
             <td class="px-1 py-0.5 text-center" style:border="1px solid {colors.CELL_BORDER}">
               <button
                 class="text-red-500 hover:text-red-400 text-xs"
-                onclick={() => handleDelete(i)}
+                onclick={() => handleDelete(index)}
               >
                 Del
               </button>

@@ -1,11 +1,17 @@
 use std::net::UdpSocket;
+use std::time::Duration;
 
 #[tauri::command]
 pub fn get_local_ips() -> Vec<String> {
     let mut ips = Vec::new();
 
     // Get local IP by connecting to an external address (doesn't actually send data)
+    // Use timeout to prevent hanging
     if let Ok(socket) = UdpSocket::bind("0.0.0.0:0") {
+        // Set timeout to prevent blocking
+        let _ = socket.set_read_timeout(Some(Duration::from_millis(500)));
+        let _ = socket.set_write_timeout(Some(Duration::from_millis(500)));
+
         if socket.connect("8.8.8.8:80").is_ok() {
             if let Ok(addr) = socket.local_addr() {
                 ips.push(addr.ip().to_string());

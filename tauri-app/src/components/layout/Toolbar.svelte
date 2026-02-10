@@ -31,10 +31,15 @@
     groupsModeActive.update((g) => !g);
   }
 
+  let searchingForHost = $state(false);
+
   async function highlightMatchingNodes() {
+    searchingForHost = true;
     try {
       const localIps = await getLocalIps();
       const allNodes = $nodes;
+      let found = false;
+
       for (let i = 0; i < allNodes.length; i++) {
         const node = allNodes[i];
         const vlanValues = Object.values(node.vlans);
@@ -44,10 +49,20 @@
             ...pr,
             [i]: [true], // Mark as host
           }));
+          found = true;
         }
       }
-    } catch {
-      // Best-effort
+
+      if (!found) {
+        // No matching node found - clear all highlights briefly to show it ran
+        pingResults.set({});
+      }
+    } catch (error) {
+      console.error("Who am I failed:", error);
+      // Clear highlights on error
+      pingResults.set({});
+    } finally {
+      searchingForHost = false;
     }
   }
 
@@ -136,6 +151,15 @@
     >
       {$groupsModeActive ? "Groups (Active)" : "Groups"}
     </button>
+
+    <button
+      class={buttonClass}
+      style:background-color={colors.BUTTON_BG}
+      style:color={colors.BUTTON_TEXT}
+      onclick={() => activeDialog.set("groupEditor")}
+    >
+      Edit Groups
+    </button>
   {/if}
 
   <!-- Always visible buttons -->
@@ -143,9 +167,11 @@
     class={buttonClass}
     style:background-color={colors.BUTTON_BG}
     style:color={colors.BUTTON_TEXT}
+    style:opacity={searchingForHost ? "0.6" : "1"}
+    disabled={searchingForHost}
     onclick={highlightMatchingNodes}
   >
-    Who am I?
+    {searchingForHost ? "Searching..." : "Who am I?"}
   </button>
 
   <button
