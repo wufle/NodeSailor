@@ -13,6 +13,7 @@
     newNetwork,
   } from "../../lib/actions/fileActions";
   import { settings } from "../../lib/stores/settingsStore";
+  import { invoke } from "@tauri-apps/api/core";
 
   let colors = $derived(getThemeColors($currentTheme));
   let isIronclad = $derived($currentTheme === "ironclad");
@@ -54,6 +55,19 @@
   function openHelp() {
     close();
     activeDialog.set("help");
+  }
+
+  function openTutorial() {
+    close();
+    activeDialog.set("tutorial");
+  }
+
+  async function toggleAutoLoad() {
+    const newValue = !$settings.auto_load_last_file;
+    await invoke("save_settings", {
+      settings: { ...$settings, auto_load_last_file: newValue },
+    });
+    settings.update((s) => ({ ...s, auto_load_last_file: newValue }));
   }
 
   let buttonClass = $derived(
@@ -116,6 +130,20 @@
       Load
     </button>
 
+    <!-- Auto-load checkbox -->
+    <label
+      class="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer"
+      style:color={colors.BUTTON_TEXT}
+    >
+      <input
+        type="checkbox"
+        checked={$settings.auto_load_last_file ?? false}
+        onchange={toggleAutoLoad}
+        class="cursor-pointer"
+      />
+      <span>Auto-load last file on startup</span>
+    </label>
+
     <!-- Theme Selector -->
     <div class="flex gap-1">
       {#each themeOptions as opt}
@@ -141,6 +169,15 @@
       onclick={openConfigMenu}
     >
       Configuration Menu
+    </button>
+
+    <button
+      class={buttonClass}
+      style:background-color={colors.BUTTON_BG}
+      style:color={colors.BUTTON_TEXT}
+      onclick={openTutorial}
+    >
+      Tutorial
     </button>
 
     <button

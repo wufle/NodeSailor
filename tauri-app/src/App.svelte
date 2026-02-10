@@ -11,6 +11,7 @@
   import ContextMenu from "./components/canvas/ContextMenu.svelte";
   import StartMenu from "./components/dialogs/StartMenu.svelte";
   import HelpWindow from "./components/dialogs/HelpWindow.svelte";
+  import TutorialWalkthrough from "./components/dialogs/TutorialWalkthrough.svelte";
   import NodeEditor from "./components/dialogs/NodeEditor.svelte";
   import ConnectionEditor from "./components/dialogs/ConnectionEditor.svelte";
   import ConfirmDialog from "./components/dialogs/ConfirmDialog.svelte";
@@ -24,6 +25,8 @@
   import CustomCommandsEditor from "./components/editors/CustomCommandsEditor.svelte";
   import ColorSchemeEditor from "./components/editors/ColorSchemeEditor.svelte";
   import { loadFile, saveFile } from "./lib/actions/fileActions";
+  import { settings } from "./lib/stores/settingsStore";
+  import { invoke } from "@tauri-apps/api/core";
 
   // Reactive theme application
   $effect(() => {
@@ -68,10 +71,24 @@
   }
 
   onMount(async () => {
+    // Load settings first
     try {
-      await loadFile("/Users/mark/Code/3rd-party/NodeSailor-Vibed/NodeSailor/example network.json");
+      const loadedSettings = await invoke("load_settings");
+      settings.set(loadedSettings as any);
     } catch (e) {
-      console.error("Auto-load failed:", e);
+      console.error("Failed to load settings:", e);
+    }
+
+    // Auto-load last file if enabled
+    const currentSettings = $settings;
+    if (currentSettings.auto_load_last_file && currentSettings.last_file_path) {
+      try {
+        await loadFile(currentSettings.last_file_path);
+      } catch (e) {
+        console.error("Auto-load failed:", e);
+        showStartMenu.set(true);
+      }
+    } else {
       showStartMenu.set(true);
     }
   });
@@ -103,6 +120,10 @@
 
 {#if $activeDialog === "help"}
   <HelpWindow />
+{/if}
+
+{#if $activeDialog === "tutorial"}
+  <TutorialWalkthrough />
 {/if}
 
 {#if $activeDialog === "nodeEditor"}

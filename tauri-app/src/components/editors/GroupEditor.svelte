@@ -79,8 +79,7 @@
               style:background-color={$isDark
                 ? preset.dark_bg
                 : preset.light_bg}
-              style:border-color={group.color_preset_id ===
-              preset.id
+              style:border-color={group.color_preset_id === preset.id
                 ? colors.NODE_HIGHLIGHT
                 : $isDark
                   ? preset.dark_border

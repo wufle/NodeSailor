@@ -13,9 +13,14 @@ import {
   displayOptions,
 } from "../stores/networkStore";
 import { unsavedChanges, showStartMenu } from "../stores/uiStore";
+import { settings } from "../stores/settingsStore";
 import type { NetworkNode } from "../types/network";
 
 let currentFilePath: string | null = null;
+
+export function getCurrentFilePath(): string | null {
+  return currentFilePath;
+}
 
 function parseNodes(rawNodes: any[]): NetworkNode[] {
   return rawNodes.map((raw) => {
@@ -94,6 +99,13 @@ export async function loadFile(filePath?: string): Promise<void> {
   currentFilePath = path;
   unsavedChanges.set(false);
   showStartMenu.set(false);
+
+  // Save last file path to settings
+  const currentSettings = get(settings);
+  await invoke("save_settings", {
+    settings: { ...currentSettings, last_file_path: path },
+  });
+  settings.update((s) => ({ ...s, last_file_path: path }));
 }
 
 export async function saveFile(): Promise<void> {
