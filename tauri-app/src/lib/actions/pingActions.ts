@@ -16,9 +16,11 @@ export async function pingNode(nodeIndex: number): Promise<void> {
 
 export async function pingAllNodes(): Promise<void> {
   const allNodes = get(nodes);
+  const pingPromises = [];
   for (let i = 0; i < allNodes.length; i++) {
-    await pingNode(i);
+    pingPromises.push(pingNode(i));
   }
+  await Promise.all(pingPromises);
 }
 
 export function clearPingResults(): void {

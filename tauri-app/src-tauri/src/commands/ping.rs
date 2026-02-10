@@ -4,9 +4,18 @@ use regex::Regex;
 fn ping_single(ip: &str) -> bool {
     let param = if cfg!(target_os = "windows") { "-n" } else { "-c" };
 
-    let output = Command::new("ping")
-        .args([param, "1", ip])
-        .output();
+    let mut cmd = Command::new("ping");
+    cmd.args([param, "1", ip]);
+
+    // Hide the console window on Windows
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    let output = cmd.output();
 
     match output {
         Ok(result) => {
