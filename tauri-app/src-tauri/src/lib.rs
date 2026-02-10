@@ -19,6 +19,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::file_io::load_file,
             commands::file_io::save_file,
+            commands::file_io::show_save_dialog,
             commands::ping::ping_ips,
             commands::system::open_rdp,
             commands::system::open_file_explorer,

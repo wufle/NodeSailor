@@ -44,6 +44,7 @@
   import StickyNoteEl from "./StickyNote.svelte";
   import GroupRect from "./GroupRect.svelte";
   import WaypointHandle from "./WaypointHandle.svelte";
+  import GroupResizeHandle from "./GroupResizeHandle.svelte";
   import ironGripUrl from "../../assets/textures/iron-grip.png";
 
   let isIronclad = $derived($currentTheme === "ironclad");
@@ -330,6 +331,19 @@
     }
   }
 
+  function handleGroupRightClick(e: MouseEvent, index: number) {
+    if ($mode !== "Configuration") return;
+    e.preventDefault();
+    contextMenu.set({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      nodeIndex: null,
+      connectionIndex: null,
+    });
+    (window as any).__contextGroupIndex = index;
+  }
+
   // Middle-click on connection line: add waypoint
   function handleConnectionMiddleClick(
     e: MouseEvent,
@@ -461,6 +475,7 @@
             bgColor={gc.bg}
             borderColor={gc.border}
             textColor={colors.GROUP_TEXT}
+            onRightClick={handleGroupRightClick}
           />
         {/each}
       {/if}
@@ -556,6 +571,7 @@
     <!-- Handles layer -->
     <g id="handles-layer">
       {#if $mode === "Configuration"}
+        <!-- Connection waypoint handles -->
         {#each $connections as conn, ci}
           {#if conn.waypoints}
             {#each conn.waypoints as wp, wi}
@@ -568,6 +584,16 @@
             {/each}
           {/if}
         {/each}
+
+        <!-- Group resize handles -->
+        {#if $displayOptions.show_groups !== false && $groupsModeActive}
+          {#each $groups as group, gi}
+            <GroupResizeHandle {group} groupIndex={gi} corner="tl" />
+            <GroupResizeHandle {group} groupIndex={gi} corner="tr" />
+            <GroupResizeHandle {group} groupIndex={gi} corner="bl" />
+            <GroupResizeHandle {group} groupIndex={gi} corner="br" />
+          {/each}
+        {/if}
       {/if}
     </g>
   </g>

@@ -38,22 +38,35 @@
     try {
       const localIps = await getLocalIps();
       const allNodes = $nodes;
-      let found = false;
+      const matchingIndices: number[] = [];
 
+      // Find all matching nodes
       for (let i = 0; i < allNodes.length; i++) {
         const node = allNodes[i];
         const vlanValues = Object.values(node.vlans);
         if (vlanValues.some((ip) => localIps.includes(ip))) {
-          // Flash the node by toggling ping results
-          pingResults.update((pr) => ({
-            ...pr,
-            [i]: [true], // Mark as host
-          }));
-          found = true;
+          matchingIndices.push(i);
         }
       }
 
-      if (!found) {
+      if (matchingIndices.length > 0) {
+        // Flash matching nodes 5 times
+        for (let flash = 0; flash < 5; flash++) {
+          // Highlight on
+          const highlightState: Record<number, boolean[]> = {};
+          for (const idx of matchingIndices) {
+            highlightState[idx] = [true];
+          }
+          pingResults.set(highlightState);
+
+          await new Promise(resolve => setTimeout(resolve, 300));
+
+          // Highlight off
+          pingResults.set({});
+
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      } else {
         // No matching node found - clear all highlights briefly to show it ran
         pingResults.set({});
       }

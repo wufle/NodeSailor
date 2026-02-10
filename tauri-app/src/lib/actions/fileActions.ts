@@ -110,7 +110,24 @@ export async function loadFile(filePath?: string): Promise<void> {
 
 export async function saveFile(): Promise<void> {
   let path = currentFilePath;
-  if (!path) {
+
+  // If there's an existing file, ask user what they want to do
+  if (path) {
+    const choice = await invoke<string>("show_save_dialog", { currentPath: path });
+
+    if (choice === "cancel") {
+      return;
+    } else if (choice === "new") {
+      // Prompt for new file location
+      const selected = await save({
+        filters: [{ name: "JSON", extensions: ["json"] }],
+      });
+      if (!selected) return;
+      path = selected;
+    }
+    // If "overwrite", keep the current path
+  } else {
+    // No existing file, prompt for new location
     const selected = await save({
       filters: [{ name: "JSON", extensions: ["json"] }],
     });

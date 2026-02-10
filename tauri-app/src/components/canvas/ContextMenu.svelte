@@ -10,6 +10,7 @@
     nodes,
     removeNode,
     removeStickyNote,
+    removeGroup,
     customCommands,
   } from "../../lib/stores/networkStore";
   import { getThemeColors } from "../../lib/theme/colors";
@@ -33,6 +34,7 @@
       connectionIndex: null,
     });
     (window as any).__contextStickyIndex = undefined;
+    (window as any).__contextGroupIndex = undefined;
   }
 
   function handleAction(action: () => void) {
@@ -181,6 +183,24 @@
           handleAction(() => removeStickyNote(stickyIdx))}
       >
         Delete Sticky Note
+      </button>
+    {:else if (window as any).__contextGroupIndex !== undefined}
+      {@const groupIdx = (window as any).__contextGroupIndex}
+      <button
+        class="block w-full text-left px-4 py-2 text-sm hover:opacity-80"
+        style:color={colors.BUTTON_TEXT}
+        onclick={() =>
+          handleAction(() => activeDialog.set("groupEditor"))}
+      >
+        Edit Group Colors
+      </button>
+      <button
+        class="block w-full text-left px-4 py-2 text-sm hover:opacity-80"
+        style:color="#ef4444"
+        onclick={() =>
+          handleAction(() => removeGroup(groupIdx))}
+      >
+        Delete Group
       </button>
     {/if}
   </div>
