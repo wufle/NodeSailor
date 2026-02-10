@@ -45,6 +45,7 @@
   import GroupRect from "./GroupRect.svelte";
   import WaypointHandle from "./WaypointHandle.svelte";
   import GroupResizeHandle from "./GroupResizeHandle.svelte";
+  import CanvasStatusBar from "./CanvasStatusBar.svelte";
   import ironGripUrl from "../../assets/textures/iron-grip.png";
 
   let isIronclad = $derived($currentTheme === "ironclad");
@@ -73,6 +74,42 @@
   let dragStickyIndex: number | null = null;
 
   let colors = $derived(getThemeColors($currentTheme));
+
+  // Filter nodes based on VLAN visibility
+  function isNodeVisible(node: typeof $nodes[0]): boolean {
+    const visibleVlans = $displayOptions.visible_vlans;
+
+    // If null or undefined, show all nodes
+    if (visibleVlans === null || visibleVlans === undefined) return true;
+
+    // If empty array, hide all nodes
+    if (visibleVlans.length === 0) return false;
+
+    // Check if node has a non-empty IP address in any of the visible VLANs
+    return visibleVlans.some(vlanKey => {
+      const ip = node.vlans[vlanKey];
+      return ip && ip.trim() !== "";
+    });
+  }
+
+  let visibleNodes = $derived($nodes.map((node, i) => ({ node, index: i, visible: isNodeVisible(node) })));
+
+  // Helper to check if a connection should be visible (both nodes must be visible)
+  function isConnectionVisible(conn: typeof $connections[0]): boolean {
+    const fromNode = $nodes[conn.from];
+    const toNode = $nodes[conn.to];
+    if (!fromNode || !toNode) return false;
+    return isNodeVisible(fromNode) && isNodeVisible(toNode);
+  }
+
+  // Dynamic cursor based on current mode and state
+  let canvasCursor = $derived.by(() => {
+    if (isPanning) return "grabbing";
+    if (isDragging || isDraggingStickyNote) return "grabbing";
+    if ($mode !== "Configuration") return "default";
+    if ($groupsModeActive) return "crosshair";
+    return "default";
+  });
 
   /** Convert screen coordinates to world (SVG) coordinates */
   function screenToWorld(
@@ -436,11 +473,7 @@
   bind:this={svgEl}
   class="w-full h-full"
   style:background-color={colors.FRAME_BG}
-  style:cursor={isPanning
-    ? "grabbing"
-    : $groupsModeActive
-      ? "crosshair"
-      : "default"}
+  style:cursor={canvasCursor}
   onmousedown={onMouseDown}
   onmousemove={onMouseMove}
   onmouseup={onMouseUp}
@@ -485,7 +518,7 @@
     <g id="connections-layer">
       {#if $displayOptions.show_connections !== false}
         {#each $connections as conn, i}
-          {#if $nodes[conn.from] && $nodes[conn.to]}
+          {#if $nodes[conn.from] && $nodes[conn.to] && isConnectionVisible(conn)}
             <ConnectionLine
               connection={conn}
               index={i}
@@ -524,21 +557,23 @@
 
     <!-- Nodes layer -->
     <g id="nodes-layer">
-      {#each $nodes as node, i}
-        <NodeElement
-          {node}
-          index={i}
-          fillColor={getNodeFill(i, colors.NODE_DEFAULT)}
-          outlineColor={$selectedNodeIndex === i
-            ? colors.NODE_HIGHLIGHT
-            : colors.NODE_OUTLINE_DEFAULT}
-          outlineWidth={$selectedNodeIndex === i ? 4 : 2}
-          textColor={colors.BUTTON_TEXT}
-          fontSize={$displayOptions.node_size ?? 14}
-          onMouseDown={(e) => handleNodeMouseDown(e, i)}
-          onMouseEnter={() => handleNodeMouseEnter(i)}
-          onMouseLeave={handleNodeMouseLeave}
-        />
+      {#each visibleNodes as { node, index, visible }}
+        {#if visible}
+          <NodeElement
+            {node}
+            index={index}
+            fillColor={getNodeFill(index, colors.NODE_DEFAULT)}
+            outlineColor={$selectedNodeIndex === index
+              ? colors.NODE_HIGHLIGHT
+              : colors.NODE_OUTLINE_DEFAULT}
+            outlineWidth={$selectedNodeIndex === index ? 4 : 2}
+            textColor={colors.BUTTON_TEXT}
+            fontSize={$displayOptions.node_size ?? 14}
+            onMouseDown={(e) => handleNodeMouseDown(e, index)}
+            onMouseEnter={() => handleNodeMouseEnter(index)}
+            onMouseLeave={handleNodeMouseLeave}
+          />
+        {/if}
       {/each}
     </g>
 
@@ -546,7 +581,7 @@
     <g id="connection-labels-layer">
       {#if $displayOptions.show_connections !== false && $displayOptions.show_connection_labels !== false}
         {#each $connections as conn, i}
-          {#if $nodes[conn.from] && $nodes[conn.to]}
+          {#if $nodes[conn.from] && $nodes[conn.to] && isConnectionVisible(conn)}
             <ConnectionLine
               connection={conn}
               index={i}
@@ -613,3 +648,6 @@
     />
   {/if}
 </svg>
+
+<!-- Canvas status bar -->
+<CanvasStatusBar />

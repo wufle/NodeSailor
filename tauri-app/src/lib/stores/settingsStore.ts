@@ -5,6 +5,9 @@ export interface AppSettings {
   last_file_path?: string;
   window_geometry?: string;
   auto_load_last_file?: boolean;
+  tutorial_completed?: boolean;
+  show_canvas_status_bar?: boolean; // Default true for new users
+  auto_show_tutorial?: boolean; // Default true for first launch
 }
 
 export const settings = writable<AppSettings>({});

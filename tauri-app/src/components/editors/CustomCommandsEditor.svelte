@@ -16,6 +16,8 @@
   let editTemplate = $state("");
   let editApplicableAll = $state(true);
   let editApplicableNodes = $state<string[]>([]);
+  let saveMessage = $state<string>("");
+  let saveMessageTimeout: number | undefined;
 
   function close() {
     activeDialog.set(null);
@@ -64,6 +66,13 @@
       return copy;
     });
     selectedCommand = editName;
+
+    // Show save confirmation
+    saveMessage = "✓ Saved";
+    if (saveMessageTimeout) clearTimeout(saveMessageTimeout);
+    saveMessageTimeout = window.setTimeout(() => {
+      saveMessage = "";
+    }, 2000);
   }
 
   function deleteCommand() {
@@ -195,7 +204,7 @@
             </div>
           {/if}
 
-          <div class="flex gap-2">
+          <div class="flex gap-2 items-center">
             <button
               class="px-3 py-1.5 text-xs rounded {isIronclad ? 'ironclad-btn' : ''}"
               style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
@@ -211,6 +220,14 @@
             >
               Delete
             </button>
+            {#if saveMessage}
+              <span
+                class="text-xs text-green-500 font-medium"
+                style:color={isIronclad ? "#2ecc71" : undefined}
+              >
+                {saveMessage}
+              </span>
+            {/if}
           </div>
         </div>
       {:else}

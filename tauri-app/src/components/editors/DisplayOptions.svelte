@@ -10,12 +10,22 @@
     activeDialog.set(null);
   }
 
-  function toggle(key: keyof typeof $displayOptions) {
+  // Use local state that syncs with store for proper reactivity
+  let showConnections = $state($displayOptions.show_connections !== false);
+  let showConnectionLabels = $state($displayOptions.show_connection_labels !== false);
+  let showNotes = $state($displayOptions.show_notes !== false);
+  let showGroups = $state($displayOptions.show_groups !== false);
+
+  // Update store when local state changes
+  $effect(() => {
     displayOptions.update((opts) => ({
       ...opts,
-      [key]: !opts[key],
+      show_connections: showConnections,
+      show_connection_labels: showConnectionLabels,
+      show_notes: showNotes,
+      show_groups: showGroups,
     }));
-  }
+  });
 
   function setNodeSize(val: number) {
     displayOptions.update((opts) => ({
@@ -34,8 +44,7 @@
     <label class="flex items-center gap-2 text-sm" style:color={colors.BUTTON_TEXT}>
       <input
         type="checkbox"
-        checked={$displayOptions.show_connections !== false}
-        onchange={() => toggle("show_connections")}
+        bind:checked={showConnections}
       />
       Show Connections
     </label>
@@ -43,8 +52,7 @@
     <label class="flex items-center gap-2 text-sm" style:color={colors.BUTTON_TEXT}>
       <input
         type="checkbox"
-        checked={$displayOptions.show_connection_labels !== false}
-        onchange={() => toggle("show_connection_labels")}
+        bind:checked={showConnectionLabels}
       />
       Show Connection Labels
     </label>
@@ -52,8 +60,7 @@
     <label class="flex items-center gap-2 text-sm" style:color={colors.BUTTON_TEXT}>
       <input
         type="checkbox"
-        checked={$displayOptions.show_notes !== false}
-        onchange={() => toggle("show_notes")}
+        bind:checked={showNotes}
       />
       Show Sticky Notes
     </label>
@@ -61,8 +68,7 @@
     <label class="flex items-center gap-2 text-sm" style:color={colors.BUTTON_TEXT}>
       <input
         type="checkbox"
-        checked={$displayOptions.show_groups !== false}
-        onchange={() => toggle("show_groups")}
+        bind:checked={showGroups}
       />
       Show Groups
     </label>

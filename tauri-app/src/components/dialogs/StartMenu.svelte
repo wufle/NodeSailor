@@ -171,7 +171,7 @@
       style:color={colors.BUTTON_TEXT}
       onclick={openConfigMenu}
     >
-      Configuration Menu
+      Custom Commands
     </button>
 
     <button

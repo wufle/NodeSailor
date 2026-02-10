@@ -57,4 +57,5 @@ export interface DisplayOptions {
   show_notes?: boolean;
   show_groups?: boolean;
   node_size?: number;
+  visible_vlans?: string[] | null; // null = show all, empty array = show none, array with keys = show those
 }

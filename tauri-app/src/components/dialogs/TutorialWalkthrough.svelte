@@ -1,7 +1,10 @@
 <script lang="ts">
   import DialogWrapper from "./DialogWrapper.svelte";
   import { currentTheme, activeDialog } from "../../lib/stores/uiStore";
+  import { settings } from "../../lib/stores/settingsStore";
   import { getThemeColors } from "../../lib/theme/colors";
+  import { invoke } from "@tauri-apps/api/core";
+  import { convertFileSrc } from "@tauri-apps/api/core";
 
   interface TutorialStep {
     title: string;
@@ -13,7 +16,7 @@
   const tutorialSteps: TutorialStep[] = [
     {
       title: "Creating Your First Node",
-      imagePath: "/screenshots/configuration_guidance/c1_new_node.png",
+      imagePath: "data/screenshots/configuration_guidance/c1_new_node.png",
       description: "In Configuration mode, double-click anywhere on the canvas to create a new node.",
       points: [
         "Double-click an empty area to open the node editor",
@@ -24,7 +27,7 @@
     },
     {
       title: "Creating Connections",
-      imagePath: "/screenshots/configuration_guidance/c2_new_connection.png",
+      imagePath: "data/screenshots/configuration_guidance/c2_new_connection.png",
       description: "Connect nodes together to visualize your network topology.",
       points: [
         "Middle-click (or Ctrl+Click) on the first node",
@@ -35,7 +38,7 @@
     },
     {
       title: "List Editor",
-      imagePath: "/screenshots/configuration_guidance/c3_list_editor.png",
+      imagePath: "data/screenshots/configuration_guidance/c3_list_editor.png",
       description: "Edit multiple nodes at once using the Node List editor.",
       points: [
         "Access via 'Node List' button in Configuration mode",
@@ -46,7 +49,7 @@
     },
     {
       title: "Working with Groups",
-      imagePath: "/screenshots/configuration_guidance/c4_groups.png",
+      imagePath: "data/screenshots/configuration_guidance/c4_groups.png",
       description: "Organize your network visually using groups.",
       points: [
         "Click 'Groups' button to activate group mode",
@@ -57,7 +60,7 @@
     },
     {
       title: "Custom Commands",
-      imagePath: "/screenshots/configuration_guidance/c5_custom_commands.png",
+      imagePath: "data/screenshots/configuration_guidance/c5_custom_commands.png",
       description: "Create custom commands for quick access to common tasks.",
       points: [
         "Access via 'Start Menu > Configuration Menu'",
@@ -68,7 +71,7 @@
     },
     {
       title: "Node Pinging",
-      imagePath: "/screenshots/operator_guidance/o1_nodeping.png",
+      imagePath: "data/screenshots/operator_guidance/o1_nodeping.png",
       description: "Test connectivity by pinging nodes in Operator mode.",
       points: [
         "Click a node to ping all its IP addresses",
@@ -80,7 +83,7 @@
     },
     {
       title: "Context Menu",
-      imagePath: "/screenshots/operator_guidance/o2_context_menu.png",
+      imagePath: "data/screenshots/operator_guidance/o2_context_menu.png",
       description: "Right-click nodes to access quick actions.",
       points: [
         "Launch Remote Desktop connections",
@@ -92,7 +95,7 @@
     },
     {
       title: "Top Toolbar Buttons",
-      imagePath: "/screenshots/operator_guidance/o3_top_buttons.png",
+      imagePath: "data/screenshots/operator_guidance/o3_top_buttons.png",
       description: "Use the toolbar for common operations.",
       points: [
         "Toggle between Operator and Configuration modes",
@@ -104,7 +107,7 @@
     },
     {
       title: "Navigation Controls",
-      imagePath: "/screenshots/operator_guidance/o4_navigation_guidance.png",
+      imagePath: "data/screenshots/operator_guidance/o4_navigation_guidance.png",
       description: "Navigate the canvas efficiently.",
       points: [
         "Right-click and drag to pan the canvas",
@@ -120,15 +123,27 @@
   let colors = $derived(getThemeColors($currentTheme));
   let isIronclad = $derived($currentTheme === "ironclad");
 
-  function close() {
+  // Computed image source with proper Tauri asset path
+  let currentImageSrc = $derived(convertFileSrc(tutorialSteps[currentStep].imagePath));
+
+  async function markTutorialCompleted() {
+    const updatedSettings = { ...$settings, tutorial_completed: true };
+    await invoke("save_settings", { settings: updatedSettings });
+    settings.set(updatedSettings);
+  }
+
+  async function close(completed: boolean = false) {
+    if (completed || currentStep === tutorialSteps.length - 1) {
+      await markTutorialCompleted();
+    }
     activeDialog.set(null);
   }
 
-  function nextStep() {
+  async function nextStep() {
     if (currentStep < tutorialSteps.length - 1) {
       currentStep++;
     } else {
-      close();
+      await close(true);
     }
   }
 
@@ -163,7 +178,7 @@
     <!-- Image -->
     <div class="flex justify-center">
       <img
-        src={tutorialSteps[currentStep].imagePath}
+        src={currentImageSrc}
         alt={tutorialSteps[currentStep].title}
         class="max-w-full max-h-96 object-contain rounded"
         style:border="1px solid {colors.BORDER_COLOR}"
@@ -204,7 +219,7 @@
         class="{buttonClass} px-6"
         style:background-color={colors.BUTTON_BG}
         style:color={colors.BUTTON_TEXT}
-        onclick={close}
+        onclick={() => close(false)}
       >
         Skip Tutorial
       </button>

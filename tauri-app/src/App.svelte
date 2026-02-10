@@ -1,12 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { isDark, currentTheme, mode, showStartMenu, unsavedChanges, activeDialog } from "./lib/stores/uiStore";
+  import { get } from "svelte/store";
+  import { isDark, currentTheme, mode, showStartMenu, unsavedChanges, activeDialog, panX, panY } from "./lib/stores/uiStore";
   import type { ThemeName } from "./lib/stores/uiStore";
   import { getThemeColors } from "./lib/theme/colors";
   import TopologyCanvas from "./components/canvas/TopologyCanvas.svelte";
   import Toolbar from "./components/layout/Toolbar.svelte";
   import InfoPanel from "./components/layout/InfoPanel.svelte";
-  import ZoomControls from "./components/layout/ZoomControls.svelte";
+  import DisplayOptionsPanel from "./components/layout/DisplayOptionsPanel.svelte";
   import ModeBanner from "./components/layout/ModeBanner.svelte";
   import ContextMenu from "./components/canvas/ContextMenu.svelte";
   import StartMenu from "./components/dialogs/StartMenu.svelte";
@@ -51,6 +52,28 @@
     const tag = (e.target as HTMLElement)?.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
+    // Arrow keys for panning
+    if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      e.preventDefault();
+      const panAmount = 50;
+
+      switch (e.key) {
+        case "ArrowUp":
+          panY.update((y) => y + panAmount);
+          break;
+        case "ArrowDown":
+          panY.update((y) => y - panAmount);
+          break;
+        case "ArrowLeft":
+          panX.update((x) => x + panAmount);
+          break;
+        case "ArrowRight":
+          panX.update((x) => x - panAmount);
+          break;
+      }
+      return;
+    }
+
     if (e.ctrlKey && e.shiftKey && e.key === "C") {
       e.preventDefault();
       const cycle: ThemeName[] = ["dark", "ironclad", "light"];
@@ -80,7 +103,7 @@
     }
 
     // Auto-load last file if enabled
-    const currentSettings = $settings;
+    const currentSettings = get(settings);
     if (currentSettings.auto_load_last_file && currentSettings.last_file_path) {
       try {
         await loadFile(currentSettings.last_file_path);
@@ -90,6 +113,14 @@
       }
     } else {
       showStartMenu.set(true);
+    }
+
+    // Auto-launch tutorial on first run
+    if (!currentSettings.tutorial_completed) {
+      // Small delay to ensure UI is ready
+      setTimeout(() => {
+        activeDialog.set("tutorial");
+      }, 500);
     }
   });
 
@@ -108,7 +139,7 @@
   <div class="relative flex-1 overflow-hidden">
     <TopologyCanvas />
     <InfoPanel />
-    <ZoomControls />
+    <DisplayOptionsPanel />
     <ContextMenu />
   </div>
 </div>

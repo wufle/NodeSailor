@@ -11,6 +11,7 @@
   import { pingAllNodes, clearPingResults } from "../../lib/actions/pingActions";
   import { getLocalIps } from "../../lib/actions/systemActions";
   import { nodes, pingResults } from "../../lib/stores/networkStore";
+  import TooltipWrapper from "../common/TooltipWrapper.svelte";
 
   let colors = $derived(getThemeColors($currentTheme));
   let isIronclad = $derived($currentTheme === "ironclad");
@@ -98,117 +99,127 @@
   style:border-bottom={isIronclad ? undefined : `1px solid ${colors.BORDER_COLOR}`}
 >
   <!-- Start Menu -->
-  <button
-    class="{buttonClass} font-bold"
-    style:background-color={colors.BUTTON_BG}
-    style:color={colors.BUTTON_TEXT}
-    onclick={() => showStartMenu.set(true)}
-  >
-    Start Menu
-  </button>
+  <TooltipWrapper text="Open start menu for file operations and settings">
+    <button
+      class="{buttonClass} font-bold"
+      style:background-color={colors.BUTTON_BG}
+      style:color={colors.BUTTON_TEXT}
+      onclick={() => showStartMenu.set(true)}
+    >
+      Start Menu
+    </button>
+  </TooltipWrapper>
 
   <!-- Mode Toggle -->
-  <button
-    class={buttonClass}
-    style:background-color={$mode === "Configuration"
-      ? colors.BUTTON_CONFIGURATION_MODE
-      : colors.BUTTON_BG}
-    style:color={colors.BUTTON_TEXT}
-    onclick={toggleMode}
-  >
-    {#if isIronclad}
-      <span class="inline-block {valveTurning ? 'valve-turning' : ''}" style="margin-right: 4px;">&#9881;</span>
-    {/if}
-    {$mode} Mode
-  </button>
-
-  <!-- Display Options (always visible) -->
-  <button
-    class={buttonClass}
-    style:background-color={colors.BUTTON_BG}
-    style:color={colors.BUTTON_TEXT}
-    onclick={() => activeDialog.set("displayOptions")}
-  >
-    Display Options
-  </button>
+  <TooltipWrapper text="Switch between Configuration (edit) and Operator (monitor) modes">
+    <button
+      class={buttonClass}
+      style:background-color={$mode === "Configuration"
+        ? colors.BUTTON_CONFIGURATION_MODE
+        : colors.BUTTON_BG}
+      style:color={colors.BUTTON_TEXT}
+      onclick={toggleMode}
+    >
+      {#if isIronclad}
+        <span class="inline-block {valveTurning ? 'valve-turning' : ''}" style="margin-right: 4px;">&#9881;</span>
+      {/if}
+      {$mode} Mode
+    </button>
+  </TooltipWrapper>
 
   <!-- Configuration-only buttons -->
   {#if $mode === "Configuration"}
-    <button
-      class={buttonClass}
-      style:background-color={colors.BUTTON_BG}
-      style:color={colors.BUTTON_TEXT}
-      onclick={() => activeDialog.set("vlanConfig")}
-    >
-      VLAN Config
-    </button>
+    <TooltipWrapper text="Configure VLAN labels and display order">
+      <button
+        class={buttonClass}
+        style:background-color={colors.BUTTON_BG}
+        style:color={colors.BUTTON_TEXT}
+        onclick={() => activeDialog.set("vlanConfig")}
+      >
+        VLAN Config
+      </button>
+    </TooltipWrapper>
 
-    <button
-      class={buttonClass}
-      style:background-color={colors.BUTTON_BG}
-      style:color={colors.BUTTON_TEXT}
-      onclick={() => activeDialog.set("nodeList")}
-    >
-      Node List
-    </button>
+    <TooltipWrapper text="Edit all nodes in a spreadsheet-like table">
+      <button
+        class={buttonClass}
+        style:background-color={colors.BUTTON_BG}
+        style:color={colors.BUTTON_TEXT}
+        onclick={() => activeDialog.set("nodeList")}
+      >
+        Node List
+      </button>
+    </TooltipWrapper>
 
-    <button
-      class={buttonClass}
-      style:background-color={colors.BUTTON_BG}
-      style:color={colors.BUTTON_TEXT}
-      onclick={() => activeDialog.set("connectionList")}
-    >
-      Connections List
-    </button>
+    <TooltipWrapper text="Edit all connections in a spreadsheet-like table">
+      <button
+        class={buttonClass}
+        style:background-color={colors.BUTTON_BG}
+        style:color={colors.BUTTON_TEXT}
+        onclick={() => activeDialog.set("connectionList")}
+      >
+        Connections List
+      </button>
+    </TooltipWrapper>
 
-    <button
-      class="{buttonClass}"
-      style:background-color={$groupsModeActive
-        ? colors.BUTTON_ACTIVE_BG
-        : colors.BUTTON_BG}
-      style:color={colors.BUTTON_TEXT}
-      onclick={toggleGroupsMode}
-    >
-      {$groupsModeActive ? "Groups (Active)" : "Groups"}
-    </button>
+    <TooltipWrapper text="Toggle Groups mode to draw group rectangles on canvas">
+      <button
+        class="{buttonClass}"
+        style:background-color={$groupsModeActive
+          ? colors.BUTTON_ACTIVE_BG
+          : colors.BUTTON_BG}
+        style:color={colors.BUTTON_TEXT}
+        onclick={toggleGroupsMode}
+      >
+        {$groupsModeActive ? "Groups (Active)" : "Groups"}
+      </button>
+    </TooltipWrapper>
 
-    <button
-      class={buttonClass}
-      style:background-color={colors.BUTTON_BG}
-      style:color={colors.BUTTON_TEXT}
-      onclick={() => activeDialog.set("groupEditor")}
-    >
-      Edit Groups
-    </button>
+    <TooltipWrapper text="Edit group colors and properties">
+      <button
+        class={buttonClass}
+        style:background-color={colors.BUTTON_BG}
+        style:color={colors.BUTTON_TEXT}
+        onclick={() => activeDialog.set("groupEditor")}
+      >
+        Edit Groups
+      </button>
+    </TooltipWrapper>
   {/if}
 
   <!-- Always visible buttons -->
-  <button
-    class={buttonClass}
-    style:background-color={colors.BUTTON_BG}
-    style:color={colors.BUTTON_TEXT}
-    style:opacity={searchingForHost ? "0.6" : "1"}
-    disabled={searchingForHost}
-    onclick={highlightMatchingNodes}
-  >
-    {searchingForHost ? "Searching..." : "Who am I?"}
-  </button>
+  <TooltipWrapper text="Highlight nodes matching your computer's IP addresses">
+    <button
+      class={buttonClass}
+      style:background-color={colors.BUTTON_BG}
+      style:color={colors.BUTTON_TEXT}
+      style:opacity={searchingForHost ? "0.6" : "1"}
+      disabled={searchingForHost}
+      onclick={highlightMatchingNodes}
+    >
+      {searchingForHost ? "Searching..." : "Who am I?"}
+    </button>
+  </TooltipWrapper>
 
-  <button
-    class={buttonClass}
-    style:background-color={colors.BUTTON_BG}
-    style:color={colors.BUTTON_TEXT}
-    onclick={() => clearPingResults()}
-  >
-    Clear Status
-  </button>
+  <TooltipWrapper text="Clear all node status indicators and highlights">
+    <button
+      class={buttonClass}
+      style:background-color={colors.BUTTON_BG}
+      style:color={colors.BUTTON_TEXT}
+      onclick={() => clearPingResults()}
+    >
+      Clear Status
+    </button>
+  </TooltipWrapper>
 
-  <button
-    class={buttonClass}
-    style:background-color={colors.BUTTON_BG}
-    style:color={colors.BUTTON_TEXT}
-    onclick={() => pingAllNodes()}
-  >
-    Ping All
-  </button>
+  <TooltipWrapper text="Ping all nodes to check network connectivity">
+    <button
+      class={buttonClass}
+      style:background-color={colors.BUTTON_BG}
+      style:color={colors.BUTTON_TEXT}
+      onclick={() => pingAllNodes()}
+    >
+      Ping All
+    </button>
+  </TooltipWrapper>
 </div>
