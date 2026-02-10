@@ -50,8 +50,8 @@
       }
 
       if (matchingIndices.length > 0) {
-        // Flash matching nodes 5 times
-        for (let flash = 0; flash < 5; flash++) {
+        // Flash matching nodes 3 times quickly
+        for (let flash = 0; flash < 3; flash++) {
           // Highlight on
           const highlightState: Record<number, boolean[]> = {};
           for (const idx of matchingIndices) {
@@ -59,13 +59,20 @@
           }
           pingResults.set(highlightState);
 
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise(resolve => setTimeout(resolve, 200));
 
           // Highlight off
           pingResults.set({});
 
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise(resolve => setTimeout(resolve, 150));
         }
+
+        // Leave highlighted after flashing
+        const finalHighlight: Record<number, boolean[]> = {};
+        for (const idx of matchingIndices) {
+          finalHighlight[idx] = [true];
+        }
+        pingResults.set(finalHighlight);
       } else {
         // No matching node found - clear all highlights briefly to show it ran
         pingResults.set({});
