@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # Cargo dependencies
+  - package-ecosystem: "cargo"
+    directory: "/tauri-app/src-tauri"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # glib is Linux-only, not used in Windows builds
+      - dependency-name: "glib"
+        versions: ["0.18.5"]
+        update-types: ["version-update:semver-patch", "version-update:semver-minor"]
+    open-pull-requests-limit: 5
+
+  # npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/tauri-app"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
