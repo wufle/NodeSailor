@@ -189,7 +189,6 @@
         alt={tutorialSteps[currentStep].title}
         class="max-w-full max-h-96 object-contain rounded"
         style:border="1px solid {colors.BORDER_COLOR}"
-        onerror={(e) => console.error('Image failed to load:', tutorialSteps[currentStep].imagePath)}
       />
     </div>
 
