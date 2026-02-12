@@ -5,6 +5,16 @@
   import { getThemeColors } from "../../lib/theme/colors";
   import { invoke } from "@tauri-apps/api/core";
 
+  import c1NewNode from "../../assets/screenshots/configuration_guidance/c1_new_node.png";
+  import c2NewConnection from "../../assets/screenshots/configuration_guidance/c2_new_connection.png";
+  import c3ListEditor from "../../assets/screenshots/configuration_guidance/c3_list_editor.png";
+  import c4Groups from "../../assets/screenshots/configuration_guidance/c4_groups.png";
+  import c5CustomCommands from "../../assets/screenshots/configuration_guidance/c5_custom_commands.png";
+  import o1Nodeping from "../../assets/screenshots/operator_guidance/o1_nodeping.png";
+  import o2ContextMenu from "../../assets/screenshots/operator_guidance/o2_context_menu.png";
+  import o3TopButtons from "../../assets/screenshots/operator_guidance/o3_top_buttons.png";
+  import o4Navigation from "../../assets/screenshots/operator_guidance/o4_navigation_guidance.png";
+
   interface TutorialStep {
     title: string;
     imagePath: string;
@@ -15,7 +25,7 @@
   const tutorialSteps: TutorialStep[] = [
     {
       title: "Creating Your First Node",
-      imagePath: "/screenshots/configuration_guidance/c1_new_node.png",
+      imagePath: c1NewNode,
       description: "In Configuration mode, double-click anywhere on the canvas to create a new node.",
       points: [
         "Double-click an empty area to open the node editor",
@@ -26,7 +36,7 @@
     },
     {
       title: "Creating Connections",
-      imagePath: "/screenshots/configuration_guidance/c2_new_connection.png",
+      imagePath: c2NewConnection,
       description: "Connect nodes together to visualize your network topology.",
       points: [
         "Middle-click (or Ctrl+Click) on the first node",
@@ -37,7 +47,7 @@
     },
     {
       title: "List Editor",
-      imagePath: "/screenshots/configuration_guidance/c3_list_editor.png",
+      imagePath: c3ListEditor,
       description: "Edit multiple nodes at once using the Node List editor.",
       points: [
         "Access via 'Node List' button in Configuration mode",
@@ -48,7 +58,7 @@
     },
     {
       title: "Working with Groups",
-      imagePath: "/screenshots/configuration_guidance/c4_groups.png",
+      imagePath: c4Groups,
       description: "Organize your network visually using groups.",
       points: [
         "Click 'Groups' button to activate group mode",
@@ -59,7 +69,7 @@
     },
     {
       title: "Custom Commands",
-      imagePath: "/screenshots/configuration_guidance/c5_custom_commands.png",
+      imagePath: c5CustomCommands,
       description: "Create custom commands for quick access to common tasks.",
       points: [
         "Access via 'Start Menu > Configuration Menu'",
@@ -70,7 +80,7 @@
     },
     {
       title: "Node Pinging",
-      imagePath: "/screenshots/operator_guidance/o1_nodeping.png",
+      imagePath: o1Nodeping,
       description: "Test connectivity by pinging nodes in Operator mode.",
       points: [
         "Click a node to ping all its IP addresses",
@@ -82,7 +92,7 @@
     },
     {
       title: "Context Menu",
-      imagePath: "/screenshots/operator_guidance/o2_context_menu.png",
+      imagePath: o2ContextMenu,
       description: "Right-click nodes to access quick actions.",
       points: [
         "Launch Remote Desktop connections",
@@ -94,7 +104,7 @@
     },
     {
       title: "Top Toolbar Buttons",
-      imagePath: "/screenshots/operator_guidance/o3_top_buttons.png",
+      imagePath: o3TopButtons,
       description: "Use the toolbar for common operations.",
       points: [
         "Toggle between Operator and Configuration modes",
@@ -106,7 +116,7 @@
     },
     {
       title: "Navigation Controls",
-      imagePath: "/screenshots/operator_guidance/o4_navigation_guidance.png",
+      imagePath: o4Navigation,
       description: "Navigate the canvas efficiently.",
       points: [
         "Right-click and drag to pan the canvas",
