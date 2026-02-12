@@ -12,6 +12,7 @@
     saveFile,
     newNetwork,
   } from "../../lib/actions/fileActions";
+  import { highlightMatchingNodes } from "../../lib/actions/systemActions";
   import { settings } from "../../lib/stores/settingsStore";
   import { invoke } from "@tauri-apps/api/core";
 
@@ -35,6 +36,7 @@
   async function handleLoad() {
     await loadFile();
     close();
+    highlightMatchingNodes();
   }
 
   const themeOptions: { name: ThemeName; label: string }[] = [
@@ -101,7 +103,7 @@
       NS
     </div>
     <div class="text-xs opacity-60" style:color={colors.BUTTON_TEXT}>
-      Version 1.0.3
+      Version 1.0.4
     </div>
   </div>
 

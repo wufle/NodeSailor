@@ -16,7 +16,7 @@
   const tutorialSteps: TutorialStep[] = [
     {
       title: "Creating Your First Node",
-      imagePath: "data/screenshots/configuration_guidance/c1_new_node.png",
+      imagePath: "public/screenshots/configuration_guidancec1_new_node.png",
       description: "In Configuration mode, double-click anywhere on the canvas to create a new node.",
       points: [
         "Double-click an empty area to open the node editor",

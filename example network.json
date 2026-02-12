@@ -134,12 +134,12 @@
         },
         {
             "name": "laptop 3",
-            "x": 866.66,
-            "y": 754.02,
+            "x": 861,
+            "y": 749,
             "remote_desktop_address": "",
             "file_path": "",
             "web_config_url": "",
-            "VLAN_100": "192.168.0.103",
+            "VLAN_100": "192.168.0.128",
             "VLAN_200": "",
             "VLAN_300": "",
             "VLAN_400": ""
@@ -278,8 +278,6 @@
             "dark_border": "#ffffff"
         }
     ],
-    "group_window_height": 460,
-    "node_window_height": 360,
     "custom_commands": {
         "ping -t": {
             "template": "ping {ddddd} -t\npause",

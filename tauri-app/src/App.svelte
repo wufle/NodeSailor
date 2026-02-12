@@ -25,7 +25,10 @@
   import DisplayOptionsEditor from "./components/editors/DisplayOptions.svelte";
   import CustomCommandsEditor from "./components/editors/CustomCommandsEditor.svelte";
   import ColorSchemeEditor from "./components/editors/ColorSchemeEditor.svelte";
+  import TerminalPane from "./components/layout/TerminalPane.svelte";
+  import { terminalVisible } from "./lib/stores/terminalStore";
   import { loadFile, saveFile } from "./lib/actions/fileActions";
+  import { highlightMatchingNodes } from "./lib/actions/systemActions";
   import { settings } from "./lib/stores/settingsStore";
   import { invoke } from "@tauri-apps/api/core";
 
@@ -86,10 +89,13 @@
       saveFile();
     } else if (e.ctrlKey && e.key === "l") {
       e.preventDefault();
-      loadFile();
+      loadFile().then(() => highlightMatchingNodes());
     } else if (e.key === "F1") {
       e.preventDefault();
       activeDialog.set("help");
+    } else if (e.ctrlKey && e.key === "`") {
+      e.preventDefault();
+      terminalVisible.update((v) => !v);
     }
   }
 
@@ -107,6 +113,7 @@
     if (currentSettings.auto_load_last_file && currentSettings.last_file_path) {
       try {
         await loadFile(currentSettings.last_file_path);
+        highlightMatchingNodes();
       } catch (e) {
         console.error("Auto-load failed:", e);
         showStartMenu.set(true);
@@ -142,6 +149,7 @@
     <DisplayOptionsPanel />
     <ContextMenu />
   </div>
+  <TerminalPane />
 </div>
 
 <!-- Dialogs -->

@@ -450,3 +450,17 @@ html, body, #app {
 .ironclad-start-menu .ironclad-logo {
   background: url('./assets/textures/brushed-alum-dark.png') repeat, linear-gradient(135deg, #1e2838 0%, #0e1620 100%);
 }
+
+/* Terminal pane - industrial console */
+.ironclad-terminal {
+  border-top: 3px solid var(--color-copper, #f0a030) !important;
+}
+.ironclad-terminal .terminal-header {
+  background: url('./assets/textures/squared-metal.png') repeat, linear-gradient(180deg, #32363e 0%, #22262e 40%, #1a1e24 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.3);
+}
+.ironclad-terminal .terminal-body {
+  background: url('./assets/textures/dark-matter.png') repeat, #0a0c0e !important;
+}

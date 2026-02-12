@@ -9,8 +9,6 @@
   } from "../../lib/stores/uiStore";
   import { getThemeColors } from "../../lib/theme/colors";
   import { pingAllNodes, clearPingResults } from "../../lib/actions/pingActions";
-  import { getLocalIps } from "../../lib/actions/systemActions";
-  import { nodes, pingResults } from "../../lib/stores/networkStore";
   import TooltipWrapper from "../common/TooltipWrapper.svelte";
 
   let colors = $derived(getThemeColors($currentTheme));
@@ -30,61 +28,6 @@
 
   function toggleGroupsMode() {
     groupsModeActive.update((g) => !g);
-  }
-
-  let searchingForHost = $state(false);
-
-  async function highlightMatchingNodes() {
-    searchingForHost = true;
-    try {
-      const localIps = await getLocalIps();
-      const allNodes = $nodes;
-      const matchingIndices: number[] = [];
-
-      // Find all matching nodes
-      for (let i = 0; i < allNodes.length; i++) {
-        const node = allNodes[i];
-        const vlanValues = Object.values(node.vlans);
-        if (vlanValues.some((ip) => localIps.includes(ip))) {
-          matchingIndices.push(i);
-        }
-      }
-
-      if (matchingIndices.length > 0) {
-        // Flash matching nodes 3 times quickly
-        for (let flash = 0; flash < 3; flash++) {
-          // Highlight on
-          const highlightState: Record<number, boolean[]> = {};
-          for (const idx of matchingIndices) {
-            highlightState[idx] = [true];
-          }
-          pingResults.set(highlightState);
-
-          await new Promise(resolve => setTimeout(resolve, 200));
-
-          // Highlight off
-          pingResults.set({});
-
-          await new Promise(resolve => setTimeout(resolve, 150));
-        }
-
-        // Leave highlighted after flashing
-        const finalHighlight: Record<number, boolean[]> = {};
-        for (const idx of matchingIndices) {
-          finalHighlight[idx] = [true];
-        }
-        pingResults.set(finalHighlight);
-      } else {
-        // No matching node found - clear all highlights briefly to show it ran
-        pingResults.set({});
-      }
-    } catch (error) {
-      console.error("Who am I failed:", error);
-      // Clear highlights on error
-      pingResults.set({});
-    } finally {
-      searchingForHost = false;
-    }
   }
 
   let buttonClass = $derived(
@@ -188,19 +131,6 @@
   {/if}
 
   <!-- Always visible buttons -->
-  <TooltipWrapper text="Highlight nodes matching your computer's IP addresses">
-    <button
-      class={buttonClass}
-      style:background-color={colors.BUTTON_BG}
-      style:color={colors.BUTTON_TEXT}
-      style:opacity={searchingForHost ? "0.6" : "1"}
-      disabled={searchingForHost}
-      onclick={highlightMatchingNodes}
-    >
-      {searchingForHost ? "Searching..." : "Who am I?"}
-    </button>
-  </TooltipWrapper>
-
   <TooltipWrapper text="Clear all node status indicators and highlights">
     <button
       class={buttonClass}
