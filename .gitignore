@@ -20,3 +20,5 @@ example network6.json
 data/custom_commands.json
 .claude/
 nul
+node_modules/
+tauri-app/dist/
