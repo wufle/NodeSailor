@@ -4,7 +4,7 @@
 pyenv.cfg
 run.cmd
 last_file_path.ini
-.vscode/settings.json
+.vscode/
 NodeSailor.spec
 example network2.json
 test.bat
