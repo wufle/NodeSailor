@@ -132,8 +132,6 @@
   let colors = $derived(getThemeColors($currentTheme));
   let isIronclad = $derived($currentTheme === "ironclad");
 
-  // Computed image source with proper Tauri asset path
-  let currentImageSrc = $derived(tutorialSteps[currentStep].imagePath);
 
   async function markTutorialCompleted() {
     const updatedSettings = { ...$settings, tutorial_completed: true };
@@ -187,10 +185,11 @@
     <!-- Image -->
     <div class="flex justify-center">
       <img
-        src={currentImageSrc}
+        src={tutorialSteps[currentStep].imagePath}
         alt={tutorialSteps[currentStep].title}
         class="max-w-full max-h-96 object-contain rounded"
         style:border="1px solid {colors.BORDER_COLOR}"
+        onerror={(e) => console.error('Image failed to load:', tutorialSteps[currentStep].imagePath)}
       />
     </div>
 
