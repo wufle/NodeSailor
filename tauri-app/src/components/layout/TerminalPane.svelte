@@ -169,7 +169,7 @@
   {#if $terminalVisible}
     <div
       bind:this={scrollContainer}
-      class="overflow-y-auto overflow-x-hidden {isIronclad ? 'terminal-body' : ''}"
+      class="overflow-y-auto overflow-x-hidden terminal-pane-body {isIronclad ? 'terminal-body' : ''}"
       style:height="{$terminalHeight}px"
       style:background-color={isIronclad ? undefined : (isDarkOrIronclad ? "#0d1117" : "#fafafa")}
       style:font-family="'Consolas', 'Courier New', monospace"

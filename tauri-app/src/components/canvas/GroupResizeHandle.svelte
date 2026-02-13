@@ -105,4 +105,5 @@
   stroke-width="2"
   style:cursor={corner === "tl" || corner === "br" ? "nwse-resize" : "nesw-resize"}
   onmousedown={onMouseDown}
+  oncontextmenu={(e) => e.preventDefault()}
 />

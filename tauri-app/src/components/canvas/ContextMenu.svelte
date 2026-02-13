@@ -92,6 +92,7 @@
     style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
     style:border={isIronclad ? undefined : `1px solid ${colors.BORDER_COLOR}`}
     onclick={(e) => e.stopPropagation()}
+    oncontextmenu={(e) => e.preventDefault()}
   >
     {#if $contextMenu.nodeIndex !== null}
       {@const nodeIdx = $contextMenu.nodeIndex}
