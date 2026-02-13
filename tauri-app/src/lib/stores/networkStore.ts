@@ -16,6 +16,7 @@ export const stickyNotes = writable<StickyNote[]>([]);
 export const groups = writable<GroupRect[]>([]);
 export const displayOptions = writable<DisplayOptions>({});
 export const pingResults = writable<Record<number, boolean[]>>({});
+export const pingAnimationStates = writable<Record<number, 'success' | 'failure'>>({});
 export const hostNodeIndices = writable<Set<number>>(new Set());
 export const vlanLabels = writable<Record<string, string>>({});
 export const vlanLabelOrder = writable<string[]>([]);

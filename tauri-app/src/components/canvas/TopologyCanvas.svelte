@@ -29,6 +29,7 @@
     removeConnection,
     addGroup,
     pingResults,
+    pingAnimationStates,
   } from "../../lib/stores/networkStore";
   import { getThemeColors } from "../../lib/theme/colors";
   import { getGroupColors } from "../../lib/theme/presets";
@@ -563,7 +564,7 @@
             textColor={colors.BUTTON_TEXT}
             fontSize={$displayOptions.node_size ?? 14}
             onMouseDown={(e) => handleNodeMouseDown(e, index)}
-
+            pingAnimationState={$pingAnimationStates[index] ?? null}
           />
         {/if}
       {/each}

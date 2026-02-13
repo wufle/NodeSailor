@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { NetworkNode } from "../../lib/types/network";
   import { currentTheme } from "../../lib/stores/uiStore";
-  import { hostNodeIndices } from "../../lib/stores/networkStore";
+  import { hostNodeIndices, pingAnimationStates } from "../../lib/stores/networkStore";
   import squaredMetalUrl from "../../assets/textures/squared-metal.png";
 
   let {
@@ -15,6 +15,7 @@
     onMouseDown,
     onMouseEnter,
     onMouseLeave,
+    pingAnimationState = null,
   }: {
     node: NetworkNode;
     index: number;
@@ -26,10 +27,28 @@
     onMouseDown: (e: MouseEvent) => void;
     onMouseEnter?: () => void;
     onMouseLeave?: () => void;
+    pingAnimationState?: 'success' | 'failure' | null;
   } = $props();
 
   let isIronclad = $derived($currentTheme === "ironclad");
   let isHostNode = $derived($hostNodeIndices.has(index));
+  let hasPingSuccess = $derived(pingAnimationState === 'success');
+  let hasPingFailure = $derived(pingAnimationState === 'failure');
+
+  // Auto-clear animation state after CSS animation completes
+  $effect(() => {
+    if (pingAnimationState) {
+      const duration = pingAnimationState === 'success' ? 600 : 800;
+      const timeoutId = setTimeout(() => {
+        pingAnimationStates.update((s) => {
+          const copy = { ...s };
+          delete copy[index];
+          return copy;
+        });
+      }, duration);
+      return () => clearTimeout(timeoutId);
+    }
+  });
 
   // Approximate text width for sizing the rectangle
   let textEl: SVGTextElement;
@@ -88,6 +107,38 @@
   .strobe-effect {
     animation: strobe-pulse 6s ease-out forwards;
   }
+
+  @keyframes ping-success-strobe {
+    0% {
+      filter: drop-shadow(0 0 0px rgba(39, 174, 96, 0));
+    }
+    20% {
+      filter: drop-shadow(0 0 20px rgba(39, 174, 96, 0.9));
+    }
+    100% {
+      filter: drop-shadow(0 0 0px rgba(39, 174, 96, 0));
+    }
+  }
+
+  @keyframes ping-failure-strobe {
+    0% {
+      filter: drop-shadow(0 0 0px rgba(231, 76, 60, 0));
+    }
+    50% {
+      filter: drop-shadow(0 0 20px rgba(231, 76, 60, 0.9));
+    }
+    100% {
+      filter: drop-shadow(0 0 0px rgba(231, 76, 60, 0));
+    }
+  }
+
+  .ping-success-effect {
+    animation: ping-success-strobe 0.6s ease-out forwards;
+  }
+
+  .ping-failure-effect {
+    animation: ping-failure-strobe 0.8s ease-out forwards;
+  }
 </style>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -95,6 +146,8 @@
   data-type="node"
   data-index={index}
   class:strobe-effect={isHostNode}
+  class:ping-success-effect={hasPingSuccess}
+  class:ping-failure-effect={hasPingFailure}
   style:cursor="pointer"
   onmousedown={onMouseDown}
   onmouseenter={onMouseEnter}

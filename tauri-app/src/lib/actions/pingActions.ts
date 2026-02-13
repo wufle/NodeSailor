@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { get } from "svelte/store";
-import { nodes, pingResults } from "../stores/networkStore";
+import { nodes, pingResults, pingAnimationStates } from "../stores/networkStore";
 import { addTerminalEntry } from "../stores/terminalStore";
 
 export async function pingNode(nodeIndex: number): Promise<void> {
@@ -21,6 +21,13 @@ export async function pingNode(nodeIndex: number): Promise<void> {
 
   const results: boolean[] = await invoke("ping_ips", { ips });
   pingResults.update((pr) => ({ ...pr, [nodeIndex]: results }));
+
+  // Trigger strobe animation
+  const allSuccess = results.every((r) => r);
+  pingAnimationStates.update((s) => ({
+    ...s,
+    [nodeIndex]: allSuccess ? 'success' : 'failure',
+  }));
 
   for (let i = 0; i < ips.length; i++) {
     const status = results[i] ? "Success" : "Failed";
