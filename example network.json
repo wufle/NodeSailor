@@ -92,7 +92,7 @@
             "file_path": "\\\\192.168.0.42\\C$",
             "web_config_url": "\\\\192.168.0.42",
             "VLAN_100": "192.168.0.42",
-            "VLAN_200": "",
+            "VLAN_200": "192.168.0.1",
             "VLAN_300": "",
             "VLAN_400": ""
         },
@@ -227,7 +227,21 @@
         "VLAN_400"
     ],
     "stickynotes": [],
-    "groups": [],
+    "groups": [
+        {
+            "x1": 613,
+            "y1": 585.2125015258789,
+            "x2": 1060,
+            "y2": 788.2125015258789,
+            "name": "classroom",
+            "color": "",
+            "light_bg": "#e0fff4",
+            "light_border": "#2ecc71",
+            "dark_bg": "#204034",
+            "dark_border": "#2ecc71",
+            "color_preset_id": "preset3"
+        }
+    ],
     "group_color_presets": [
         {
             "id": "preset1",
@@ -280,15 +294,7 @@
     ],
     "custom_commands": {
         "ping -t": {
-            "template": "ping {ddddd} -t\npause",
-            "applicable_nodes": null
-        },
-        "ping -derp": {
-            "template": "ping {ip} -derp",
-            "applicable_nodes": null
-        },
-        "asdfasdf": {
-            "template": "fasdasdfasdf",
+            "template": "ping {ip} -t\npause",
             "applicable_nodes": null
         }
     }
