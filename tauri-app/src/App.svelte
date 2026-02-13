@@ -132,6 +132,19 @@
   });
 
   let colors = $derived(getThemeColors($currentTheme));
+
+  function onContextMenu(e: MouseEvent) {
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.isContentEditable ||
+      target.closest(".terminal-pane-body")
+    ) {
+      return;
+    }
+    e.preventDefault();
+  }
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -139,6 +152,7 @@
 <div
   class="flex flex-col w-full h-full"
   style:background-color={colors.FRAME_BG}
+  oncontextmenu={onContextMenu}
 >
   <Toolbar />
   <ModeBanner />

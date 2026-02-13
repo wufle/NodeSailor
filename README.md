@@ -1,82 +1,156 @@
 # NodeSailor
 
-NodeSailor is a basic network topology mapping, configuration and testing tool.  It the time of initialy relese, it has largely been written by copy/pasting ChatGPT prompts. I knew next to nothing about Python (or network configuration for that matter) when I started this, so it's been a fun and potentially scary test of the power of the current AI tools out there.  
+**A network topology mapping, configuration and testing utility**
 
-*They took our jerbs!*
+NodeSailor is a cross-platform desktop application for visualizing, configuring, and testing network topologies. Built with Tauri, it combines the performance of Rust with a modern web-based interface to provide a lightweight yet powerful network management tool.
 
-This project was initially created in order to better understand a certain, unique network installation and at the same time, learn how to write some Python.  It has evolved in to something that will actually be useful for future maintenance and testing (for me at least anyway!).
+<img width="1745" height="1158" alt="image" src="https://github.com/user-attachments/assets/a9646bad-30a5-4576-a6b6-f28962397e58" />
 
- ![image](https://github.com/wufle/NodeSailor/assets/121041163/c6629eee-93f7-4306-a2ce-06756320e175)
+## 🚀 Features
 
+- **Visual Network Mapping**: Create and visualize network topologies with an intuitive drag-and-drop interface
+- **Network Testing**: Perform ping tests, connectivity checks, and other network diagnostics
+- **VLAN Support**: Configure and manage multiple VLANs within your network topology
+- **Device Management**: Track and organize network devices with custom properties and connections
+- **Cross-Platform**: Runs on Windows, macOS, and Linux
+- **Lightweight**: Small binary size thanks to Tauri's architecture
+- **Modern UI**: Built with Svelte for a responsive and intuitive user experience
 
-**Operation Instructions**
+## 📋 Requirements
 
-Networks are manually configured by the user when in "Configuration Mode". I've included a basic example config, 'example network.json'.
+### For Running the Application
 
-In Operator mode, the user can perform basic network testing functions via a simple GUI. It is possible to quickly ascertain network status and access other common admin functions, like Remote desktop, File Explorer, Web browser.
+Download the latest release from the [Releases](https://github.com/wufle/NodeSailor/releases) page for your platform:
+- Windows: `.exe` installer
+- macOS: `.dmg` or `.app`
+- Linux: `.deb`, `.rpm`, or `.AppImage`
 
-Keyboard Shortcuts and Functions:
-        
-*Operator Mode:*
-- 'F1' for help.
-- Left click on Node: Ping the node! Node will change colour depending on response, Green is good, Yellow means response from some Vlans but not others (if configured), Red for no response.  Vlan responses are indicated in the information window at the bottom right of screen.
-- Right Click on Node: Open context menu for other node-specific operations.
-- 'Who am I?': Identify and highlight the node where this program is running.
-- 'Ping All': Ping all nodes and update their status.
-- 'Clear Status': Reset the status of all nodes.
-- Radio buttons for displaying/hiding selected Vlans.
+### For Development
 
-        
-*Configuration Mode:*
-- Double Left Click: Create a node.
-- Left click hold and drag node to move it.
-- Shift + Double Left Click: Create a sticky note.
-- Shift left click drag to move sticky notes.
-- Middle Click: Create a connection between nodes (including a label is desired).
-- Shift + Middle Click: Remove a connection.
-- Right Click on Node: Open context menu for additional options (Edit, Delete, Remote desktop, File Explorer, Web browser).
-- 'Save': Save the current network config.
-- 'Load': Load a saved network config.
+- **Node.js** (v18 or later)
+- **Rust** (latest stable version)
+- **pnpm**, **npm**, or **yarn**
+
+## 🛠️ Installation
+
+### Option 1: Download Pre-built Binary (Recommended)
+
+1. Visit the [Releases](https://github.com/wufle/NodeSailor/releases) page
+2. Download the appropriate installer for your operating system
+3. Install and run NodeSailor
+
+### Option 2: Build from Source
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/wufle/NodeSailor.git
+   cd NodeSailor/tauri-app
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   pnpm install
+   ```
+
+3. **Run in development mode**
+   ```bash
+   npm run tauri dev
+   # or
+   pnpm tauri dev
+   ```
+
+4. **Build for production**
+   ```bash
+   npm run tauri build
+   # or
+   pnpm tauri build
+   ```
+
+## 📖 Usage
+
+### Operator Mode
+
+**Navigate and test your network:**
+
+- **Left Click on Node**: Ping the node
+  - 🟢 Green: Successfully pinged
+  - 🟡 Yellow: Partial response (some VLANs responding)
+  - 🔴 Red: No response
   
-**Installation Instructions:**
+- **Right Click on Node**: Open context menu with options:
+  - Remote Desktop
+  - File Explorer
+  - Web Browser
+  - Additional custom user-created operations
 
-A prepackaged executable can be found in the releases section - https://github.com/wufle/NodeSailor/releases.  Simply download the latest release and run NodeSailor.exe.
+- **VLAN Management**: Use radio buttons to show/hide specific VLANs
 
-If you would instead like to run the project from the source files, run through the steps below to setup a virtual Python environment and install the dependancies.
+- **Keyboard Shortcuts**:
+  - `F1`: Open help menu
 
-1. Create the Virtual Environment
+### Configuration Mode
 
-Opent a terminal and run the command:
+**Build and modify your network topology:**
 
-`python -m venv '.\NodeSailor'` <-- clone the project repository to this filepath
+- **Double Left Click**: Create a new node
+- **Left Click + Drag**: Move nodes
+- **Shift + Double Left Click**: Create a sticky note
+- **Shift + Left Click + Drag**: Move sticky notes
+- **Middle Click**: Create a connection between nodes (with optional label)
+- **Shift + Middle Click**: Remove a connection
+- **Right Click on Node**: Context menu with options:
+  - Edit node properties
+  - Delete node
+  - Access remote desktop
+  - Open file explorer
+  - Launch web browser
 
-2. Activate the Virtual Environment:
+- **File Operations**:
+  - `Save`: Save the current network configuration
+  - `Load`: Load a saved network configuration
 
-`cd '.\NodeSailor\'`
+## 🗂️ Project Structure
 
-`.\Scripts\activate`
+```
+NodeSailor/
+├── tauri-app/           # Tauri application
+│   ├── src/             # Frontend source (Svelte)
+│   ├── src-tauri/       # Rust backend
+│   └── package.json     # Node.js dependencies
+├── data/                # Application data files
+├── example network.json # Example network configurations
+└── README.md           # This file
+```
 
-3. Install Packages While the Virtual Environment is Active. Install packages using pip:
+## 🔄 Migration from Python Version
 
-`pip install -r requirements.txt`
+NodeSailor is currently being ported from Python (using Tkinter) to a modern Tauri application. The Tauri version offers:
 
-4. Run the python script with:
+- Better performance through Rust backend
+- Modern, responsive UI with Svelte
+- Smaller application size
+- Better cross-platform support
+- Enhanced security
 
-`Python .\NodeSailor.py` 
+Legacy Python files remain in the repository for reference but are no longer maintained.
 
-**Known bugs/problems:**
-- Pan and zoom funcitonality messes with the alignment of cursor and nodes
+## 🐛 Known Issues
 
-**Future plans:**
-* Tutorial for first time use.
-* More configuration options when creating a new network, i.e., number and name of seperate networks/VLANs.
-* User created background image for networks.
-* Make the `F1` help page pretty.
-* Node/cable list viewer with search functionality and quick edit. 
-* More thorough network testing functionality, tracert implementation? display ping times?
-* enhanced colour menu options.
-* tool tips for connections
-* custom graphics, user editable. 
-* grid snap functionality when moving nodes. 
-* 
+- Pan and zoom functionality may have cursor alignment issues (under investigation)
 
+
+## 📄 License
+
+This project is licensed under the GNU General Public License v3.0 - see the [COPYING.TXT](COPYING.TXT) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [Tauri](https://tauri.app/)
+- UI powered by [Svelte](https://svelte.dev/)
+- Originally developed with assistance from AI tools to accelerate learning and development
+
+---
+
+**Note**: This project is actively under development. The Tauri version represents a complete rewrite with improved architecture and performance. For the legacy Python version, see the root directory files.
