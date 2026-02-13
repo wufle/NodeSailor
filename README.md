@@ -4,7 +4,7 @@
 
 NodeSailor is a cross-platform desktop application for visualizing, configuring, and testing network topologies. Built with Tauri, it combines the performance of Rust with a modern web-based interface to provide a lightweight yet powerful network management tool.
 
-![NodeSailor Screenshot](https://private-user-images.githubusercontent.com/121041163/285645852-c6629eee-93f7-4306-a2ce-06756320e175.png)
+<img width="1745" height="1158" alt="image" src="https://github.com/user-attachments/assets/a9646bad-30a5-4576-a6b6-f28962397e58" />
 
 ## 🚀 Features
 
