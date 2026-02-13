@@ -287,14 +287,7 @@
     // Context menu is handled by right-click on nodes
   }
 
-  // Node event handlers (called from NodeElement)
-  function handleNodeMouseEnter(index: number) {
-    hoveredNodeIndex.set(index);
-  }
 
-  function handleNodeMouseLeave() {
-    hoveredNodeIndex.set(null);
-  }
 
   function handleNodeMouseDown(e: MouseEvent, index: number) {
     if (e.button === 0) {
@@ -570,8 +563,7 @@
             textColor={colors.BUTTON_TEXT}
             fontSize={$displayOptions.node_size ?? 14}
             onMouseDown={(e) => handleNodeMouseDown(e, index)}
-            onMouseEnter={() => handleNodeMouseEnter(index)}
-            onMouseLeave={handleNodeMouseLeave}
+
           />
         {/if}
       {/each}
