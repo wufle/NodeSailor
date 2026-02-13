@@ -8,6 +8,7 @@ export interface AppSettings {
   tutorial_completed?: boolean;
   show_canvas_status_bar?: boolean; // Default true for new users
   auto_show_tutorial?: boolean; // Default true for first launch
+  disable_strobe_effects?: boolean;
 }
 
 export const settings = writable<AppSettings>({});

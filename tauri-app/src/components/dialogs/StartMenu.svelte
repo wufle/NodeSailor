@@ -5,7 +5,6 @@
     showStartMenu,
     activeDialog,
   } from "../../lib/stores/uiStore";
-  import type { ThemeName } from "../../lib/stores/uiStore";
   import { getThemeColors } from "../../lib/theme/colors";
   import {
     loadFile,
@@ -39,19 +38,14 @@
     highlightMatchingNodes();
   }
 
-  const themeOptions: { name: ThemeName; label: string }[] = [
-    { name: "light", label: "Light" },
-    { name: "dark", label: "Dark" },
-    { name: "ironclad", label: "Ironclad" },
-  ];
-
-  function setTheme(t: ThemeName) {
-    currentTheme.set(t);
-  }
-
   function openConfigMenu() {
     close();
     activeDialog.set("customCommands");
+  }
+
+  function openDisplayOptions() {
+    close();
+    activeDialog.set("displayOptionsDialog");
   }
 
   function openHelp() {
@@ -149,23 +143,14 @@
       <span>Auto-load last file on startup</span>
     </label>
 
-    <!-- Theme Selector -->
-    <div class="flex gap-1">
-      {#each themeOptions as opt}
-        <button
-          class="{buttonClass} {isIronclad ? 'ironclad-btn' : ''}"
-          style:background-color={$currentTheme === opt.name
-            ? colors.BUTTON_ACTIVE_BG
-            : colors.BUTTON_BG}
-          style:color={$currentTheme === opt.name
-            ? colors.BUTTON_ACTIVE_TEXT
-            : colors.BUTTON_TEXT}
-          onclick={() => setTheme(opt.name)}
-        >
-          {opt.label}
-        </button>
-      {/each}
-    </div>
+    <button
+      class={buttonClass}
+      style:background-color={colors.BUTTON_BG}
+      style:color={colors.BUTTON_TEXT}
+      onclick={openDisplayOptions}
+    >
+      Display Options
+    </button>
 
     <button
       class={buttonClass}

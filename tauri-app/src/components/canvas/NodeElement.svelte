@@ -2,6 +2,7 @@
   import type { NetworkNode } from "../../lib/types/network";
   import { currentTheme } from "../../lib/stores/uiStore";
   import { hostNodeIndices, pingAnimationStates } from "../../lib/stores/networkStore";
+  import { settings } from "../../lib/stores/settingsStore";
   import squaredMetalUrl from "../../assets/textures/squared-metal.png";
 
   let {
@@ -31,9 +32,10 @@
   } = $props();
 
   let isIronclad = $derived($currentTheme === "ironclad");
-  let isHostNode = $derived($hostNodeIndices.has(index));
-  let hasPingSuccess = $derived(pingAnimationState === 'success');
-  let hasPingFailure = $derived(pingAnimationState === 'failure');
+  let strobeDisabled = $derived($settings.disable_strobe_effects ?? false);
+  let isHostNode = $derived($hostNodeIndices.has(index) && !strobeDisabled);
+  let hasPingSuccess = $derived(pingAnimationState === 'success' && !strobeDisabled);
+  let hasPingFailure = $derived(pingAnimationState === 'failure' && !strobeDisabled);
 
   // Auto-clear animation state after CSS animation completes
   $effect(() => {

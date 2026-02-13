@@ -24,7 +24,7 @@
   import VlanConfigEditor from "./components/editors/VlanConfigEditor.svelte";
   import DisplayOptionsEditor from "./components/editors/DisplayOptions.svelte";
   import CustomCommandsEditor from "./components/editors/CustomCommandsEditor.svelte";
-  import ColorSchemeEditor from "./components/editors/ColorSchemeEditor.svelte";
+  import DisplayOptionsDialog from "./components/dialogs/DisplayOptionsDialog.svelte";
   import TerminalPane from "./components/layout/TerminalPane.svelte";
   import { terminalVisible } from "./lib/stores/terminalStore";
   import { loadFile, saveFile } from "./lib/actions/fileActions";
@@ -221,6 +221,6 @@
   <CustomCommandsEditor />
 {/if}
 
-{#if $activeDialog === "colorScheme"}
-  <ColorSchemeEditor />
+{#if $activeDialog === "displayOptionsDialog"}
+  <DisplayOptionsDialog />
 {/if}
