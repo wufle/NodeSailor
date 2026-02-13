@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { NetworkNode } from "../../lib/types/network";
   import { currentTheme } from "../../lib/stores/uiStore";
-  import { pingResults } from "../../lib/stores/networkStore";
+  import { hostNodeIndices } from "../../lib/stores/networkStore";
   import squaredMetalUrl from "../../assets/textures/squared-metal.png";
 
   let {
@@ -29,9 +29,7 @@
   } = $props();
 
   let isIronclad = $derived($currentTheme === "ironclad");
-  let isPinged = $derived(
-    $pingResults && $pingResults[index] && $pingResults[index].length > 0
-  );
+  let isHostNode = $derived($hostNodeIndices.has(index));
 
   // Approximate text width for sizing the rectangle
   let textEl: SVGTextElement;
@@ -96,7 +94,7 @@
 <g
   data-type="node"
   data-index={index}
-  class:strobe-effect={isPinged}
+  class:strobe-effect={isHostNode}
   style:cursor="pointer"
   onmousedown={onMouseDown}
   onmouseenter={onMouseEnter}

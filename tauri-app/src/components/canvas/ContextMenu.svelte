@@ -24,24 +24,41 @@
   let colors = $derived(getThemeColors($currentTheme));
   let isIronclad = $derived($currentTheme === "ironclad");
 
-  function positionMenu(el: HTMLDivElement) {
-    const pad = 4;
-    let x = $contextMenu.x;
-    let y = $contextMenu.y;
-    const rect = el.getBoundingClientRect();
+  let menuX = $state(0);
+  let menuY = $state(0);
+  let menuReady = $state(false);
+  let menuEl: HTMLDivElement | undefined = $state();
 
-    if (x + rect.width > window.innerWidth - pad) {
-      x = window.innerWidth - rect.width - pad;
-    }
-    if (y + rect.height > window.innerHeight - pad) {
-      y = window.innerHeight - rect.height - pad;
-    }
-    if (x < pad) x = pad;
-    if (y < pad) y = pad;
+  // Re-run positioning whenever contextMenu changes (handles re-opens)
+  $effect(() => {
+    // Track the context menu state to re-trigger on changes
+    const cx = $contextMenu.x;
+    const cy = $contextMenu.y;
+    const visible = $contextMenu.visible;
+    if (!visible || !menuEl) return;
 
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
-  }
+    menuReady = false;
+    requestAnimationFrame(() => {
+      if (!menuEl) return;
+      const pad = 4;
+      const rect = menuEl.getBoundingClientRect();
+      let x = cx;
+      let y = cy;
+
+      if (x + rect.width > window.innerWidth - pad) {
+        x = window.innerWidth - rect.width - pad;
+      }
+      if (y + rect.height > window.innerHeight - pad) {
+        y = window.innerHeight - rect.height - pad;
+      }
+      if (x < pad) x = pad;
+      if (y < pad) y = pad;
+
+      menuX = x;
+      menuY = y;
+      menuReady = true;
+    });
+  });
 
   function close() {
     contextMenu.set({
@@ -104,10 +121,11 @@
 {#if $contextMenu.visible}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    use:positionMenu
+    bind:this={menuEl}
     class="fixed z-50 rounded overflow-hidden {isIronclad ? 'ironclad-context-menu' : 'shadow-lg'}"
-    style:left="{$contextMenu.x}px"
-    style:top="{$contextMenu.y}px"
+    style:left="{menuX}px"
+    style:top="{menuY}px"
+    style:visibility={menuReady ? 'visible' : 'hidden'}
     style:background-color={isIronclad ? undefined : colors.BUTTON_BG}
     style:border={isIronclad ? undefined : `1px solid ${colors.BORDER_COLOR}`}
     onclick={(e) => e.stopPropagation()}

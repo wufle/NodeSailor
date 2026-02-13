@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { get } from "svelte/store";
 import type { NetworkNode } from "../types/network";
 import { addTerminalEntry } from "../stores/terminalStore";
-import { nodes, pingResults } from "../stores/networkStore";
+import { nodes, pingResults, hostNodeIndices } from "../stores/networkStore";
 
 export async function getLocalIps(): Promise<string[]> {
   addTerminalEntry(
@@ -100,7 +100,7 @@ export async function highlightMatchingNodes(): Promise<void> {
         matchedNames.join(", ")
       );
 
-      // Flash matching nodes 3 times quickly
+      // Flash matching nodes 3 times quickly using pingResults
       for (let flash = 0; flash < 3; flash++) {
         const highlightState: Record<number, boolean[]> = {};
         for (const idx of matchingIndices) {
@@ -115,19 +115,15 @@ export async function highlightMatchingNodes(): Promise<void> {
         await new Promise((resolve) => setTimeout(resolve, 150));
       }
 
-      // Leave highlighted after flashing
-      const finalHighlight: Record<number, boolean[]> = {};
-      for (const idx of matchingIndices) {
-        finalHighlight[idx] = [true];
-      }
-      pingResults.set(finalHighlight);
+      // Set persistent host node glow (separate from ping results)
+      hostNodeIndices.set(new Set(matchingIndices));
     } else {
       addTerminalEntry(
         "info",
         "who-am-i",
         "No matching node found for this machine's IP addresses"
       );
-      pingResults.set({});
+      hostNodeIndices.set(new Set());
     }
   } catch (error) {
     console.error("Who am I failed:", error);
@@ -136,6 +132,6 @@ export async function highlightMatchingNodes(): Promise<void> {
       "who-am-i",
       `Failed to identify local node: ${error}`
     );
-    pingResults.set({});
+    hostNodeIndices.set(new Set());
   }
 }
