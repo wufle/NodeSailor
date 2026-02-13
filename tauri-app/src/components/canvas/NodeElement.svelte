@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { NetworkNode } from "../../lib/types/network";
   import { currentTheme } from "../../lib/stores/uiStore";
+  import { pingResults } from "../../lib/stores/networkStore";
   import squaredMetalUrl from "../../assets/textures/squared-metal.png";
 
   let {
@@ -28,6 +29,9 @@
   } = $props();
 
   let isIronclad = $derived($currentTheme === "ironclad");
+  let isPinged = $derived(
+    $pingResults && $pingResults[index] && $pingResults[index].length > 0
+  );
 
   // Approximate text width for sizing the rectangle
   let textEl: SVGTextElement;
@@ -58,10 +62,41 @@
   let halfH = $derived(textHeight / 2 + pad);
 </script>
 
+<style>
+  @keyframes strobe-pulse {
+    0% {
+      filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.2)); /* Initial faint glow */
+    }
+    16.67% { /* Peak of first strobe */
+      filter: drop-shadow(0 0 16px rgba(255, 255, 0, 0.8));
+    }
+    33.33% { /* Return to faint glow */
+      filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.2));
+    }
+    50% { /* Peak of second strobe */
+      filter: drop-shadow(0 0 16px rgba(255, 255, 0, 0.8));
+    }
+    66.67% { /* Return to faint glow */
+      filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.2));
+    }
+    83.33% { /* Peak of third strobe */
+      filter: drop-shadow(0 0 16px rgba(255, 255, 0, 0.8));
+    }
+    100% { /* Final sustained light glow */
+      filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.5));
+    }
+  }
+
+  .strobe-effect {
+    animation: strobe-pulse 6s ease-out forwards;
+  }
+</style>
+
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <g
   data-type="node"
   data-index={index}
+  class:strobe-effect={isPinged}
   style:cursor="pointer"
   onmousedown={onMouseDown}
   onmouseenter={onMouseEnter}

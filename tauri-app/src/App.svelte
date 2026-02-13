@@ -89,7 +89,9 @@
       saveFile();
     } else if (e.ctrlKey && e.key === "l") {
       e.preventDefault();
-      loadFile().then(() => highlightMatchingNodes());
+      loadFile().then(() => {
+        highlightMatchingNodes();
+      });
     } else if (e.key === "F1") {
       e.preventDefault();
       activeDialog.set("help");

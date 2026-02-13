@@ -85,6 +85,7 @@ export async function highlightMatchingNodes(): Promise<void> {
     for (let i = 0; i < allNodes.length; i++) {
       const node = allNodes[i];
       const vlanValues = Object.values(node.vlans);
+      
       if (vlanValues.some((ip) => localIps.includes(ip))) {
         matchingIndices.push(i);
       }
