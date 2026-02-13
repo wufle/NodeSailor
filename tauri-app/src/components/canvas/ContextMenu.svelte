@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import {
     contextMenu,
     mode,
@@ -24,6 +23,25 @@
 
   let colors = $derived(getThemeColors($currentTheme));
   let isIronclad = $derived($currentTheme === "ironclad");
+
+  function positionMenu(el: HTMLDivElement) {
+    const pad = 4;
+    let x = $contextMenu.x;
+    let y = $contextMenu.y;
+    const rect = el.getBoundingClientRect();
+
+    if (x + rect.width > window.innerWidth - pad) {
+      x = window.innerWidth - rect.width - pad;
+    }
+    if (y + rect.height > window.innerHeight - pad) {
+      y = window.innerHeight - rect.height - pad;
+    }
+    if (x < pad) x = pad;
+    if (y < pad) y = pad;
+
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+  }
 
   function close() {
     contextMenu.set({
@@ -86,6 +104,7 @@
 {#if $contextMenu.visible}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
+    use:positionMenu
     class="fixed z-50 rounded overflow-hidden {isIronclad ? 'ironclad-context-menu' : 'shadow-lg'}"
     style:left="{$contextMenu.x}px"
     style:top="{$contextMenu.y}px"
