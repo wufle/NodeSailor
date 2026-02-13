@@ -29,7 +29,7 @@
       imagePath: "/screenshots/configuration_guidance/c2_new_connection.png",
       description: "Connect nodes together to visualize your network topology.",
       points: [
-        "Middle-click (or Ctrl+Click) on the first node",
+        "Middle-click on the first node",
         "Middle-click on the second node to create a connection",
         "Shift + Middle-click to remove connections",
         "Right-click connections to edit labels"
@@ -43,7 +43,7 @@
         "Access via 'Node List' button in Configuration mode",
         "View all nodes in a table format",
         "Quickly edit node properties",
-        "Sort and search for specific nodes"
+        "Sort columns by clicking headers"
       ]
     },
     {
@@ -62,7 +62,7 @@
       imagePath: "/screenshots/configuration_guidance/c5_custom_commands.png",
       description: "Create custom commands for quick access to common tasks.",
       points: [
-        "Access via 'Start Menu > Configuration Menu'",
+        "Access via Start Menu > 'Custom Commands'",
         "Use placeholders: {ip}, {name}, {file}, {web}",
         "Example: ping {ip} -t",
         "Commands appear in node context menus"
@@ -88,20 +88,7 @@
         "Launch Remote Desktop connections",
         "Open file paths in Explorer",
         "Navigate to web interfaces",
-        "Run custom commands",
-        "Copy IP addresses to clipboard"
-      ]
-    },
-    {
-      title: "Top Toolbar Buttons",
-      imagePath: "/screenshots/operator_guidance/o3_top_buttons.png",
-      description: "Use the toolbar for common operations.",
-      points: [
-        "Toggle between Operator and Configuration modes",
-        "Ping All nodes simultaneously",
-        "Clear Status to reset ping results",
-        "'Who am I?' highlights your current PC",
-        "Display Options to customize appearance"
+        "Run custom commands"
       ]
     },
     {
@@ -111,9 +98,7 @@
       points: [
         "Right-click and drag to pan the canvas",
         "Mouse wheel to zoom in and out",
-        "Arrow keys for precise panning",
-        "Zoom controls in the bottom-left corner",
-        "Double-click empty space to recenter"
+        "Arrow keys for precise panning"
       ]
     }
   ];
@@ -173,11 +158,11 @@
     </div>
 
     <!-- Image -->
-    <div class="flex justify-center">
+    <div class="flex justify-center items-center" style:height="384px">
       <img
         src={tutorialSteps[currentStep].imagePath}
         alt={tutorialSteps[currentStep].title}
-        class="max-w-full max-h-96 object-contain rounded"
+        class="max-w-full max-h-full object-contain rounded"
         style:border="1px solid {colors.BORDER_COLOR}"
       />
     </div>
