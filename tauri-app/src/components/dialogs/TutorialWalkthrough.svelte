@@ -71,13 +71,12 @@
     {
       title: "Node Pinging",
       imagePath: "/screenshots/operator_guidance/o1_nodeping.png",
-      description: "Test connectivity by pinging nodes in Operator mode.",
+      description: "Click a node to ping all its IP addresses.",
       points: [
-        "Click a node to ping all its IP addresses",
         "Green = all IPs connected",
         "Yellow = partial connectivity",
         "Red = no connection",
-        "Use 'Ping All' to test all nodes at once"
+        "Use the 'Ping All' button to test all nodes at once"
       ]
     },
     {
