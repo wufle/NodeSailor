@@ -18,9 +18,7 @@
   let isIronclad = $derived($currentTheme === "ironclad");
 
   // Show hovered node if hovering, otherwise show selected node
-  let displayNodeIndex = $derived(
-    $hoveredNodeIndex !== null ? $hoveredNodeIndex : $selectedNodeIndex
-  );
+  let displayNodeIndex = $derived($selectedNodeIndex);
 
   let selectedNode = $derived(
     displayNodeIndex !== null ? $nodes[displayNodeIndex] : null
