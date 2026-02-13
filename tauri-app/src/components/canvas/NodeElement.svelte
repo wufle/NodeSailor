@@ -38,7 +38,7 @@
   // Auto-clear animation state after CSS animation completes
   $effect(() => {
     if (pingAnimationState) {
-      const duration = pingAnimationState === 'success' ? 600 : 800;
+      const duration = pingAnimationState === 'success' ? 1000 : 1200;
       const timeoutId = setTimeout(() => {
         pingAnimationStates.update((s) => {
           const copy = { ...s };
@@ -112,8 +112,11 @@
     0% {
       filter: drop-shadow(0 0 0px rgba(39, 174, 96, 0));
     }
-    20% {
-      filter: drop-shadow(0 0 20px rgba(39, 174, 96, 0.9));
+    15% {
+      filter: drop-shadow(0 0 22px rgba(39, 174, 96, 0.9));
+    }
+    40% {
+      filter: drop-shadow(0 0 12px rgba(39, 174, 96, 0.4));
     }
     100% {
       filter: drop-shadow(0 0 0px rgba(39, 174, 96, 0));
@@ -124,8 +127,11 @@
     0% {
       filter: drop-shadow(0 0 0px rgba(231, 76, 60, 0));
     }
-    50% {
-      filter: drop-shadow(0 0 20px rgba(231, 76, 60, 0.9));
+    30% {
+      filter: drop-shadow(0 0 22px rgba(231, 76, 60, 0.9));
+    }
+    55% {
+      filter: drop-shadow(0 0 12px rgba(231, 76, 60, 0.4));
     }
     100% {
       filter: drop-shadow(0 0 0px rgba(231, 76, 60, 0));
@@ -133,11 +139,11 @@
   }
 
   .ping-success-effect {
-    animation: ping-success-strobe 0.6s ease-out forwards;
+    animation: ping-success-strobe 1s ease-in-out forwards;
   }
 
   .ping-failure-effect {
-    animation: ping-failure-strobe 0.8s ease-out forwards;
+    animation: ping-failure-strobe 1.2s ease-in-out forwards;
   }
 </style>
 
