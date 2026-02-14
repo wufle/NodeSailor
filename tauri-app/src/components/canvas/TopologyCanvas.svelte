@@ -182,14 +182,12 @@
           activeDialog.set("nodeEditor");
           (window as any).__newNodePosition = { x, y };
           (window as any).__editNodeIndex = null;
-          activeTool.set("select");
           return;
         }
         if ($activeTool === "addNote") {
           const { x, y } = screenToWorld(e.clientX, e.clientY);
           activeDialog.set("stickyNote");
           (window as any).__stickyNotePosition = { x, y };
-          activeTool.set("select");
           return;
         }
       }
@@ -349,7 +347,6 @@
           (window as any).__editConnectionIndex = null;
           activeDialog.set("connectionEditor");
           connectionStartNodeIndex.set(null);
-          activeTool.set("select");
         }
         return;
       }
