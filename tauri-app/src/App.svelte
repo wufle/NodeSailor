@@ -45,6 +45,14 @@
     }
   });
 
+  // Persist current theme to settings
+  $effect(() => {
+    settings.update((s) => ({ ...s, last_custom_theme: $currentTheme }));
+    invoke("save_settings", { settings: { last_custom_theme: $currentTheme } }).catch((e) =>
+      console.error("Failed to save theme setting:", e)
+    );
+  });
+
   // Keyboard shortcuts
   function handleKeydown(e: KeyboardEvent) {
     // Don't handle shortcuts if focus is in an input
