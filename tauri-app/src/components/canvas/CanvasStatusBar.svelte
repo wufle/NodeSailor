@@ -27,6 +27,7 @@
 </script>
 
 {#if visible}
+<!--
   <div
     class="canvas-status-bar"
     style:background-color={colors.FRAME_BG}
@@ -46,6 +47,7 @@
       {/each}
     </div>
   </div>
+  -->
 {/if}
 
 <style>

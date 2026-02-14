@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { get } from "svelte/store";
-  import { isDark, currentTheme, mode, showStartMenu, unsavedChanges, activeDialog, panX, panY } from "./lib/stores/uiStore";
+  import { isDark, currentTheme, mode, showStartMenu, unsavedChanges, activeDialog, panX, panY, activeTool, connectionStartNodeIndex, selectedNodeIndex } from "./lib/stores/uiStore";
   import type { ThemeName } from "./lib/stores/uiStore";
   import { effectiveColors, loadColorOverrides, loadCustomThemes } from "./lib/theme/colors";
   import TopologyCanvas from "./components/canvas/TopologyCanvas.svelte";
   import Toolbar from "./components/layout/Toolbar.svelte";
+  import ToolSidebar from "./components/layout/ToolSidebar.svelte";
   import InfoPanel from "./components/layout/InfoPanel.svelte";
   import DisplayOptionsPanel from "./components/layout/DisplayOptionsPanel.svelte";
   import ModeBanner from "./components/layout/ModeBanner.svelte";
@@ -27,6 +28,7 @@
   import DisplayOptionsDialog from "./components/dialogs/DisplayOptionsDialog.svelte";
   import TerminalPane from "./components/layout/TerminalPane.svelte";
   import { terminalVisible } from "./lib/stores/terminalStore";
+  import { removeNode } from "./lib/stores/networkStore";
   import { loadFile, saveFile } from "./lib/actions/fileActions";
   import { highlightMatchingNodes } from "./lib/actions/systemActions";
   import { settings } from "./lib/stores/settingsStore";
@@ -79,6 +81,48 @@
           break;
       }
       return;
+    }
+
+    // Escape: revert to select tool, cancel connection
+    if (e.key === "Escape") {
+      e.preventDefault();
+      activeTool.set("select");
+      connectionStartNodeIndex.set(null);
+      return;
+    }
+
+    // Delete: delete selected node (Configuration mode only)
+    if ((e.key === "Delete" || e.key === "Backspace") && $mode === "Configuration") {
+      const idx = get(selectedNodeIndex);
+      if (idx !== null) {
+        e.preventDefault();
+        removeNode(idx);
+        selectedNodeIndex.set(null);
+        return;
+      }
+    }
+
+    // Tool shortcuts (Configuration mode only, no modifier keys)
+    if (!e.ctrlKey && !e.altKey && !e.shiftKey && $mode === "Configuration") {
+      switch (e.key.toLowerCase()) {
+        case "v":
+          e.preventDefault();
+          activeTool.set("select");
+          connectionStartNodeIndex.set(null);
+          return;
+        case "n":
+          e.preventDefault();
+          activeTool.set("addNode");
+          return;
+        case "c":
+          e.preventDefault();
+          activeTool.set("connect");
+          return;
+        case "t":
+          e.preventDefault();
+          activeTool.set("addNote");
+          return;
+      }
     }
 
     if (e.ctrlKey && e.shiftKey && e.key === "C") {
@@ -177,6 +221,7 @@
 
   <div class="relative flex-1 overflow-hidden">
     <TopologyCanvas />
+    <ToolSidebar />
     <InfoPanel />
     <DisplayOptionsPanel />
     <ContextMenu />

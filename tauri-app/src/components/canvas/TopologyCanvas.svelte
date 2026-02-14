@@ -15,6 +15,7 @@
     contextMenu,
     unsavedChanges,
     activeDialog,
+    activeTool,
   } from "../../lib/stores/uiStore";
   import {
     nodes,
@@ -109,6 +110,7 @@
     if (isDragging || isDraggingStickyNote) return "grabbing";
     if ($mode !== "Configuration") return "default";
     if ($groupsModeActive) return "crosshair";
+    if ($activeTool === "addNode" || $activeTool === "connect" || $activeTool === "addNote") return "crosshair";
     return "default";
   });
 
@@ -128,9 +130,22 @@
 
   // --- Mouse handlers ---
 
+  function isEmptyCanvasClick(e: MouseEvent): boolean {
+    const target = e.target as SVGElement;
+    return (
+      target === svgEl ||
+      (target.closest("svg") === svgEl &&
+        !target.closest("[data-type='group']") &&
+        !target.closest("[data-type='node']") &&
+        !target.closest("[data-type='connection']") &&
+        !target.closest("[data-type='sticky']") &&
+        !target.closest("[data-type='waypoint']"))
+    );
+  }
+
   function onMouseDown(e: MouseEvent) {
-    // Right-click: start pan
-    if (e.button === 2) {
+    // Middle-click: always pan (secondary method)
+    if (e.button === 1) {
       e.preventDefault();
       isPanning = true;
       panStartX = e.clientX;
@@ -140,24 +155,54 @@
       return;
     }
 
-    // Left-click in groups mode: start drawing group
-    if (e.button === 0 && $groupsModeActive && $mode === "Configuration") {
-      const { x, y } = screenToWorld(e.clientX, e.clientY);
-      // Check if clicking on an existing group (for selection) - skip if on empty canvas
-      const target = e.target as SVGElement;
-      if (
-        target === svgEl ||
-        target.closest("svg") === svgEl &&
-        !target.closest("[data-type='group']") &&
-        !target.closest("[data-type='node']")
-      ) {
-        isDrawingGroup = true;
-        groupStartX = x;
-        groupStartY = y;
-        groupCurrentX = x;
-        groupCurrentY = y;
-      }
+    // Right-click: context menu only (handled by onContextMenu / node handlers)
+    if (e.button === 2) {
       return;
+    }
+
+    // Left-click handling
+    if (e.button === 0) {
+      // Groups mode: draw group rectangle
+      if ($groupsModeActive && $mode === "Configuration") {
+        if (isEmptyCanvasClick(e)) {
+          const { x, y } = screenToWorld(e.clientX, e.clientY);
+          isDrawingGroup = true;
+          groupStartX = x;
+          groupStartY = y;
+          groupCurrentX = x;
+          groupCurrentY = y;
+        }
+        return;
+      }
+
+      // Tool-specific left-click on empty canvas
+      if ($mode === "Configuration" && isEmptyCanvasClick(e)) {
+        if ($activeTool === "addNode") {
+          const { x, y } = screenToWorld(e.clientX, e.clientY);
+          activeDialog.set("nodeEditor");
+          (window as any).__newNodePosition = { x, y };
+          (window as any).__editNodeIndex = null;
+          activeTool.set("select");
+          return;
+        }
+        if ($activeTool === "addNote") {
+          const { x, y } = screenToWorld(e.clientX, e.clientY);
+          activeDialog.set("stickyNote");
+          (window as any).__stickyNotePosition = { x, y };
+          activeTool.set("select");
+          return;
+        }
+      }
+
+      // Default: left-click on empty canvas = pan
+      if (isEmptyCanvasClick(e)) {
+        isPanning = true;
+        panStartX = e.clientX;
+        panStartY = e.clientY;
+        panStartPanX = $panX;
+        panStartPanY = $panY;
+        return;
+      }
     }
   }
 
@@ -292,6 +337,23 @@
 
   function handleNodeMouseDown(e: MouseEvent, index: number) {
     if (e.button === 0) {
+      // Left click in connect tool mode: connection creation
+      if ($mode === "Configuration" && $activeTool === "connect") {
+        e.preventDefault();
+        if ($connectionStartNodeIndex === null) {
+          connectionStartNodeIndex.set(index);
+        } else if ($connectionStartNodeIndex !== index) {
+          // Open connection editor
+          (window as any).__connectionFromIndex = $connectionStartNodeIndex;
+          (window as any).__connectionToIndex = index;
+          (window as any).__editConnectionIndex = null;
+          activeDialog.set("connectionEditor");
+          connectionStartNodeIndex.set(null);
+          activeTool.set("select");
+        }
+        return;
+      }
+
       // Left click: select + start drag in config mode
       previousSelectedNodeIndex.set($selectedNodeIndex);
       selectedNodeIndex.set(index);
@@ -303,33 +365,6 @@
 
       // Ping on click (both modes)
       pingNode(index);
-    } else if (e.button === 1) {
-      // Middle click: connection creation
-      e.preventDefault();
-      if ($mode !== "Configuration") return;
-
-      if (e.shiftKey) {
-        // Shift+middle: remove connection
-        const currentConns = $connections;
-        const connIdx = currentConns.findIndex(
-          (c) => c.from === index || c.to === index
-        );
-        if (connIdx >= 0) {
-          removeConnection(connIdx);
-        }
-        return;
-      }
-
-      if ($connectionStartNodeIndex === null) {
-        connectionStartNodeIndex.set(index);
-      } else if ($connectionStartNodeIndex !== index) {
-        // Open connection editor
-        (window as any).__connectionFromIndex = $connectionStartNodeIndex;
-        (window as any).__connectionToIndex = index;
-        (window as any).__editConnectionIndex = null;
-        activeDialog.set("connectionEditor");
-        connectionStartNodeIndex.set(null);
-      }
     } else if (e.button === 2) {
       // Right click: context menu
       e.preventDefault();
@@ -375,20 +410,13 @@
     (window as any).__contextGroupIndex = index;
   }
 
-  // Middle-click on connection line: add waypoint
-  function handleConnectionMiddleClick(
+  // Double-click on connection line: add waypoint
+  function handleConnectionDblClick(
     e: MouseEvent,
     connIndex: number
   ) {
     if ($mode !== "Configuration") return;
-    if (e.button !== 1) return;
     e.preventDefault();
-
-    if (e.shiftKey) {
-      // Shift+middle: remove entire connection
-      removeConnection(connIndex);
-      return;
-    }
 
     const { x, y } = screenToWorld(e.clientX, e.clientY);
     const conn = $connections[connIndex];
@@ -413,18 +441,21 @@
     unsavedChanges.set(true);
   }
 
-  // Connection label right-click: edit connection
+  // Connection right-click: show context menu with edit/delete options
   function handleConnectionRightClick(
     e: MouseEvent,
     connIndex: number
   ) {
     if (e.button !== 2) return;
     e.preventDefault();
-    (window as any).__editConnectionIndex = connIndex;
-    const conn = $connections[connIndex];
-    (window as any).__connectionFromIndex = conn.from;
-    (window as any).__connectionToIndex = conn.to;
-    activeDialog.set("connectionEditor");
+    e.stopPropagation();
+    contextMenu.set({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      nodeIndex: null,
+      connectionIndex: connIndex,
+    });
   }
 
   // Build SVG polyline points string
@@ -524,8 +555,8 @@
               showLabels={false}
               showLine={true}
               showHandles={$mode === "Configuration"}
-              onMiddleClick={(e) =>
-                handleConnectionMiddleClick(e, i)}
+              onDblClick={(e) =>
+                handleConnectionDblClick(e, i)}
               onRightClick={(e) =>
                 handleConnectionRightClick(e, i)}
             />
@@ -586,8 +617,8 @@
               showLabels={true}
               showLine={false}
               showHandles={false}
-              onMiddleClick={(e) =>
-                handleConnectionMiddleClick(e, i)}
+              onDblClick={(e) =>
+                handleConnectionDblClick(e, i)}
               onRightClick={(e) =>
                 handleConnectionRightClick(e, i)}
             />

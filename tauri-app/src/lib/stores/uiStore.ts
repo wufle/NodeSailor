@@ -21,6 +21,9 @@ export const previousSelectedNodeIndex = writable<number | null>(null);
 export const groupsModeActive = writable(false);
 export const connectionStartNodeIndex = writable<number | null>(null);
 
+export type ActiveTool = "select" | "addNode" | "connect" | "addNote";
+export const activeTool = writable<ActiveTool>("select");
+
 export const contextMenu = writable({
   visible: false,
   x: 0,

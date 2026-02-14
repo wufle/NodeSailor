@@ -7,7 +7,9 @@
   } from "../../lib/stores/uiStore";
   import {
     nodes,
+    connections,
     removeNode,
+    removeConnection,
     removeStickyNote,
     removeGroup,
     customCommands,
@@ -210,6 +212,38 @@
               {cmd.name}
             </button>
           {/each}
+        {/if}
+      {/if}
+    {:else if $contextMenu.connectionIndex !== null}
+      {@const connIdx = $contextMenu.connectionIndex}
+      {@const conn = $connections[connIdx]}
+      {#if conn}
+        <button
+          class="block w-full text-left px-4 py-2 text-sm hover:opacity-80"
+          style:color={colors.BUTTON_TEXT}
+          onclick={() =>
+            handleAction(() => {
+              (window as any).__editConnectionIndex = connIdx;
+              (window as any).__connectionFromIndex = conn.from;
+              (window as any).__connectionToIndex = conn.to;
+              activeDialog.set("connectionEditor");
+            })}
+        >
+          Edit Connection
+        </button>
+        {#if $mode === "Configuration"}
+          <div
+            class="border-t"
+            style:border-color={colors.BORDER_COLOR}
+          ></div>
+          <button
+            class="block w-full text-left px-4 py-2 text-sm hover:opacity-80"
+            style:color="#ef4444"
+            onclick={() =>
+              handleAction(() => removeConnection(connIdx))}
+          >
+            Delete Connection
+          </button>
         {/if}
       {/if}
     {:else if (window as any).__contextStickyIndex !== undefined}

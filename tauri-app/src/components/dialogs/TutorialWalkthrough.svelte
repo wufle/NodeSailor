@@ -16,12 +16,12 @@
     {
       title: "Creating Your First Node",
       imagePath: "/screenshots/configuration_guidance/c1_new_node.png",
-      description: "In Configuration mode, double-click anywhere on the canvas to create a new node.",
+      description: "In Configuration mode, create nodes using the Add Node tool or by double-clicking the canvas.",
       points: [
-        "Double-click an empty area to open the node editor",
-        "Enter a name for your node",
-        "Add IP addresses for different VLANs",
-        "Optionally add Remote Desktop, file path, or web URL"
+        "Select the Add Node tool from the side toolbar (or press N)",
+        "Click anywhere on the canvas to place a node",
+        "You can also double-click an empty area as a shortcut",
+        "Enter a name, IP addresses, and optional RDP/file/web URLs"
       ]
     },
     {
@@ -29,10 +29,10 @@
       imagePath: "/screenshots/configuration_guidance/c2_new_connection.png",
       description: "Connect nodes together to visualize your network topology.",
       points: [
-        "Middle-click on the first node",
-        "Middle-click on the second node to create a connection",
-        "Shift + Middle-click to remove connections",
-        "Right-click connections to edit labels"
+        "Select the Connect tool from the side toolbar (or press C)",
+        "Click the first node, then click the second node",
+        "Right-click a connection to edit or delete it",
+        "Double-click a connection line to add a waypoint"
       ]
     },
     {
@@ -95,7 +95,8 @@
       imagePath: "/screenshots/operator_guidance/o4_navigation_guidance.png",
       description: "Navigate the canvas efficiently.",
       points: [
-        "Right-click and drag to pan the canvas",
+        "Left-click and drag on empty canvas to pan",
+        "Middle-click and drag to pan (alternative)",
         "Mouse wheel to zoom in and out",
         "Arrow keys for precise panning"
       ]

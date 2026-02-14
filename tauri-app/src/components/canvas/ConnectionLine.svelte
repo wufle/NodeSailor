@@ -5,6 +5,7 @@
     interpolatePolyline,
   } from "../../lib/utils/geometry";
 
+
   let {
     connection,
     index,
@@ -16,7 +17,7 @@
     showLabels,
     showLine = true,
     showHandles,
-    onMiddleClick,
+    onDblClick,
     onRightClick,
   }: {
     connection: NetworkConnection;
@@ -29,7 +30,7 @@
     showLabels: boolean;
     showLine?: boolean;
     showHandles: boolean;
-    onMiddleClick: (e: MouseEvent) => void;
+    onDblClick: (e: MouseEvent) => void;
     onRightClick: (e: MouseEvent) => void;
   } = $props();
 
@@ -67,6 +68,7 @@
       });
     }
   });
+
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -82,9 +84,10 @@
       stroke="transparent"
       stroke-width="10"
       style:cursor="pointer"
-      onmousedown={onMiddleClick}
+      ondblclick={onDblClick}
       oncontextmenu={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         onRightClick(e);
       }}
     />
@@ -122,6 +125,7 @@
       style:cursor="pointer"
       oncontextmenu={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         onRightClick(e);
       }}
     >
