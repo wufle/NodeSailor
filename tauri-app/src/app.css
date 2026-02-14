@@ -23,6 +23,19 @@
   --color-group-text: #003366;
 }
 
+.tooltip {
+  position: absolute;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  white-space: nowrap;
+  z-index: 10000;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  opacity: 0.98;
+}
+
 .dark {
   --color-node-default: #28376c;
   --color-frame-bg: #0c0f14;

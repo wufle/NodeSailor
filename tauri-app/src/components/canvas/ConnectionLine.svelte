@@ -4,6 +4,7 @@
     buildPolylinePoints,
     interpolatePolyline,
   } from "../../lib/utils/geometry";
+  import { tooltip } from "../../lib/actions/tooltip";
 
 
   let {
@@ -72,9 +73,8 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<g data-type="connection" data-index={index}>
+<g data-type="connection" data-index={index} use:tooltip={connection.connectioninfo}>
   {#if connection.connectioninfo}
-    <title>{connection.connectioninfo}</title>
   {/if}
   {#if showLine}
     <!-- Hit area (wider invisible line for easier clicking) -->

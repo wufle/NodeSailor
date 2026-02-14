@@ -666,3 +666,4 @@
 
 <!-- Canvas status bar -->
 <CanvasStatusBar />
+
