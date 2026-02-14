@@ -66,7 +66,7 @@
     style:border-bottom-right-radius="6px"
   >
     {#each tools as tool}
-      <TooltipWrapper text={tool.tooltip}>
+      <TooltipWrapper text={tool.tooltip} position="right">
         <button
           class="w-9 h-9 flex items-center justify-center rounded transition-colors {isIronclad ? 'ironclad-btn' : ''}"
           style:background-color={$activeTool === tool.id ? colors.BUTTON_ACTIVE_BG : colors.BUTTON_BG}
