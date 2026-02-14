@@ -3,36 +3,7 @@ import { writable, derived } from "svelte/store";
 export type BuiltInTheme = "light" | "dark" | "ironclad";
 export type ThemeName = BuiltInTheme | (string & {});
 
-function createRefreshableStore<T>(initial: T) {
-  let value = initial;
-  const subscribers = new Set<(v: T) => void>();
-
-  function notify() {
-    for (const fn of subscribers) fn(value);
-  }
-
-  return {
-    subscribe(fn: (v: T) => void) {
-      subscribers.add(fn);
-      fn(value);
-      return () => { subscribers.delete(fn); };
-    },
-    set(v: T) {
-      value = v;
-      notify();
-    },
-    update(fn: (v: T) => T) {
-      value = fn(value);
-      notify();
-    },
-    /** Force all subscribers to re-evaluate, even if value unchanged */
-    refresh() {
-      notify();
-    },
-  };
-}
-
-export const currentTheme = createRefreshableStore<ThemeName>("dark");
+export const currentTheme = writable<ThemeName>("dark");
 export const isDark = derived(currentTheme, (t) => t !== "light");
 export const mode = writable<"Operator" | "Configuration">("Operator");
 export const showStartMenu = writable(false);

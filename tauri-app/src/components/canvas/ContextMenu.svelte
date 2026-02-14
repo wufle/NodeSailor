@@ -12,7 +12,7 @@
     removeGroup,
     customCommands,
   } from "../../lib/stores/networkStore";
-  import { getThemeColors } from "../../lib/theme/colors";
+  import { effectiveColors } from "../../lib/theme/colors";
   import {
     openRemoteDesktop,
     openFileExplorer,
@@ -21,7 +21,7 @@
   } from "../../lib/actions/systemActions";
   import type { CustomCommand } from "../../lib/types/network";
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
   let isIronclad = $derived($currentTheme === "ironclad");
 
   let menuX = $state(0);

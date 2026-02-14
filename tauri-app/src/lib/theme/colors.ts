@@ -1,3 +1,5 @@
+import { writable, derived } from "svelte/store";
+import { currentTheme } from "../stores/uiStore";
 import type { BuiltInTheme, ThemeName } from "../stores/uiStore";
 
 export interface ThemeColors {
@@ -121,11 +123,24 @@ const builtInThemes: Record<BuiltInTheme, ThemeColors> = {
 let customThemes: Record<string, ThemeColors> = {};
 let colorOverrides: Record<string, Partial<ThemeColors>> = {};
 
+// Version counter — bump this to make effectiveColors re-derive
+const colorVersion = writable(0);
+
+function bumpVersion() {
+  colorVersion.update((v) => v + 1);
+}
+
 export function getThemeColors(theme: ThemeName): ThemeColors {
   const base = customThemes[theme] ?? builtInThemes[theme as BuiltInTheme] ?? darkTheme;
   const custom = colorOverrides[theme];
   return custom ? { ...base, ...custom } : base;
 }
+
+/** Reactive store: re-derives whenever theme or color overrides change */
+export const effectiveColors = derived(
+  [currentTheme, colorVersion],
+  ([theme, _v]) => getThemeColors(theme),
+);
 
 export function isBuiltInTheme(name: string): boolean {
   return name in builtInThemes;
@@ -136,6 +151,7 @@ export function isBuiltInTheme(name: string): boolean {
 export function setColorOverride(theme: ThemeName, key: keyof ThemeColors, value: string) {
   if (!colorOverrides[theme]) colorOverrides[theme] = {};
   colorOverrides[theme]![key] = value;
+  bumpVersion();
 }
 
 export function resetColorOverrides(theme?: ThemeName) {
@@ -144,10 +160,12 @@ export function resetColorOverrides(theme?: ThemeName) {
   } else {
     colorOverrides = {};
   }
+  bumpVersion();
 }
 
 export function loadColorOverrides(overrides: Record<string, Partial<ThemeColors>>) {
   colorOverrides = overrides;
+  bumpVersion();
 }
 
 export function getColorOverrides(): Record<string, Partial<ThemeColors>> {
@@ -158,15 +176,18 @@ export function getColorOverrides(): Record<string, Partial<ThemeColors>> {
 
 export function registerCustomTheme(name: string, colors: ThemeColors) {
   customThemes[name] = { ...colors };
+  bumpVersion();
 }
 
 export function removeCustomTheme(name: string) {
   delete customThemes[name];
   delete colorOverrides[name];
+  bumpVersion();
 }
 
 export function loadCustomThemes(themes: Record<string, ThemeColors>) {
   customThemes = themes;
+  bumpVersion();
 }
 
 export function getCustomThemeNames(): string[] {

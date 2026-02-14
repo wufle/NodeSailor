@@ -11,10 +11,10 @@
     vlanLabelOrder,
     pingResults,
   } from "../../lib/stores/networkStore";
-  import { getThemeColors } from "../../lib/theme/colors";
+  import { effectiveColors } from "../../lib/theme/colors";
   import { getPopulatedVlans } from "../../lib/utils/vlanUtils";
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
   let isIronclad = $derived($currentTheme === "ironclad");
 
   // Show hovered node if hovering, otherwise show selected node

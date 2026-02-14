@@ -2,7 +2,7 @@
   import DialogWrapper from "./DialogWrapper.svelte";
   import { currentTheme, activeDialog } from "../../lib/stores/uiStore";
   import { settings } from "../../lib/stores/settingsStore";
-  import { getThemeColors } from "../../lib/theme/colors";
+  import { effectiveColors } from "../../lib/theme/colors";
   import { invoke } from "@tauri-apps/api/core";
 
   interface TutorialStep {
@@ -103,7 +103,7 @@
   ];
 
   let currentStep = $state(0);
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
   let isIronclad = $derived($currentTheme === "ironclad");
 
 

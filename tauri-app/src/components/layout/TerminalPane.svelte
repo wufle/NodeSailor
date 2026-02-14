@@ -1,6 +1,6 @@
 <script lang="ts">
   import { currentTheme } from "../../lib/stores/uiStore";
-  import { getThemeColors } from "../../lib/theme/colors";
+  import { effectiveColors } from "../../lib/theme/colors";
   import {
     terminalEntries,
     terminalVisible,
@@ -9,7 +9,7 @@
   } from "../../lib/stores/terminalStore";
   import type { TerminalEntryType } from "../../lib/stores/terminalStore";
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
   let isIronclad = $derived($currentTheme === "ironclad");
   let isDarkOrIronclad = $derived($currentTheme === "dark" || $currentTheme === "ironclad");
 

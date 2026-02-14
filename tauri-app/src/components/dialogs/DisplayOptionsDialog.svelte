@@ -4,6 +4,7 @@
   import type { ThemeName } from "../../lib/stores/uiStore";
   import {
     getThemeColors,
+    effectiveColors,
     setColorOverride,
     resetColorOverrides,
     getColorOverrides,
@@ -50,7 +51,7 @@
     GROUP_OUTLINE: "Group Outline",
   };
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
   let isIronclad = $derived($currentTheme === "ironclad");
   let themeKeys = $derived(Object.keys(colors) as (keyof ThemeColors)[]);
   let customNames = $state(getCustomThemeNames());
@@ -80,12 +81,10 @@
 
   function handleColorChange(key: keyof ThemeColors, value: string) {
     setColorOverride($currentTheme, key, value);
-    currentTheme.refresh();
   }
 
   async function handleReset() {
     resetColorOverrides($currentTheme);
-    currentTheme.refresh();
     await saveOverrides();
   }
 

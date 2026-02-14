@@ -5,7 +5,7 @@
     showStartMenu,
     activeDialog,
   } from "../../lib/stores/uiStore";
-  import { getThemeColors } from "../../lib/theme/colors";
+  import { effectiveColors } from "../../lib/theme/colors";
   import {
     loadFile,
     saveFile,
@@ -15,7 +15,7 @@
   import { settings } from "../../lib/stores/settingsStore";
   import { invoke } from "@tauri-apps/api/core";
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
   let isIronclad = $derived($currentTheme === "ironclad");
 
   function close() {

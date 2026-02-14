@@ -3,7 +3,7 @@
   import { get } from "svelte/store";
   import { isDark, currentTheme, mode, showStartMenu, unsavedChanges, activeDialog, panX, panY } from "./lib/stores/uiStore";
   import type { ThemeName } from "./lib/stores/uiStore";
-  import { getThemeColors, loadColorOverrides, loadCustomThemes } from "./lib/theme/colors";
+  import { effectiveColors, loadColorOverrides, loadCustomThemes } from "./lib/theme/colors";
   import TopologyCanvas from "./components/canvas/TopologyCanvas.svelte";
   import Toolbar from "./components/layout/Toolbar.svelte";
   import InfoPanel from "./components/layout/InfoPanel.svelte";
@@ -122,7 +122,6 @@
       if (loadedSettings.last_custom_theme) {
         currentTheme.set(loadedSettings.last_custom_theme);
       }
-      currentTheme.refresh();
     } catch (e) {
       console.error("Failed to load settings:", e);
     }
@@ -150,7 +149,7 @@
     }
   });
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
 
   function onContextMenu(e: MouseEvent) {
     const target = e.target as HTMLElement;

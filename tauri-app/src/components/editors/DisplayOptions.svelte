@@ -2,9 +2,9 @@
   import DialogWrapper from "../dialogs/DialogWrapper.svelte";
   import { currentTheme, activeDialog } from "../../lib/stores/uiStore";
   import { displayOptions } from "../../lib/stores/networkStore";
-  import { getThemeColors } from "../../lib/theme/colors";
+  import { effectiveColors } from "../../lib/theme/colors";
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
 
   function close() {
     activeDialog.set(null);

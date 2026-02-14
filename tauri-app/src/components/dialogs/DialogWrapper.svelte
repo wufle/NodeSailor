@@ -1,6 +1,6 @@
 <script lang="ts">
   import { isDark, currentTheme, activeDialog } from "../../lib/stores/uiStore";
-  import { getThemeColors } from "../../lib/theme/colors";
+  import { effectiveColors } from "../../lib/theme/colors";
   import type { Snippet } from "svelte";
 
   let {
@@ -15,7 +15,7 @@
     children: Snippet;
   } = $props();
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
   let isIronclad = $derived($currentTheme === "ironclad");
 
   // Drag state

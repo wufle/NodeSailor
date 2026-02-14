@@ -7,11 +7,11 @@
     activeDialog,
     showStartMenu,
   } from "../../lib/stores/uiStore";
-  import { getThemeColors } from "../../lib/theme/colors";
+  import { effectiveColors } from "../../lib/theme/colors";
   import { pingAllNodes, clearPingResults } from "../../lib/actions/pingActions";
   import TooltipWrapper from "../common/TooltipWrapper.svelte";
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
   let isIronclad = $derived($currentTheme === "ironclad");
   let valveTurning = $state(false);
 

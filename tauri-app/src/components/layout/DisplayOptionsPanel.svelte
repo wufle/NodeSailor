@@ -1,9 +1,9 @@
 <script lang="ts">
   import { zoom, panX, panY, zoomPercent, currentTheme } from "../../lib/stores/uiStore";
   import { displayOptions, vlanLabels } from "../../lib/stores/networkStore";
-  import { getThemeColors } from "../../lib/theme/colors";
+  import { effectiveColors } from "../../lib/theme/colors";
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
   let isIronclad = $derived($currentTheme === "ironclad");
 
   let isExpanded = $state(false);

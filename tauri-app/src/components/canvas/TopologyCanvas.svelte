@@ -31,7 +31,7 @@
     pingResults,
     pingAnimationStates,
   } from "../../lib/stores/networkStore";
-  import { getThemeColors } from "../../lib/theme/colors";
+  import { effectiveColors } from "../../lib/theme/colors";
   import { getGroupColors } from "../../lib/theme/presets";
   import { groupColorPresets } from "../../lib/stores/networkStore";
   import {
@@ -74,7 +74,7 @@
   let isDraggingStickyNote = $state(false);
   let dragStickyIndex: number | null = null;
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
 
   // Filter nodes based on VLAN visibility
   function isNodeVisible(node: typeof $nodes[0]): boolean {

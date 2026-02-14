@@ -1,8 +1,8 @@
 <script lang="ts">
   import { zoom, panX, panY, isDark, currentTheme, zoomPercent } from "../../lib/stores/uiStore";
-  import { getThemeColors } from "../../lib/theme/colors";
+  import { effectiveColors } from "../../lib/theme/colors";
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
   let isIronclad = $derived($currentTheme === "ironclad");
 
   function zoomIn() {

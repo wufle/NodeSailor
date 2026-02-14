@@ -1,9 +1,9 @@
 <script lang="ts">
   import { mode, groupsModeActive, currentTheme } from "../../lib/stores/uiStore";
   import { settings } from "../../lib/stores/settingsStore";
-  import { getThemeColors } from "../../lib/theme/colors";
+  import { effectiveColors } from "../../lib/theme/colors";
 
-  let colors = $derived(getThemeColors($currentTheme));
+  let colors = $derived($effectiveColors);
 
   // Only show if enabled in settings (default true)
   let visible = $derived($settings.show_canvas_status_bar !== false);
