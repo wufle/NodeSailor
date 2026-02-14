@@ -318,12 +318,6 @@
       return;
     }
 
-    // Create node
-    const { x, y } = screenToWorld(e.clientX, e.clientY);
-    // Open node editor dialog
-    activeDialog.set("nodeEditor");
-    (window as any).__newNodePosition = { x, y };
-    (window as any).__editNodeIndex = null;
   }
 
   function onContextMenu(e: MouseEvent) {
