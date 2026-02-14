@@ -3,7 +3,7 @@
   import { get } from "svelte/store";
   import { isDark, currentTheme, mode, showStartMenu, unsavedChanges, activeDialog, panX, panY } from "./lib/stores/uiStore";
   import type { ThemeName } from "./lib/stores/uiStore";
-  import { getThemeColors } from "./lib/theme/colors";
+  import { getThemeColors, loadColorOverrides, loadCustomThemes } from "./lib/theme/colors";
   import TopologyCanvas from "./components/canvas/TopologyCanvas.svelte";
   import Toolbar from "./components/layout/Toolbar.svelte";
   import InfoPanel from "./components/layout/InfoPanel.svelte";
@@ -36,16 +36,12 @@
   $effect(() => {
     const el = document.documentElement;
     el.classList.remove("light", "dark", "theme-ironclad");
-    switch ($currentTheme) {
-      case "ironclad":
-        el.classList.add("theme-ironclad");
-        break;
-      case "dark":
-        el.classList.add("dark");
-        break;
-      default:
-        el.classList.add("light");
-        break;
+    if ($currentTheme === "ironclad") {
+      el.classList.add("theme-ironclad");
+    } else if ($currentTheme === "light") {
+      el.classList.add("light");
+    } else {
+      el.classList.add("dark");
     }
   });
 
@@ -95,6 +91,9 @@
     } else if (e.key === "F1") {
       e.preventDefault();
       activeDialog.set("help");
+    } else if (e.ctrlKey && e.altKey && e.key === "I") {
+      e.preventDefault();
+      currentTheme.set("ironclad");
     } else if (e.ctrlKey && e.key === "`") {
       e.preventDefault();
       terminalVisible.update((v) => !v);
@@ -104,8 +103,18 @@
   onMount(async () => {
     // Load settings first
     try {
-      const loadedSettings = await invoke("load_settings");
-      settings.set(loadedSettings as any);
+      const loadedSettings = await invoke("load_settings") as any;
+      settings.set(loadedSettings);
+      if (loadedSettings.custom_themes) {
+        loadCustomThemes(loadedSettings.custom_themes);
+      }
+      if (loadedSettings.custom_theme_colors) {
+        loadColorOverrides(loadedSettings.custom_theme_colors);
+      }
+      if (loadedSettings.last_custom_theme) {
+        currentTheme.set(loadedSettings.last_custom_theme);
+      }
+      currentTheme.refresh();
     } catch (e) {
       console.error("Failed to load settings:", e);
     }

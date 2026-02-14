@@ -9,6 +9,9 @@ export interface AppSettings {
   show_canvas_status_bar?: boolean; // Default true for new users
   auto_show_tutorial?: boolean; // Default true for first launch
   disable_strobe_effects?: boolean;
+  custom_theme_colors?: Record<string, Record<string, string>>;
+  custom_themes?: Record<string, Record<string, string>>;
+  last_custom_theme?: string;
 }
 
 export const settings = writable<AppSettings>({});

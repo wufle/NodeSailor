@@ -1,4 +1,4 @@
-import type { ThemeName } from "../stores/uiStore";
+import type { BuiltInTheme, ThemeName } from "../stores/uiStore";
 
 export interface ThemeColors {
   FRAME_BG: string;
@@ -112,12 +112,67 @@ const ironcladTheme: ThemeColors = {
   GROUP_OUTLINE: "#e09240",
 };
 
-const themes: Record<ThemeName, ThemeColors> = {
+const builtInThemes: Record<BuiltInTheme, ThemeColors> = {
   light: lightTheme,
   dark: darkTheme,
   ironclad: ironcladTheme,
 };
 
+let customThemes: Record<string, ThemeColors> = {};
+let colorOverrides: Record<string, Partial<ThemeColors>> = {};
+
 export function getThemeColors(theme: ThemeName): ThemeColors {
-  return themes[theme] ?? darkTheme;
+  const base = customThemes[theme] ?? builtInThemes[theme as BuiltInTheme] ?? darkTheme;
+  const custom = colorOverrides[theme];
+  return custom ? { ...base, ...custom } : base;
+}
+
+export function isBuiltInTheme(name: string): boolean {
+  return name in builtInThemes;
+}
+
+// --- Color overrides (live editing on top of any theme) ---
+
+export function setColorOverride(theme: ThemeName, key: keyof ThemeColors, value: string) {
+  if (!colorOverrides[theme]) colorOverrides[theme] = {};
+  colorOverrides[theme]![key] = value;
+}
+
+export function resetColorOverrides(theme?: ThemeName) {
+  if (theme) {
+    delete colorOverrides[theme];
+  } else {
+    colorOverrides = {};
+  }
+}
+
+export function loadColorOverrides(overrides: Record<string, Partial<ThemeColors>>) {
+  colorOverrides = overrides;
+}
+
+export function getColorOverrides(): Record<string, Partial<ThemeColors>> {
+  return colorOverrides;
+}
+
+// --- Custom themes (saved as full theme presets) ---
+
+export function registerCustomTheme(name: string, colors: ThemeColors) {
+  customThemes[name] = { ...colors };
+}
+
+export function removeCustomTheme(name: string) {
+  delete customThemes[name];
+  delete colorOverrides[name];
+}
+
+export function loadCustomThemes(themes: Record<string, ThemeColors>) {
+  customThemes = themes;
+}
+
+export function getCustomThemeNames(): string[] {
+  return Object.keys(customThemes);
+}
+
+export function getCustomThemes(): Record<string, ThemeColors> {
+  return customThemes;
 }
