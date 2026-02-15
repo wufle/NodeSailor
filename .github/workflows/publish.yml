@@ -31,13 +31,13 @@ jobs:
 
       - name: Get Release Version
         id: get_version
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+        run: echo "release_version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
 
       - name: Read Release Notes
         id: read_release_notes
         run: |
           echo "RELEASE_NOTES_BODY<<EOF" >> $GITHUB_ENV
-          cat RELEASE_NOTES_v${{ env.RELEASE_VERSION }}.md >> $GITHUB_ENV
+          cat RELEASE_NOTES_v${{ steps.get_version.outputs.release_version }}.md >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Install dependencies (Ubuntu only)
