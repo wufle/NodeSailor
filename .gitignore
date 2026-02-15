@@ -23,3 +23,4 @@ nul
 node_modules/
 tauri-app/dist/
 release.py
+version_bumper.py
