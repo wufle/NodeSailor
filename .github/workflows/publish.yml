@@ -29,22 +29,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get Release Version
-        id: get_version
-        run: echo "release_version=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-
       - name: Read Release Notes
         id: read_release_notes
         uses: actions/github-script@v6
         with:
           script: |
             const fs = require('fs');
-            const version = process.env.RELEASE_VERSION_FOR_SCRIPT;
+            const version = '${{ github.ref_name }}';
             const filePath = `RELEASE_NOTES_v${version}.md`;
             const content = fs.readFileSync(filePath, 'utf8');
             core.setOutput('release_notes_body', content);
-        env:
-          RELEASE_VERSION_FOR_SCRIPT: ${{ steps.get_version.outputs.release_version }}
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
