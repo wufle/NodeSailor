@@ -97,7 +97,7 @@
       NS
     </div>
     <div class="text-xs opacity-60" style:color={colors.BUTTON_TEXT}>
-      Version 1.1.1
+      Version 1.1.2
     </div>
   </div>
 
