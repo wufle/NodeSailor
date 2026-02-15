@@ -12,7 +12,7 @@ _internal/custom_commands.json
 example network test.json
 .roomodes
 __pycache__/
-*.pyc
+
 data/NodeSailor_settings.ini
 data/custom_commands.json
 example network7.json
@@ -22,3 +22,4 @@ data/custom_commands.json
 nul
 node_modules/
 tauri-app/dist/
+release.py
