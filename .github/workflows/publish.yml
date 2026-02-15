@@ -35,7 +35,10 @@ jobs:
 
       - name: Read Release Notes
         id: read_release_notes
-        run: echo "RELEASE_NOTES_BODY=$(cat RELEASE_NOTES_v${{ env.RELEASE_VERSION }}.md)" >> $GITHUB_ENV
+        run: |
+          echo "RELEASE_NOTES_BODY<<EOF" >> $GITHUB_ENV
+          cat RELEASE_NOTES_v${{ env.RELEASE_VERSION }}.md >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
