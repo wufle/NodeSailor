@@ -36,8 +36,11 @@ jobs:
           script: |
             const fs = require('fs');
             const version = '${{ github.ref_name }}';
+            core.info(`Debug: Raw version from github.ref_name: ${version}`);
             const cleanedVersion = version.startsWith('v') ? version.substring(1) : version;
+            core.info(`Debug: Cleaned version: ${cleanedVersion}`);
             const filePath = `RELEASE_NOTES_v${cleanedVersion}.md`;
+            core.info(`Debug: File path being checked: ${filePath}`);
             const content = fs.readFileSync(filePath, 'utf8');
             core.setOutput('release_notes_body', content);
 
