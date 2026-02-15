@@ -127,7 +127,7 @@
 
     if (e.ctrlKey && e.shiftKey && e.key === "C") {
       e.preventDefault();
-      const cycle: ThemeName[] = ["dark", "ironclad", "light"];
+      const cycle: ThemeName[] = ["dark", "light"];
       currentTheme.update((t) => {
         const idx = cycle.indexOf(t);
         return cycle[(idx + 1) % cycle.length];
@@ -143,7 +143,7 @@
     } else if (e.key === "F1") {
       e.preventDefault();
       activeDialog.set("help");
-    } else if (e.ctrlKey && e.altKey && e.key === "I") {
+    } else if (e.ctrlKey && e.key === "I") {
       e.preventDefault();
       currentTheme.set("ironclad");
     } else if (e.ctrlKey && e.key === "`") {
