@@ -31,19 +31,20 @@ jobs:
 
       - name: Get Release Version
         id: get_version
-        run: echo "release_version=$(echo "${GITHUB_REF}" | sed 's/^refs\/tags\/v//')" >> "$GITHUB_OUTPUT"
-        shell: bash
+        run: echo "release_version=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
 
       - name: Read Release Notes
         id: read_release_notes
-        run: |
-          RELEASE_VERSION="${{ steps.get_version.outputs.release_version }}"
-          echo "Debug: Release version is ${RELEASE_VERSION}"
-          DELIMITER=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13)
-          echo "release_notes_body<<$DELIMITER" >> "$GITHUB_OUTPUT"
-          cat RELEASE_NOTES_v"${RELEASE_VERSION}".md >> "$GITHUB_OUTPUT"
-          echo "$DELIMITER" >> "$GITHUB_OUTPUT"
-        shell: bash
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const version = process.env.RELEASE_VERSION_FOR_SCRIPT;
+            const filePath = `RELEASE_NOTES_v${version}.md`;
+            const content = fs.readFileSync(filePath, 'utf8');
+            core.setOutput('release_notes_body', content);
+        env:
+          RELEASE_VERSION_FOR_SCRIPT: ${{ steps.get_version.outputs.release_version }}
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
