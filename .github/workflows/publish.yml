@@ -37,10 +37,13 @@ jobs:
       - name: Read Release Notes
         id: read_release_notes
         run: |
-          echo "Debug: Release version is ${{ steps.get_version.outputs.release_version }}"
-          echo "RELEASE_NOTES_BODY<<EOF" >> $GITHUB_ENV
-          cat RELEASE_NOTES_v${{ steps.get_version.outputs.release_version }}.md >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          RELEASE_VERSION="${{ steps.get_version.outputs.release_version }}"
+          echo "Debug: Release version is ${RELEASE_VERSION}"
+          DELIMITER=$(dd if=/dev/urandom bs=8 count=1 2>/dev/null | base64)
+          echo "RELEASE_NOTES_BODY<<$DELIMITER" >> $GITHUB_ENV
+          cat RELEASE_NOTES_v"${RELEASE_VERSION}".md >> $GITHUB_ENV
+          echo "$DELIMITER" >> $GITHUB_ENV
+        shell: bash
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
