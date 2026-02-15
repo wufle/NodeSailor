@@ -4,7 +4,7 @@
 
 NodeSailor is a network topology mapping, configuration, and testing tool designed for visualizing and managing network infrastructures. It provides an intuitive GUI for creating network diagrams, managing nodes and connections, and performing basic network testing operations.
 
-**Current Version**: 1.0.2
+**Current Version**: 1.1.1
 **Original Implementation**: Python/Tkinter
 **Current Implementation**: Tauri 2.x + Svelte 5 + Rust
 
