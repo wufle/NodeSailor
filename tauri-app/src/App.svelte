@@ -143,7 +143,7 @@
     } else if (e.key === "F1") {
       e.preventDefault();
       activeDialog.set("help");
-    } else if (e.ctrlKey && e.key === "I") {
+    } else if (e.shiftKey && e.key === "I") {
       e.preventDefault();
       currentTheme.set("ironclad");
     } else if (e.ctrlKey && e.key === "`") {
