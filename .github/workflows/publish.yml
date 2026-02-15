@@ -31,7 +31,8 @@ jobs:
 
       - name: Get Release Version
         id: get_version
-        run: echo "release_version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+        run: echo "release_version=$(echo "${GITHUB_REF}" | sed 's/^refs\/tags\/v//')" >> "$GITHUB_OUTPUT"
+        shell: bash
 
       - name: Read Release Notes
         id: read_release_notes
