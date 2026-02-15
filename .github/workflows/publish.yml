@@ -40,6 +40,7 @@ jobs:
           RELEASE_VERSION="${{ steps.get_version.outputs.release_version }}"
           echo "Debug: Release version is ${RELEASE_VERSION}"
           echo "release_notes_body=$(cat RELEASE_NOTES_v"${RELEASE_VERSION}".md)" >> "$GITHUB_OUTPUT"
+        shell: bash
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
