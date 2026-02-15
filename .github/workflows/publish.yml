@@ -39,7 +39,10 @@ jobs:
         run: |
           RELEASE_VERSION="${{ steps.get_version.outputs.release_version }}"
           echo "Debug: Release version is ${RELEASE_VERSION}"
-          echo "release_notes_body=$(cat RELEASE_NOTES_v"${RELEASE_VERSION}".md)" >> "$GITHUB_OUTPUT"
+          DELIMITER=$(dd if=/dev/urandom bs=8 count=1 2>/dev/null | base64)
+          echo "release_notes_body<<$DELIMITER" >> "$GITHUB_OUTPUT"
+          cat RELEASE_NOTES_v"${RELEASE_VERSION}".md >> "$GITHUB_OUTPUT"
+          echo "$DELIMITER" >> "$GITHUB_OUTPUT"
         shell: bash
 
       - name: Install dependencies (Ubuntu only)
