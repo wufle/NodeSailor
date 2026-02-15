@@ -39,7 +39,7 @@ jobs:
         run: |
           RELEASE_VERSION="${{ steps.get_version.outputs.release_version }}"
           echo "Debug: Release version is ${RELEASE_VERSION}"
-          DELIMITER=$(dd if=/dev/urandom bs=8 count=1 2>/dev/null | base64)
+          DELIMITER=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13)
           echo "release_notes_body<<$DELIMITER" >> "$GITHUB_OUTPUT"
           cat RELEASE_NOTES_v"${RELEASE_VERSION}".md >> "$GITHUB_OUTPUT"
           echo "$DELIMITER" >> "$GITHUB_OUTPUT"
