@@ -169,8 +169,6 @@
   }
 
   onMount(async () => {
-    registerCustomTheme("matrix", matrixTheme);
-
     // Load settings first
     try {
       const loadedSettings = await invoke("load_settings") as any;
@@ -187,6 +185,9 @@
     } catch (e) {
       console.error("Failed to load settings:", e);
     }
+
+    // Register matrix easter egg theme after settings load (loadCustomThemes replaces all custom themes)
+    registerCustomTheme("matrix", matrixTheme);
 
     // Auto-load last file if enabled
     const currentSettings = get(settings);

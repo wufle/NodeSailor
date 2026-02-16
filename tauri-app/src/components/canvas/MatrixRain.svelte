@@ -1,36 +1,32 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { terminalEntries } from "../../lib/stores/terminalStore";
+  import type { TerminalEntry } from "../../lib/stores/terminalStore";
 
   let canvasEl: HTMLCanvasElement | undefined = $state(undefined);
   let animationId: number = 0;
 
-  // Fallback characters when no terminal output exists
-  const FALLBACK_CHARS =
-    "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン" +
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
+  const FONT_SIZE = 13;
+  const COLUMN_WIDTH = 10;
+  const FRAME_DELAY = 1000 / 30;
 
-  const FONT_SIZE = 14;
-  const COLUMN_WIDTH = 18;
-  const FRAME_DELAY = 1000 / 30; // ~30 FPS
-
-  // Text pool built from terminal entries
-  let textPool: string = "";
+  // Terminal messages displayed vertically in columns
+  let messages: string[] = [];
   const unsubscribe = terminalEntries.subscribe((entries) => {
-    if (entries.length === 0) {
-      textPool = "";
-      return;
-    }
-    // Concatenate all terminal text into one long string
-    textPool = entries
-      .map((e) => [e.command, e.description, e.result].filter(Boolean).join(" "))
-      .join(" | ");
+    messages = entries.flatMap((e: TerminalEntry) => {
+      const parts: string[] = [];
+      if (e.command) parts.push(e.command);
+      if (e.description) parts.push(e.description);
+      if (e.result) parts.push(`[${e.result}]`);
+      return parts;
+    });
   });
 
   interface Drop {
-    y: number; // current row position
-    textOffset: number; // position within text pool or fallback
-    speed: number; // rows per tick (randomized)
+    y: number;
+    msgIndex: number;  // which message this column is displaying
+    charIndex: number; // position within that message
+    speed: number;
   }
 
   let drops: Drop[] = [];
@@ -41,22 +37,27 @@
     drops = [];
     for (let i = 0; i < numColumns; i++) {
       drops.push({
-        y: Math.random() * -50,
-        textOffset: Math.floor(Math.random() * 1000),
-        speed: 0.5 + Math.random() * 0.8,
+        y: Math.random() * -60,
+        msgIndex: Math.floor(Math.random() * Math.max(1, messages.length)),
+        charIndex: 0,
+        speed: 0.3 + Math.random() * 0.7,
       });
     }
   }
 
   function getChar(drop: Drop): string {
-    const source = textPool || FALLBACK_CHARS;
-    const idx = Math.floor(Math.abs(drop.textOffset)) % source.length;
-    return source[idx];
+    if (messages.length === 0) {
+      // Fallback: random chars when no terminal output yet
+      const fallback = "NODESAILOR>_PING...TRACERT...CONNECT...TIMEOUT...OK";
+      return fallback[Math.floor(Math.abs(drop.charIndex)) % fallback.length];
+    }
+    const msg = messages[drop.msgIndex % messages.length];
+    return msg[Math.floor(Math.abs(drop.charIndex)) % msg.length];
   }
 
   function draw(ctx: CanvasRenderingContext2D, width: number, height: number) {
-    // Fade trail
-    ctx.fillStyle = "rgba(0, 0, 0, 0.06)";
+    // Fade trail — slightly faster fade for readability
+    ctx.fillStyle = "rgba(0, 0, 0, 0.07)";
     ctx.fillRect(0, 0, width, height);
 
     ctx.font = `${FONT_SIZE}px 'Consolas', 'Courier New', monospace`;
@@ -67,25 +68,33 @@
       const y = drop.y * FONT_SIZE;
 
       if (y > 0 && y < height) {
-        // Bright head character
+        // Bright head character (white-green)
         ctx.fillStyle = "#aaffaa";
         ctx.fillText(getChar(drop), x, y);
 
-        // Slightly dimmer trail character one row back
-        if (y - FONT_SIZE > 0) {
-          ctx.fillStyle = "#00ff00";
-          const trailDrop = { ...drop, textOffset: drop.textOffset - 1 };
-          ctx.fillText(getChar(trailDrop), x, y - FONT_SIZE);
+        // Trail characters fade from bright to dim green
+        for (let t = 1; t < 4; t++) {
+          const trailY = y - t * FONT_SIZE;
+          if (trailY > 0) {
+            const alpha = 0.7 - t * 0.15;
+            ctx.fillStyle = `rgba(0, 255, 0, ${alpha})`;
+            const trailChar = getChar({ ...drop, charIndex: drop.charIndex - t });
+            ctx.fillText(trailChar, x, trailY);
+          }
         }
       }
 
       drop.y += drop.speed;
-      drop.textOffset += 1;
+      drop.charIndex += 1;
 
-      // Reset when off screen
+      // Reset when off screen — pick a new message
       if (y > height && Math.random() > 0.975) {
-        drop.y = Math.random() * -20;
-        drop.speed = 0.5 + Math.random() * 0.8;
+        drop.y = Math.random() * -30;
+        drop.speed = 0.3 + Math.random() * 0.7;
+        drop.charIndex = 0;
+        if (messages.length > 0) {
+          drop.msgIndex = Math.floor(Math.random() * messages.length);
+        }
       }
     }
   }
