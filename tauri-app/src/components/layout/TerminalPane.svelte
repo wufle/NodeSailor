@@ -1,6 +1,7 @@
 <script lang="ts">
   import { currentTheme } from "../../lib/stores/uiStore";
   import { effectiveColors } from "../../lib/theme/colors";
+  import { matrixMode } from "../../lib/stores/matrixStore";
   import {
     terminalEntries,
     terminalVisible,
@@ -11,7 +12,8 @@
 
   let colors = $derived($effectiveColors);
   let isIronclad = $derived($currentTheme === "ironclad");
-  let isDarkOrIronclad = $derived($currentTheme === "dark" || $currentTheme === "ironclad");
+  let isMatrix = $derived($matrixMode);
+  let isDarkOrIronclad = $derived($currentTheme === "dark" || $currentTheme === "ironclad" || isMatrix);
 
   let scrollContainer: HTMLDivElement | undefined = $state(undefined);
   let userScrolledUp = $state(false);
@@ -31,6 +33,9 @@
   }
 
   function getTypeColor(type: TerminalEntryType): string {
+    if (isMatrix) {
+      return type === "error" ? "#ff0000" : "#00ff00";
+    }
     switch (type) {
       case "ping":
         return "#e5c07b";
@@ -50,6 +55,10 @@
   }
 
   function getResultColor(result?: string): string {
+    if (isMatrix) {
+      if (result === "Failed") return "#ff0000";
+      return "#00ff00";
+    }
     if (!result) return "#abb2bf";
     if (result === "Success") return "#98c379";
     if (result === "Failed") return "#e06c75";
@@ -171,7 +180,7 @@
       bind:this={scrollContainer}
       class="overflow-y-auto overflow-x-hidden terminal-pane-body {isIronclad ? 'terminal-body' : ''}"
       style:height="{$terminalHeight}px"
-      style:background-color={isIronclad ? undefined : (isDarkOrIronclad ? "#0d1117" : "#fafafa")}
+      style:background-color={isIronclad ? undefined : (isMatrix ? "#000000" : (isDarkOrIronclad ? "#0d1117" : "#fafafa"))}
       style:font-family="'Consolas', 'Courier New', monospace"
       style:font-size="12px"
       style:line-height="1.5"
@@ -185,7 +194,7 @@
         <div class="px-2 py-1">
           {#each $terminalEntries as entry (entry.id)}
             <div class="py-0.5">
-              <span class="opacity-40" style:color={isDarkOrIronclad ? "#636d83" : "#999999"}>
+              <span class="opacity-40" style:color={isMatrix ? "#005500" : (isDarkOrIronclad ? "#636d83" : "#999999")}>
                 [{formatTime(entry.timestamp)}]
               </span>
               {" "}
@@ -198,7 +207,7 @@
                   [{entry.result}]
                 </span>
               {/if}
-              <div class="pl-6 opacity-60 italic text-[11px]" style:color={isDarkOrIronclad ? "#7a8394" : "#888888"}>
+              <div class="pl-6 opacity-60 italic text-[11px]" style:color={isMatrix ? "#007700" : (isDarkOrIronclad ? "#7a8394" : "#888888")}>
                 {entry.description}
               </div>
             </div>

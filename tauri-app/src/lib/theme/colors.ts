@@ -114,6 +114,35 @@ const ironcladTheme: ThemeColors = {
   GROUP_OUTLINE: "#e09240",
 };
 
+// Matrix Mode easter egg theme
+export const matrixTheme: ThemeColors = {
+  FRAME_BG: "#000000",
+  BUTTON_BG: "#001a00",
+  BUTTON_TEXT: "#00ff00",
+  BUTTON_ACTIVE_BG: "#00ff00",
+  BUTTON_ACTIVE_TEXT: "#000000",
+  BUTTON_CONFIGURATION_MODE: "#00cc00",
+  CELL_BORDER: "#003300",
+  BORDER_COLOR: "#003300",
+  ENTRY_FOCUS_BG: "#001a00",
+  ENTRY_TEXT: "#00ff00",
+  INFO_NOTE_BG: "#000000dd",
+  INFO_TEXT: "#00cc00",
+  HEADER_BG: "#001a00",
+  HEADER_TEXT: "#00ff00",
+  ROW_BG_EVEN: "#000000",
+  ROW_BG_ODD: "#001100",
+  NODE_DEFAULT: "#00ff00",
+  NODE_HIGHLIGHT: "#88ff88",
+  NODE_OUTLINE_DEFAULT: "#00ff00",
+  NODE_PING_SUCCESS: "#00ff00",
+  NODE_PING_FAILURE: "#ff0000",
+  NODE_PING_PARTIAL_SUCCESS: "#00cc00",
+  Connections: "#00aa00",
+  GROUP_TEXT: "#00ff00",
+  GROUP_OUTLINE: "#00cc00",
+};
+
 const builtInThemes: Record<BuiltInTheme, ThemeColors> = {
   light: lightTheme,
   dark: darkTheme,

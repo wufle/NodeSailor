@@ -3,7 +3,9 @@
   import { get } from "svelte/store";
   import { isDark, currentTheme, mode, showStartMenu, unsavedChanges, activeDialog, panX, panY, activeTool, connectionStartNodeIndex, selectedNodeIndex } from "./lib/stores/uiStore";
   import type { ThemeName } from "./lib/stores/uiStore";
-  import { effectiveColors, loadColorOverrides, loadCustomThemes } from "./lib/theme/colors";
+  import { effectiveColors, loadColorOverrides, loadCustomThemes, matrixTheme, registerCustomTheme } from "./lib/theme/colors";
+  import { matrixMode, previousTheme } from "./lib/stores/matrixStore";
+  import MatrixRain from "./components/canvas/MatrixRain.svelte";
   import TopologyCanvas from "./components/canvas/TopologyCanvas.svelte";
   import Toolbar from "./components/layout/Toolbar.svelte";
   import ToolSidebar from "./components/layout/ToolSidebar.svelte";
@@ -37,8 +39,10 @@
   // Reactive theme application
   $effect(() => {
     const el = document.documentElement;
-    el.classList.remove("light", "dark", "theme-ironclad");
-    if ($currentTheme === "ironclad") {
+    el.classList.remove("light", "dark", "theme-ironclad", "theme-matrix");
+    if ($currentTheme === "matrix") {
+      el.classList.add("theme-matrix");
+    } else if ($currentTheme === "ironclad") {
       el.classList.add("theme-ironclad");
     } else if ($currentTheme === "light") {
       el.classList.add("light");
@@ -47,8 +51,9 @@
     }
   });
 
-  // Persist current theme to settings
+  // Persist current theme to settings (skip matrix — it's a secret easter egg)
   $effect(() => {
+    if ($currentTheme === "matrix") return;
     settings.update((s) => ({ ...s, last_custom_theme: $currentTheme }));
     invoke("save_settings", { settings: { last_custom_theme: $currentTheme } }).catch((e) =>
       console.error("Failed to save theme setting:", e)
@@ -125,7 +130,18 @@
       }
     }
 
-    if (e.ctrlKey && e.shiftKey && e.key === "C") {
+    if (e.ctrlKey && e.shiftKey && e.key === "M") {
+      e.preventDefault();
+      matrixMode.update((m) => {
+        if (!m) {
+          previousTheme.set(get(currentTheme));
+          currentTheme.set("matrix");
+        } else {
+          currentTheme.set(get(previousTheme));
+        }
+        return !m;
+      });
+    } else if (e.ctrlKey && e.shiftKey && e.key === "C") {
       e.preventDefault();
       const cycle: ThemeName[] = ["dark", "light"];
       currentTheme.update((t) => {
@@ -153,6 +169,8 @@
   }
 
   onMount(async () => {
+    registerCustomTheme("matrix", matrixTheme);
+
     // Load settings first
     try {
       const loadedSettings = await invoke("load_settings") as any;
@@ -220,6 +238,9 @@
   <ModeBanner />
 
   <div class="relative flex-1 overflow-hidden">
+    {#if $matrixMode}
+      <MatrixRain />
+    {/if}
     <TopologyCanvas />
     <ToolSidebar />
     <InfoPanel />

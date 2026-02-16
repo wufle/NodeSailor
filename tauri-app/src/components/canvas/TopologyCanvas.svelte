@@ -17,6 +17,7 @@
     activeDialog,
     activeTool,
   } from "../../lib/stores/uiStore";
+  import { matrixMode } from "../../lib/stores/matrixStore";
   import {
     nodes,
     connections,
@@ -487,8 +488,9 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <svg
   bind:this={svgEl}
-  class="w-full h-full"
-  style:background-color={colors.FRAME_BG}
+  class="w-full h-full relative"
+  style:background-color={$matrixMode ? "transparent" : colors.FRAME_BG}
+  style:z-index={$matrixMode ? 1 : undefined}
   style:cursor={canvasCursor}
   onmousedown={onMouseDown}
   onmousemove={onMouseMove}
