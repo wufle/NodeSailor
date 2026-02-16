@@ -35,14 +35,17 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const version = '${{ github.ref_name }}';
-            core.info(`Debug: Raw version from github.ref_name: ${version}`);
-            const cleanedVersion = version.startsWith('v') ? version.substring(1) : version;
-            core.info(`Debug: Cleaned version: ${cleanedVersion}`);
-            const filePath = `RELEASE_NOTES_v${cleanedVersion}.md`;
-            core.info(`Debug: File path being checked: ${filePath}`);
-            const content = fs.readFileSync(filePath, 'utf8');
-            core.setOutput('release_notes_body', content);
+            const path = 'RELEASE_NOTES.md';
+            try {
+              const content = fs.readFileSync(path, 'utf8');
+              core.setOutput('release_notes_body', content);
+              core.info('Read release notes from RELEASE_NOTES.md');
+            } catch (err) {
+              const version = '${{ github.ref_name }}';
+              const fallback = `Release ${version}`;
+              core.warning(`RELEASE_NOTES.md not found, using fallback: ${fallback}`);
+              core.setOutput('release_notes_body', fallback);
+            }
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
