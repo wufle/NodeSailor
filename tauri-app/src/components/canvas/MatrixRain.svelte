@@ -6,80 +6,121 @@
   let canvasEl: HTMLCanvasElement | undefined = $state(undefined);
   let animationId: number = 0;
 
-  const FONT_SIZE = 13;
-  const COLUMN_WIDTH = 10;
-  const FRAME_DELAY = 1000 / 30;
+  const FONT_SIZE = 14;
+  const ROW_HEIGHT = 34;
+  const COLUMN_WIDTH = 18;
+  const FRAME_DELAY = 1000 / 24;
 
-  // Terminal messages displayed vertically in columns
-  let messages: string[] = [];
+  // Event-driven drops — spawned by terminal activity
+  interface Drop {
+    x: number;       // pixel x position
+    y: number;        // current row position
+    text: string;     // the message this drop displays
+    charIndex: number;
+    speed: number;
+    done: boolean;    // true when fully off-screen
+  }
+
+  const TRAIL_LENGTH = 8;
+
+  let activeDrops: Drop[] = [];
+  let occupiedColumns: Set<number> = new Set();
+  let numColumns = 0;
+  let lastFrameTime = 0;
+  let lastEntryCount = 0;
+  let ambientTimer = 0;
+
+  // Track new terminal entries and spawn drops for them
   const unsubscribe = terminalEntries.subscribe((entries) => {
-    messages = entries.flatMap((e: TerminalEntry) => {
+    if (entries.length <= lastEntryCount) {
+      lastEntryCount = entries.length;
+      return;
+    }
+
+    // Get new entries since last check
+    const newEntries = entries.slice(lastEntryCount);
+    lastEntryCount = entries.length;
+
+    // Spawn drops for each new entry, staggered slightly
+    for (let i = 0; i < newEntries.length; i++) {
+      const entry = newEntries[i];
       const parts: string[] = [];
-      if (e.command) parts.push(e.command);
-      if (e.description) parts.push(e.description);
-      if (e.result) parts.push(`[${e.result}]`);
-      return parts;
-    });
+      if (entry.command) parts.push(entry.command);
+      if (entry.description) parts.push(entry.description);
+      if (entry.result) parts.push(`[${entry.result}]`);
+      const text = parts.join(" ");
+
+      // Spawn 1-3 drops per entry in random columns
+      const dropCount = 1 + Math.floor(Math.random() * 3);
+      for (let d = 0; d < dropCount; d++) {
+        setTimeout(() => {
+          spawnDrop(text);
+        }, i * 80 + d * 40); // stagger: entries 80ms apart, extra drops 40ms apart
+      }
+    }
   });
 
-  interface Drop {
-    y: number;
-    msgIndex: number;  // which message this column is displaying
-    charIndex: number; // position within that message
-    speed: number;
+  function spawnDrop(text: string) {
+    if (numColumns === 0) return;
+
+    // Try to find an unoccupied column (up to 10 attempts)
+    let col = -1;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const candidate = Math.floor(Math.random() * numColumns);
+      if (!occupiedColumns.has(candidate)) {
+        col = candidate;
+        break;
+      }
+    }
+    if (col === -1) return; // All columns busy, skip this drop
+
+    occupiedColumns.add(col);
+    activeDrops.push({
+      x: col * COLUMN_WIDTH,
+      y: -2 - Math.random() * 5,
+      text,
+      charIndex: 0,
+      speed: 0.2 + Math.random() * 0.3,
+      done: false,
+    });
   }
 
-  let drops: Drop[] = [];
-  let lastFrameTime = 0;
-
-  function initDrops(width: number) {
-    const numColumns = Math.floor(width / COLUMN_WIDTH);
-    drops = [];
-    for (let i = 0; i < numColumns; i++) {
-      drops.push({
-        y: Math.random() * -60,
-        msgIndex: Math.floor(Math.random() * Math.max(1, messages.length)),
-        charIndex: 0,
-        speed: 0.3 + Math.random() * 0.7,
-      });
-    }
-  }
-
-  function getChar(drop: Drop): string {
-    if (messages.length === 0) {
-      // Fallback: random chars when no terminal output yet
-      const fallback = "NODESAILOR>_PING...TRACERT...CONNECT...TIMEOUT...OK";
-      return fallback[Math.floor(Math.abs(drop.charIndex)) % fallback.length];
-    }
-    const msg = messages[drop.msgIndex % messages.length];
-    return msg[Math.floor(Math.abs(drop.charIndex)) % msg.length];
+  function getChar(drop: Drop, offset: number): string {
+    const idx = Math.floor(Math.abs(drop.charIndex - offset)) % drop.text.length;
+    return drop.text[idx];
   }
 
   function draw(ctx: CanvasRenderingContext2D, width: number, height: number) {
-    // Fade trail — slightly faster fade for readability
-    ctx.fillStyle = "rgba(0, 0, 0, 0.07)";
+    // Fade trail (slow fade for longer-lasting characters)
+    ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
     ctx.fillRect(0, 0, width, height);
 
     ctx.font = `${FONT_SIZE}px 'Consolas', 'Courier New', monospace`;
 
-    for (let i = 0; i < drops.length; i++) {
-      const drop = drops[i];
-      const x = i * COLUMN_WIDTH;
-      const y = drop.y * FONT_SIZE;
+    // Occasional ambient drop when idle (very sparse)
+    ambientTimer++;
+    if (activeDrops.length < 2 && ambientTimer > 80) {
+      ambientTimer = 0;
+      if (Math.random() < 0.15) {
+        spawnDrop("NODESAILOR");
+      }
+    }
+
+    for (const drop of activeDrops) {
+      const y = drop.y * ROW_HEIGHT;
 
       if (y > 0 && y < height) {
-        // Bright head character (white-green)
+        // Bright head character
         ctx.fillStyle = "#aaffaa";
-        ctx.fillText(getChar(drop), x, y);
+        ctx.fillText(getChar(drop, 0), drop.x, y);
 
-        // Trail characters fade from bright to dim green
-        for (let t = 1; t < 4; t++) {
-          const trailY = y - t * FONT_SIZE;
+        // Trail chars (longer, smoother fade)
+        for (let t = 1; t < TRAIL_LENGTH; t++) {
+          const trailY = y - t * ROW_HEIGHT;
           if (trailY > 0) {
-            const alpha = 0.7 - t * 0.15;
+            const alpha = 0.6 * (1 - t / TRAIL_LENGTH);
             ctx.fillStyle = `rgba(0, 255, 0, ${alpha})`;
-            const trailChar = getChar({ ...drop, charIndex: drop.charIndex - t });
-            ctx.fillText(trailChar, x, trailY);
+            ctx.fillText(getChar(drop, t), drop.x, trailY);
           }
         }
       }
@@ -87,34 +128,37 @@
       drop.y += drop.speed;
       drop.charIndex += 1;
 
-      // Reset when off screen — pick a new message
-      if (y > height && Math.random() > 0.975) {
-        drop.y = Math.random() * -30;
-        drop.speed = 0.3 + Math.random() * 0.7;
-        drop.charIndex = 0;
-        if (messages.length > 0) {
-          drop.msgIndex = Math.floor(Math.random() * messages.length);
-        }
+      // Free the column once the head is past 60% of the canvas
+      const col = Math.round(drop.x / COLUMN_WIDTH);
+      if (y > height * 0.6) {
+        occupiedColumns.delete(col);
+      }
+
+      // Mark done when trail is fully off screen
+      if (y > height + ROW_HEIGHT * TRAIL_LENGTH) {
+        drop.done = true;
       }
     }
+
+    // Clean up finished drops
+    activeDrops = activeDrops.filter((d) => !d.done);
   }
 
   function handleResize() {
     if (!canvasEl) return;
     canvasEl.width = canvasEl.offsetWidth;
     canvasEl.height = canvasEl.offsetHeight;
-    initDrops(canvasEl.width);
+    numColumns = Math.floor(canvasEl.width / COLUMN_WIDTH);
   }
 
   onMount(() => {
     if (!canvasEl) return;
     canvasEl.width = canvasEl.offsetWidth;
     canvasEl.height = canvasEl.offsetHeight;
+    numColumns = Math.floor(canvasEl.width / COLUMN_WIDTH);
 
     const ctx = canvasEl.getContext("2d");
     if (!ctx) return;
-
-    initDrops(canvasEl.width);
 
     function animate(timestamp: number) {
       if (timestamp - lastFrameTime >= FRAME_DELAY) {
