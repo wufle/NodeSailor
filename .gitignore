@@ -1,26 +1,36 @@
-/Include/
-/Lib/
-/Scripts/
-pyenv.cfg
-run.cmd
-last_file_path.ini
+# Editor / IDE
 .vscode/
-NodeSailor.spec
-example network2.json
-test.bat
-_internal/custom_commands.json
-example network test.json
-.roomodes
+
+# Node
+node_modules/
+
+# Tauri build output
+tauri-app/dist/
+
+# Python (convert_xlsx.py)
 __pycache__/
 
+# App data
 data/NodeSailor_settings.ini
 data/custom_commands.json
-example network7.json
-example network6.json
-data/custom_commands.json
-.claude/
+
+# Old / local files
+last_file_path.ini
+_internal/custom_commands.json
 nul
-node_modules/
-tauri-app/dist/
+
+# Build artifacts
+NodeSailor.spec
 release.py
 version_bumper.py
+
+# Claude
+.claude/
+
+# Test files
+example network2.json
+example network test.json
+example network7.json
+example network6.json
+test.bat
+.roomodes
