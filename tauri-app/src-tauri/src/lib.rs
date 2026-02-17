@@ -26,6 +26,8 @@ pub fn run() {
             commands::system::open_browser,
             commands::system::execute_command,
             commands::network::get_local_ips,
+            commands::discovery::get_subnets,
+            commands::discovery::discover_network,
             commands::settings::save_settings,
             commands::settings::load_settings,
         ])

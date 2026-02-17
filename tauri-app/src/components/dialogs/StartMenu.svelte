@@ -27,6 +27,11 @@
     close();
   }
 
+  function handleDiscoverNetwork() {
+    close();
+    activeDialog.set("networkDiscovery");
+  }
+
   async function handleSave() {
     await saveFile();
     close();
@@ -109,6 +114,15 @@
       onclick={handleNewNetwork}
     >
       Create New Network
+    </button>
+
+    <button
+      class={buttonClass}
+      style:background-color={colors.BUTTON_BG}
+      style:color={colors.BUTTON_TEXT}
+      onclick={handleDiscoverNetwork}
+    >
+      Discover Network
     </button>
 
     <button

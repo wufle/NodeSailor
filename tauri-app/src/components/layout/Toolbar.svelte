@@ -128,6 +128,17 @@
         Edit Groups
       </button>
     </TooltipWrapper>
+
+    <TooltipWrapper text="Scan your network to discover devices and auto-create nodes">
+      <button
+        class={buttonClass}
+        style:background-color={colors.BUTTON_BG}
+        style:color={colors.BUTTON_TEXT}
+        onclick={() => activeDialog.set("networkDiscovery")}
+      >
+        Discover
+      </button>
+    </TooltipWrapper>
   {/if}
 
   <!-- Always visible buttons -->

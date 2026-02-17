@@ -28,6 +28,7 @@
   import DisplayOptionsEditor from "./components/editors/DisplayOptions.svelte";
   import CustomCommandsEditor from "./components/editors/CustomCommandsEditor.svelte";
   import DisplayOptionsDialog from "./components/dialogs/DisplayOptionsDialog.svelte";
+  import NetworkDiscoveryDialog from "./components/dialogs/NetworkDiscoveryDialog.svelte";
   import TerminalPane from "./components/layout/TerminalPane.svelte";
   import { terminalVisible } from "./lib/stores/terminalStore";
   import { removeNode } from "./lib/stores/networkStore";
@@ -308,4 +309,8 @@
 
 {#if $activeDialog === "displayOptionsDialog"}
   <DisplayOptionsDialog />
+{/if}
+
+{#if $activeDialog === "networkDiscovery"}
+  <NetworkDiscoveryDialog />
 {/if}
