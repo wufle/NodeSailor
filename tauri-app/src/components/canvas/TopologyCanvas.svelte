@@ -8,8 +8,6 @@
     isDark,
     currentTheme,
     selectedNodeIndex,
-    hoveredNodeIndex,
-    previousSelectedNodeIndex,
     groupsModeActive,
     connectionStartNodeIndex,
     contextMenu,
@@ -347,7 +345,6 @@
       }
 
       // Left click: select + start drag in config mode
-      previousSelectedNodeIndex.set($selectedNodeIndex);
       selectedNodeIndex.set(index);
 
       if ($mode === "Configuration" && !$groupsModeActive) {

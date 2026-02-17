@@ -1,6 +1,6 @@
 <script lang="ts">
   import DialogWrapper from "../dialogs/DialogWrapper.svelte";
-  import { currentTheme, activeDialog } from "../../lib/stores/uiStore";
+  import { activeDialog } from "../../lib/stores/uiStore";
   import { displayOptions } from "../../lib/stores/networkStore";
   import { effectiveColors } from "../../lib/theme/colors";
 

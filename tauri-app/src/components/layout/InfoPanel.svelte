@@ -1,8 +1,6 @@
 <script lang="ts">
   import {
     selectedNodeIndex,
-    hoveredNodeIndex,
-    isDark,
     currentTheme,
   } from "../../lib/stores/uiStore";
   import {

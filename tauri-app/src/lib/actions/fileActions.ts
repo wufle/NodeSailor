@@ -18,10 +18,6 @@ import type { NetworkNode } from "../types/network";
 
 let currentFilePath: string | null = null;
 
-export function getCurrentFilePath(): string | null {
-  return currentFilePath;
-}
-
 function parseNodes(rawNodes: any[]): NetworkNode[] {
   return rawNodes.map((raw) => {
     const vlans: Record<string, string> = {};

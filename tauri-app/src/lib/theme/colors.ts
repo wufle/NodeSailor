@@ -30,7 +30,7 @@ export interface ThemeColors {
   GROUP_OUTLINE: string;
 }
 
-export const lightTheme: ThemeColors = {
+const lightTheme: ThemeColors = {
   FRAME_BG: "#f0f0f0",
   BUTTON_BG: "#e0e0e0",
   BUTTON_TEXT: "#333333",
@@ -58,7 +58,7 @@ export const lightTheme: ThemeColors = {
   GROUP_OUTLINE: "#3a7bd5",
 };
 
-export const darkTheme: ThemeColors = {
+const darkTheme: ThemeColors = {
   FRAME_BG: "#1e1e2e",
   BUTTON_BG: "#2a2a3a",
   BUTTON_TEXT: "#d0d0d0",
@@ -220,7 +220,7 @@ export function loadCustomThemes(themes: Record<string, ThemeColors>) {
 }
 
 export function getCustomThemeNames(): string[] {
-  return Object.keys(customThemes);
+  return Object.keys(customThemes).filter((n) => n !== "matrix");
 }
 
 export function getCustomThemes(): Record<string, ThemeColors> {

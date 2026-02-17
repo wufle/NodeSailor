@@ -16,8 +16,6 @@ export const panY = writable(0);
 export const zoomPercent = derived(zoom, (z) => Math.round(z * 100));
 
 export const selectedNodeIndex = writable<number | null>(null);
-export const hoveredNodeIndex = writable<number | null>(null);
-export const previousSelectedNodeIndex = writable<number | null>(null);
 export const groupsModeActive = writable(false);
 export const connectionStartNodeIndex = writable<number | null>(null);
 
