@@ -130,7 +130,9 @@
       }
     }
 
-    if (e.ctrlKey && e.shiftKey && e.key === "M") {
+    const key = e.key.toLowerCase();
+
+    if (e.ctrlKey && e.shiftKey && key === "m") {
       e.preventDefault();
       matrixMode.update((m) => {
         if (!m) {
@@ -141,17 +143,17 @@
         }
         return !m;
       });
-    } else if (e.ctrlKey && e.shiftKey && e.key === "C") {
+    } else if (e.ctrlKey && e.shiftKey && key === "c") {
       e.preventDefault();
       const cycle: ThemeName[] = ["dark", "light"];
       currentTheme.update((t) => {
         const idx = cycle.indexOf(t);
         return cycle[(idx + 1) % cycle.length];
       });
-    } else if (e.ctrlKey && e.key === "s") {
+    } else if (e.ctrlKey && key === "s") {
       e.preventDefault();
       saveFile();
-    } else if (e.ctrlKey && e.key === "l") {
+    } else if (e.ctrlKey && key === "l") {
       e.preventDefault();
       loadFile().then(() => {
         highlightMatchingNodes();
@@ -159,7 +161,7 @@
     } else if (e.key === "F1") {
       e.preventDefault();
       activeDialog.set("help");
-    } else if (e.shiftKey && e.key === "I") {
+    } else if (e.shiftKey && key === "i") {
       e.preventDefault();
       currentTheme.set("ironclad");
     } else if (e.ctrlKey && e.key === "`") {

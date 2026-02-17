@@ -7,9 +7,9 @@
   let animationId: number = 0;
 
   const FONT_SIZE = 14;
-  const ROW_HEIGHT = 34;
-  const COLUMN_WIDTH = 18;
-  const FRAME_DELAY = 1000 / 24;
+  const ROW_HEIGHT = 70;
+  const COLUMN_WIDTH = 28;
+  const FRAME_DELAY = 1000 / 15;
 
   // Event-driven drops — spawned by terminal activity
   interface Drop {
@@ -21,7 +21,7 @@
     done: boolean;    // true when fully off-screen
   }
 
-  const TRAIL_LENGTH = 8;
+  const TRAIL_LENGTH = 1;
 
   let activeDrops: Drop[] = [];
   let occupiedColumns: Set<number> = new Set();
@@ -80,7 +80,7 @@
       y: -2 - Math.random() * 5,
       text,
       charIndex: 0,
-      speed: 0.2 + Math.random() * 0.3,
+      speed: 0.12 + Math.random() * 0.18,
       done: false,
     });
   }
@@ -92,17 +92,18 @@
 
   function draw(ctx: CanvasRenderingContext2D, width: number, height: number) {
     // Fade trail (slow fade for longer-lasting characters)
-    ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
     ctx.fillRect(0, 0, width, height);
 
     ctx.font = `${FONT_SIZE}px 'Consolas', 'Courier New', monospace`;
 
     // Occasional ambient drop when idle (very sparse)
     ambientTimer++;
-    if (activeDrops.length < 2 && ambientTimer > 80) {
+    if (ambientTimer > 60) {
       ambientTimer = 0;
-      if (Math.random() < 0.15) {
-        spawnDrop("NODESAILOR");
+      if (Math.random() < 0.4) {
+        spawnDrop("NODESAILOR              ");
+        spawnDrop("N O D E S A I L O R          ");
       }
     }
 
@@ -130,7 +131,7 @@
 
       // Free the column once the head is past 60% of the canvas
       const col = Math.round(drop.x / COLUMN_WIDTH);
-      if (y > height * 0.6) {
+      if (y > height * 0.4) {
         occupiedColumns.delete(col);
       }
 
