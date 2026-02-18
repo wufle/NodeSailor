@@ -22,6 +22,7 @@ pub fn run() {
             commands::file_io::show_save_dialog,
             commands::ping::ping_ips,
             commands::system::open_rdp,
+            commands::system::open_ssh,
             commands::system::open_file_explorer,
             commands::system::open_browser,
             commands::system::execute_command,

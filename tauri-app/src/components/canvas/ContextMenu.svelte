@@ -17,6 +17,7 @@
   import { effectiveColors } from "../../lib/theme/colors";
   import {
     openRemoteDesktop,
+    openSSH,
     openFileExplorer,
     openWebBrowser,
     executeCustomCommand,
@@ -158,6 +159,17 @@
             )}
         >
           Open Remote Desktop
+        </button>
+        <button
+          class="block w-full text-left px-4 py-2 text-sm hover:opacity-80"
+          style:color={colors.BUTTON_TEXT}
+          onclick={() =>
+            handleAction(() => {
+              const ip = Object.values(node.vlans).find((v) => v && v.trim() !== "") ?? "";
+              openSSH(ip);
+            })}
+        >
+          Open SSH
         </button>
         <button
           class="block w-full text-left px-4 py-2 text-sm hover:opacity-80"

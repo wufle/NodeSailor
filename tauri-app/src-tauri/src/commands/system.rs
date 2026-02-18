@@ -108,6 +108,54 @@ pub fn open_browser(url: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn open_ssh(address: String) -> Result<(), String> {
+    if address.is_empty() {
+        return Err("No SSH address provided".to_string());
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        // Try OpenSSH first (built into Windows 10+), fall back to PuTTY
+        let ssh_result = Command::new("cmd")
+            .args(["/c", "start", "cmd", "/k", "ssh", &address])
+            .spawn();
+
+        match ssh_result {
+            Ok(_) => {}
+            Err(_) => {
+                // Fall back to PuTTY
+                Command::new("putty")
+                    .args(["-ssh", &address])
+                    .spawn()
+                    .map_err(|e| format!("Failed to open SSH (tried OpenSSH and PuTTY): {}", e))?;
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let script = format!(
+            r#"tell application "Terminal" to do script "ssh {}""#,
+            address.replace('"', r#"\""#)
+        );
+        Command::new("osascript")
+            .args(["-e", &script])
+            .spawn()
+            .map_err(|e| format!("Failed to open SSH: {}", e))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        Command::new("x-terminal-emulator")
+            .args(["-e", "ssh", &address])
+            .spawn()
+            .map_err(|e| format!("Failed to open SSH: {}", e))?;
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
 pub fn execute_command(command: String) -> Result<(), String> {
     if command.is_empty() {
         return Err("No command provided".to_string());

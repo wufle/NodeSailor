@@ -29,6 +29,15 @@ export async function openRemoteDesktop(address: string): Promise<void> {
   await invoke("open_rdp", { address });
 }
 
+export async function openSSH(address: string): Promise<void> {
+  addTerminalEntry(
+    "system",
+    `ssh ${address}`,
+    `Opening SSH connection to ${address}`
+  );
+  await invoke("open_ssh", { address });
+}
+
 export async function openFileExplorer(path: string): Promise<void> {
   addTerminalEntry(
     "system",
