@@ -7,6 +7,7 @@ import {
 } from "../stores/networkStore";
 import { unsavedChanges, showStartMenu, activeDialog } from "../stores/uiStore";
 import { newNetwork } from "./fileActions";
+import { highlightMatchingNodes } from "./systemActions";
 import type { NetworkNode } from "../types/network";
 
 export interface DiscoveredDevice {
@@ -126,11 +127,11 @@ function sanitizeVlanKey(label: string): string {
   return label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "range";
 }
 
-export function createNodesFromDiscovery(
+export async function createNodesFromDiscovery(
   devices: DiscoveredDevice[],
   layout: "grid" | "circle",
   clearExisting: boolean
-): void {
+): Promise<void> {
   if (clearExisting) {
     newNetwork();
   }
@@ -164,6 +165,10 @@ export function createNodesFromDiscovery(
   unsavedChanges.set(true);
   activeDialog.set(null);
   showStartMenu.set(false);
+
+  // Allow store updates to propagate before highlighting host node
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  highlightMatchingNodes();
 }
 
 export function mergeDevicesByMac(
@@ -228,12 +233,12 @@ export function mergeDevicesByMac(
   };
 }
 
-export function createNodesFromMergedDiscovery(
+export async function createNodesFromMergedDiscovery(
   mergedDevices: MergedDevice[],
   vlanConfig: { labels: Record<string, string>; order: string[] },
   layout: "grid" | "circle",
   clearExisting: boolean
-): void {
+): Promise<void> {
   if (clearExisting) {
     newNetwork();
   }
@@ -267,4 +272,8 @@ export function createNodesFromMergedDiscovery(
   unsavedChanges.set(true);
   activeDialog.set(null);
   showStartMenu.set(false);
+
+  // Allow store updates to propagate before highlighting host node
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  highlightMatchingNodes();
 }

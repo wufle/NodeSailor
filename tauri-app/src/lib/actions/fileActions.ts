@@ -11,6 +11,8 @@ import {
   customCommands,
   groupColorPresets,
   displayOptions,
+  hostNodeIndices,
+  pingResults,
 } from "../stores/networkStore";
 import { unsavedChanges, showStartMenu } from "../stores/uiStore";
 import { settings } from "../stores/settingsStore";
@@ -157,6 +159,8 @@ export function newNetwork(): void {
   vlanLabelOrder.set([]);
   customCommands.set({});
   displayOptions.set({});
+  hostNodeIndices.set(new Set());
+  pingResults.set({});
   currentFilePath = null;
   unsavedChanges.set(false);
   showStartMenu.set(false);
