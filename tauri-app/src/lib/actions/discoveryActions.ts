@@ -13,6 +13,7 @@ export interface DiscoveredDevice {
   ip: string;
   hostname: string;
   mac_address: string;
+  vendor: string;
   open_ports: number[];
 }
 
@@ -51,6 +52,30 @@ function computeCircleLayout(count: number): { x: number; y: number }[] {
   return positions;
 }
 
+function deriveFriendlyName(device: DiscoveredDevice): string {
+  // 1. Hostname if available
+  if (device.hostname) return device.hostname;
+
+  // 2. Vendor + last 3 MAC octets (e.g. "Samsung-D4E5F6")
+  if (device.vendor && device.mac_address) {
+    const hexOnly = device.mac_address.replace(/[^0-9A-Fa-f]/g, "");
+    const suffix = hexOnly.slice(-6).toUpperCase();
+    return `${device.vendor}-${suffix}`;
+  }
+
+  // 3. Device type from ports + IP last octet
+  const ipSuffix = device.ip.split(".").slice(-2).join(".");
+  if (device.open_ports.includes(631) || device.open_ports.includes(9100)) {
+    return `Printer-${ipSuffix}`;
+  }
+  if (device.open_ports.includes(80) || device.open_ports.includes(443) || device.open_ports.includes(8080)) {
+    return `Web Device-${ipSuffix}`;
+  }
+
+  // 4. Just the IP
+  return device.ip;
+}
+
 function deriveWebUrl(device: DiscoveredDevice): string {
   if (device.open_ports.includes(443)) return `https://${device.ip}`;
   if (device.open_ports.includes(80)) return `http://${device.ip}`;
@@ -80,7 +105,7 @@ export function createNodesFromDiscovery(
     const pos = positions[i];
 
     const node: NetworkNode = {
-      name: d.hostname || d.ip,
+      name: deriveFriendlyName(d),
       x: pos.x,
       y: pos.y,
       vlans: { ip: d.ip },

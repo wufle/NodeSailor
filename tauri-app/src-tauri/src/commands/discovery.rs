@@ -17,6 +17,7 @@ pub struct DiscoveredDevice {
     pub ip: String,
     pub hostname: String,
     pub mac_address: String,
+    pub vendor: String,
     pub open_ports: Vec<u16>,
 }
 
@@ -53,7 +54,6 @@ fn generate_scan_ips(ip: &str, mask: &str) -> Vec<String> {
     let broadcast = network | !mask_u32;
     let host_count = broadcast - network;
 
-    // Safety limit: don't scan more than a /20 (4094 hosts)
     if host_count > 4094 || host_count == 0 {
         return vec![];
     }
@@ -72,12 +72,7 @@ fn generate_scan_ips(ip: &str, mask: &str) -> Vec<String> {
 }
 
 fn ping_single(ip: &str) -> bool {
-    let param = if cfg!(target_os = "windows") {
-        "-n"
-    } else {
-        "-c"
-    };
-
+    let param = if cfg!(target_os = "windows") { "-n" } else { "-c" };
     let timeout_param = if cfg!(target_os = "windows") {
         vec!["-w", "1000"]
     } else {
@@ -121,8 +116,6 @@ fn read_arp_table() -> HashMap<String, String> {
 
     if let Ok(output) = cmd.output() {
         let stdout = String::from_utf8_lossy(&output.stdout);
-        // Windows format: "192.168.1.1    aa-bb-cc-dd-ee-ff    dynamic"
-        // Linux/macOS format: "? (192.168.1.1) at aa:bb:cc:dd:ee:ff"
         let re = Regex::new(r"(\d+\.\d+\.\d+\.\d+)\s+([0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2})")
             .unwrap();
         for cap in re.captures_iter(&stdout) {
@@ -136,8 +129,6 @@ fn read_arp_table() -> HashMap<String, String> {
 }
 
 fn resolve_hostname(ip: &str) -> String {
-    // Strategy 1: "ping -a" uses Windows full name resolution (NetBIOS, LLMNR, mDNS, DNS)
-    // This works on home networks where nslookup alone fails
     #[cfg(target_os = "windows")]
     {
         use std::os::windows::process::CommandExt;
@@ -149,12 +140,9 @@ fn resolve_hostname(ip: &str) -> String {
 
         if let Ok(output) = cmd.output() {
             let stdout = String::from_utf8_lossy(&output.stdout);
-            // Output: "Pinging HOSTNAME [192.168.1.5] with 32 bytes of data:"
-            // If unresolved: "Pinging 192.168.1.5 with 32 bytes of data:"
             let re = Regex::new(r"Pinging\s+(\S+)\s+\[").unwrap();
             if let Some(cap) = re.captures(&stdout) {
                 let name = cap[1].to_string();
-                // If the "name" is just the IP, it wasn't resolved
                 if name != ip {
                     return name;
                 }
@@ -162,7 +150,6 @@ fn resolve_hostname(ip: &str) -> String {
         }
     }
 
-    // Strategy 2 (non-Windows, or Windows fallback): nslookup reverse DNS
     let mut cmd = Command::new("nslookup");
     cmd.arg(ip);
 
@@ -195,6 +182,66 @@ fn check_port(ip: &str, port: u16) -> bool {
     TcpStream::connect_timeout(&addr, Duration::from_millis(500)).is_ok()
 }
 
+/// Parse a single CSV line, handling quoted fields that may contain commas.
+fn parse_csv_line(line: &str) -> Vec<String> {
+    let mut fields = Vec::new();
+    let mut current = String::new();
+    let mut in_quotes = false;
+
+    for ch in line.chars() {
+        if ch == '"' {
+            in_quotes = !in_quotes;
+        } else if ch == ',' && !in_quotes {
+            fields.push(current.clone());
+            current.clear();
+        } else {
+            current.push(ch);
+        }
+    }
+    fields.push(current);
+    fields
+}
+
+/// Load the IEEE OUI database from the bundled oui.csv resource.
+fn load_oui_table(app_handle: &tauri::AppHandle) -> HashMap<String, String> {
+    use tauri::Manager;
+
+    let resource_path = app_handle
+        .path()
+        .resource_dir()
+        .unwrap_or_default()
+        .join("oui.csv");
+
+    let mut map = HashMap::new();
+    let content = match std::fs::read_to_string(&resource_path) {
+        Ok(c) => c,
+        Err(_) => return map,
+    };
+
+    for line in content.lines().skip(1) {
+        let parts = parse_csv_line(line);
+        if parts.len() >= 3 {
+            let prefix = parts[1].trim().to_uppercase();
+            let org = parts[2].trim().to_string();
+            if prefix.len() == 6 && prefix.chars().all(|c| c.is_ascii_hexdigit()) {
+                map.insert(prefix, org);
+            }
+        }
+    }
+
+    map
+}
+
+/// Look up the vendor name for a MAC address using the OUI table.
+fn lookup_mac_vendor(mac: &str, oui_table: &HashMap<String, String>) -> String {
+    let cleaned: String = mac.chars().filter(|c| c.is_ascii_hexdigit()).collect();
+    if cleaned.len() < 6 {
+        return String::new();
+    }
+    let prefix = cleaned[..6].to_uppercase();
+    oui_table.get(&prefix).cloned().unwrap_or_default()
+}
+
 #[tauri::command]
 pub fn get_subnets() -> Result<Vec<SubnetInfo>, String> {
     let mut subnets = Vec::new();
@@ -213,12 +260,9 @@ pub fn get_subnets() -> Result<Vec<SubnetInfo>, String> {
 
         let mut current_iface = String::new();
 
-        // Parse adapter sections
         for line in stdout.lines() {
-            // Adapter name lines end with ":"
             if !line.starts_with(' ') && line.ends_with(':') {
                 current_iface = line.trim_end_matches(':').to_string();
-                // Clean up "Ethernet adapter Ethernet:" -> "Ethernet"
                 if let Some(pos) = current_iface.find("adapter ") {
                     current_iface = current_iface[(pos + 8)..].to_string();
                 }
@@ -226,7 +270,6 @@ pub fn get_subnets() -> Result<Vec<SubnetInfo>, String> {
 
             let trimmed = line.trim();
 
-            // Look for IPv4 address
             if let Some(ip_match) = Regex::new(r"IPv4.*?:\s*(\d+\.\d+\.\d+\.\d+)")
                 .unwrap()
                 .captures(trimmed)
@@ -235,8 +278,6 @@ pub fn get_subnets() -> Result<Vec<SubnetInfo>, String> {
                 if ip.starts_with("127.") || ip.starts_with("169.254.") {
                     continue;
                 }
-                // Look ahead for subnet mask in subsequent lines
-                // We'll store the IP and fill in mask later
                 subnets.push(SubnetInfo {
                     ip,
                     subnet_mask: String::new(),
@@ -245,7 +286,6 @@ pub fn get_subnets() -> Result<Vec<SubnetInfo>, String> {
                 });
             }
 
-            // Look for Subnet Mask
             if let Some(mask_match) = Regex::new(r"Subnet Mask.*?:\s*(\d+\.\d+\.\d+\.\d+)")
                 .unwrap()
                 .captures(trimmed)
@@ -280,7 +320,6 @@ pub fn get_subnets() -> Result<Vec<SubnetInfo>, String> {
 
     #[cfg(not(target_os = "windows"))]
     {
-        // macOS/Linux: parse ifconfig or ip addr
         if let Ok(output) = Command::new("ip").args(["addr", "show"]).output() {
             let stdout = String::from_utf8_lossy(&output.stdout).to_string();
             let iface_re = Regex::new(r"^\d+:\s+(\S+):").unwrap();
@@ -297,7 +336,6 @@ pub fn get_subnets() -> Result<Vec<SubnetInfo>, String> {
                     if ip.starts_with("127.") {
                         continue;
                     }
-                    // Compute network address and mask
                     let mask_u32: u32 = if prefix == 0 {
                         0
                     } else {
@@ -330,9 +368,7 @@ pub fn get_subnets() -> Result<Vec<SubnetInfo>, String> {
         }
     }
 
-    // Filter out entries with no mask (incomplete parsing)
     subnets.retain(|s| !s.subnet_mask.is_empty());
-
     Ok(subnets)
 }
 
@@ -392,9 +428,7 @@ pub async fn discover_network(
                 found_so_far: live_ips.len() as u32,
                 message: format!(
                     "Pinged {}/{} — found {} devices",
-                    scanned,
-                    total,
-                    live_ips.len()
+                    scanned, total, live_ips.len()
                 ),
             },
         );
@@ -406,20 +440,19 @@ pub async fn discover_network(
 
     let found_count = live_ips.len() as u32;
 
-    // Build initial device list
     let mut devices: Vec<DiscoveredDevice> = live_ips
         .iter()
         .map(|ip| DiscoveredDevice {
             ip: ip.clone(),
             hostname: String::new(),
             mac_address: String::new(),
+            vendor: String::new(),
             open_ports: vec![],
         })
         .collect();
 
-    // Phase 2: ARP + Hostname (for "basic" and "ports" depth)
+    // Phase 2: ARP + Vendor + Hostname (for "basic" and "ports" depth)
     if scan_depth == "basic" || scan_depth == "ports" {
-        // ARP table lookup (single command, fast)
         let _ = app_handle.emit(
             "discovery-progress",
             DiscoveryProgress {
@@ -431,14 +464,21 @@ pub async fn discover_network(
             },
         );
 
-        let arp_table =
-            tokio::task::spawn_blocking(read_arp_table)
-                .await
-                .unwrap_or_default();
+        let arp_table = tokio::task::spawn_blocking(read_arp_table)
+            .await
+            .unwrap_or_default();
 
         for device in &mut devices {
             if let Some(mac) = arp_table.get(&device.ip) {
                 device.mac_address = mac.clone();
+            }
+        }
+
+        // Load OUI table from bundled CSV and resolve vendors
+        let oui_table = load_oui_table(&app_handle);
+        for device in &mut devices {
+            if !device.mac_address.is_empty() {
+                device.vendor = lookup_mac_vendor(&device.mac_address, &oui_table);
             }
         }
 
@@ -496,7 +536,7 @@ pub async fn discover_network(
 
     // Phase 3: Port scan (for "ports" depth only)
     if scan_depth == "ports" {
-        let ports_to_check: Vec<u16> = vec![80, 443, 3389, 22];
+        let ports_to_check: Vec<u16> = vec![80, 443, 3389, 22, 631, 9100, 5353, 8080];
         let port_total = (found_count as usize * ports_to_check.len()) as u32;
 
         let _ = app_handle.emit(
@@ -552,14 +592,13 @@ pub async fn discover_network(
             );
         }
 
-        // Deduplicate open_ports
         for device in &mut devices {
             device.open_ports.sort();
             device.open_ports.dedup();
         }
     }
 
-    // Sort by IP for consistent ordering
+    // Sort by IP
     devices.sort_by(|a, b| {
         let parse_ip = |ip: &str| -> u32 {
             ip.split('.')

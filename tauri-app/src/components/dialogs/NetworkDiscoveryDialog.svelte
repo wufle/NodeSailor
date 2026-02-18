@@ -159,13 +159,16 @@
   function portBadges(ports: number[]): { label: string; title: string }[] {
     const badges: { label: string; title: string }[] = [];
     if (ports.includes(80) || ports.includes(443)) badges.push({ label: "Web", title: "HTTP/HTTPS" });
+    if (ports.includes(8080)) badges.push({ label: "Alt Web", title: "Alternate HTTP (8080)" });
     if (ports.includes(3389)) badges.push({ label: "RDP", title: "Remote Desktop" });
     if (ports.includes(22)) badges.push({ label: "SSH", title: "Secure Shell" });
+    if (ports.includes(631) || ports.includes(9100)) badges.push({ label: "Printer", title: "IPP/JetDirect" });
+    if (ports.includes(5353)) badges.push({ label: "mDNS", title: "mDNS/Bonjour" });
     return badges;
   }
 </script>
 
-<DialogWrapper title="Network Discovery" width={620} onClose={close}>
+<DialogWrapper title="Network Discovery" width={750} onClose={close}>
   {#if step === "config"}
     <!-- Configuration Step -->
     <div class="space-y-4">
@@ -381,6 +384,7 @@
                 <th class="px-2 py-1.5 text-left w-8"></th>
                 <th class="px-2 py-1.5 text-left">IP Address</th>
                 <th class="px-2 py-1.5 text-left">Hostname</th>
+                <th class="px-2 py-1.5 text-left">Vendor</th>
                 <th class="px-2 py-1.5 text-left">MAC</th>
                 <th class="px-2 py-1.5 text-left">Services</th>
               </tr>
@@ -403,6 +407,9 @@
                   <td class="px-2 py-1.5 font-mono">{device.ip}</td>
                   <td class="px-2 py-1.5 truncate max-w-[150px]">
                     {device.hostname || "—"}
+                  </td>
+                  <td class="px-2 py-1.5 truncate max-w-[120px]">
+                    {device.vendor || "—"}
                   </td>
                   <td class="px-2 py-1.5 font-mono text-[10px]">
                     {device.mac_address || "—"}
