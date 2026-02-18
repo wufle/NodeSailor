@@ -21,6 +21,7 @@
     connections,
     stickyNotes,
     groups,
+    backgroundImages,
     displayOptions,
     addNode,
     moveNode,
@@ -28,9 +29,11 @@
     addConnection,
     removeConnection,
     addGroup,
+    updateBackgroundImage,
     pingResults,
     pingAnimationStates,
   } from "../../lib/stores/networkStore";
+  import { get } from "svelte/store";
   import { effectiveColors } from "../../lib/theme/colors";
   import { getGroupColors } from "../../lib/theme/presets";
   import { groupColorPresets } from "../../lib/stores/networkStore";
@@ -46,6 +49,8 @@
   import GroupRect from "./GroupRect.svelte";
   import WaypointHandle from "./WaypointHandle.svelte";
   import GroupResizeHandle from "./GroupResizeHandle.svelte";
+  import BackgroundImageEl from "./BackgroundImageEl.svelte";
+  import BgImageResizeHandle from "./BgImageResizeHandle.svelte";
   import CanvasStatusBar from "./CanvasStatusBar.svelte";
   import ironGripUrl from "../../assets/textures/iron-grip.png";
 
@@ -73,6 +78,12 @@
   // Sticky note drag state
   let isDraggingStickyNote = $state(false);
   let dragStickyIndex: number | null = null;
+
+  // Background image drag state
+  let isDraggingBgImage = $state(false);
+  let dragBgImageIndex: number | null = null;
+  let dragBgOffsetX = 0;
+  let dragBgOffsetY = 0;
 
   let colors = $derived($effectiveColors);
 
@@ -106,7 +117,7 @@
   // Dynamic cursor based on current mode and state
   let canvasCursor = $derived.by(() => {
     if (isPanning) return "grabbing";
-    if (isDragging || isDraggingStickyNote) return "grabbing";
+    if (isDragging || isDraggingStickyNote || isDraggingBgImage) return "grabbing";
     if ($mode !== "Configuration") return "default";
     if ($groupsModeActive) return "crosshair";
     if ($activeTool === "addNode" || $activeTool === "connect" || $activeTool === "addNote") return "crosshair";
@@ -138,7 +149,8 @@
         !target.closest("[data-type='node']") &&
         !target.closest("[data-type='connection']") &&
         !target.closest("[data-type='sticky']") &&
-        !target.closest("[data-type='waypoint']"))
+        !target.closest("[data-type='waypoint']") &&
+        !target.closest("[data-type='bgimage']"))
     );
   }
 
@@ -240,6 +252,16 @@
       });
       return;
     }
+
+    // Background image drag
+    if (isDraggingBgImage && dragBgImageIndex !== null && $mode === "Configuration") {
+      const { x, y } = screenToWorld(e.clientX, e.clientY);
+      updateBackgroundImage(dragBgImageIndex, {
+        x: x - dragBgOffsetX,
+        y: y - dragBgOffsetY,
+      });
+      return;
+    }
   }
 
   function onMouseUp(e: MouseEvent) {
@@ -282,6 +304,12 @@
     if (isDraggingStickyNote) {
       isDraggingStickyNote = false;
       dragStickyIndex = null;
+      return;
+    }
+
+    if (isDraggingBgImage) {
+      isDraggingBgImage = false;
+      dragBgImageIndex = null;
       return;
     }
   }
@@ -399,6 +427,43 @@
     (window as any).__contextGroupIndex = index;
   }
 
+  function handleBgImageMouseDown(e: MouseEvent, index: number) {
+    if (e.button === 0 && $mode === "Configuration") {
+      const { x, y } = screenToWorld(e.clientX, e.clientY);
+      const img = get(backgroundImages)[index];
+      dragBgOffsetX = x - img.x;
+      dragBgOffsetY = y - img.y;
+      isDraggingBgImage = true;
+      dragBgImageIndex = index;
+      e.stopPropagation();
+    } else if (e.button === 2 && $mode === "Configuration") {
+      e.preventDefault();
+      e.stopPropagation();
+      contextMenu.set({
+        visible: true,
+        x: e.clientX,
+        y: e.clientY,
+        nodeIndex: null,
+        connectionIndex: null,
+      });
+      (window as any).__contextBgImageIndex = index;
+    }
+  }
+
+  function handleBgImageRightClick(e: MouseEvent, index: number) {
+    if ($mode !== "Configuration") return;
+    e.preventDefault();
+    e.stopPropagation();
+    contextMenu.set({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      nodeIndex: null,
+      connectionIndex: null,
+    });
+    (window as any).__contextBgImageIndex = index;
+  }
+
   // Double-click on connection line: add waypoint
   function handleConnectionDblClick(
     e: MouseEvent,
@@ -508,6 +573,20 @@
     id="world"
     transform="translate({$panX},{$panY}) scale({$zoom})"
   >
+    <!-- Background images layer (bottom-most) -->
+    <g id="background-images-layer">
+      {#if $displayOptions.show_background_images !== false}
+        {#each $backgroundImages as img, i}
+          <BackgroundImageEl
+            image={img}
+            index={i}
+            onMouseDown={(e) => handleBgImageMouseDown(e, i)}
+            onRightClick={(e) => handleBgImageRightClick(e, i)}
+          />
+        {/each}
+      {/if}
+    </g>
+
     <!-- Groups layer -->
     <g id="groups-layer">
       {#if $displayOptions.show_groups !== false}
@@ -633,6 +712,16 @@
             {/each}
           {/if}
         {/each}
+
+        <!-- Background image resize handles -->
+        {#if $displayOptions.show_background_images !== false}
+          {#each $backgroundImages as img, bi}
+            <BgImageResizeHandle image={img} imageIndex={bi} corner="tl" />
+            <BgImageResizeHandle image={img} imageIndex={bi} corner="tr" />
+            <BgImageResizeHandle image={img} imageIndex={bi} corner="bl" />
+            <BgImageResizeHandle image={img} imageIndex={bi} corner="br" />
+          {/each}
+        {/if}
 
         <!-- Group resize handles -->
         {#if $displayOptions.show_groups !== false && $groupsModeActive}

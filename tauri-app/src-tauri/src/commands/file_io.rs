@@ -1,4 +1,5 @@
 use std::fs;
+use base64::{Engine as _, engine::general_purpose};
 use tauri::AppHandle;
 
 #[tauri::command]
@@ -45,4 +46,28 @@ pub async fn show_save_dialog(app_handle: AppHandle, current_path: String) -> Re
     .map_err(|e| format!("Dialog error: {}", e))?;
 
     result
+}
+
+#[tauri::command]
+pub fn read_image_as_base64(path: String) -> Result<String, String> {
+    let data = fs::read(&path)
+        .map_err(|e| format!("Failed to read image: {}", e))?;
+
+    let ext = std::path::Path::new(&path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("png")
+        .to_lowercase();
+
+    let mime = match ext.as_str() {
+        "jpg" | "jpeg" => "image/jpeg",
+        "gif" => "image/gif",
+        "svg" => "image/svg+xml",
+        "webp" => "image/webp",
+        "bmp" => "image/bmp",
+        _ => "image/png",
+    };
+
+    let b64 = general_purpose::STANDARD.encode(&data);
+    Ok(format!("data:{};base64,{}", mime, b64))
 }

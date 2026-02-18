@@ -51,11 +51,23 @@ export interface GroupColorPreset {
   dark_border: string;
 }
 
+export interface BackgroundImage {
+  id: string;
+  dataUrl: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  opacity: number;
+  filename: string;
+}
+
 export interface DisplayOptions {
   show_connections?: boolean;
   show_connection_labels?: boolean;
   show_notes?: boolean;
   show_groups?: boolean;
+  show_background_images?: boolean;
   node_size?: number;
   visible_vlans?: string[] | null; // null = show all, empty array = show none, array with keys = show those
 }

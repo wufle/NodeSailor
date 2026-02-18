@@ -7,6 +7,7 @@ import type {
   GroupColorPreset,
   CustomCommand,
   DisplayOptions,
+  BackgroundImage,
 } from "../types/network";
 import { unsavedChanges } from "./uiStore";
 
@@ -14,6 +15,7 @@ export const nodes = writable<NetworkNode[]>([]);
 export const connections = writable<NetworkConnection[]>([]);
 export const stickyNotes = writable<StickyNote[]>([]);
 export const groups = writable<GroupRect[]>([]);
+export const backgroundImages = writable<BackgroundImage[]>([]);
 export const displayOptions = writable<DisplayOptions>({});
 export const pingResults = writable<Record<number, boolean[]>>({});
 export const pingAnimationStates = writable<Record<number, 'success' | 'failure'>>({});
@@ -174,5 +176,29 @@ export function updateGroup(
 
 export function removeGroup(index: number): void {
   groups.update((g) => g.filter((_, i) => i !== index));
+  unsavedChanges.set(true);
+}
+
+export function addBackgroundImage(img: BackgroundImage): void {
+  backgroundImages.update((imgs) => [...imgs, img]);
+  unsavedChanges.set(true);
+}
+
+export function updateBackgroundImage(
+  index: number,
+  partial: Partial<BackgroundImage>
+): void {
+  backgroundImages.update((imgs) => {
+    const copy = [...imgs];
+    if (copy[index]) {
+      copy[index] = { ...copy[index], ...partial };
+    }
+    return copy;
+  });
+  unsavedChanges.set(true);
+}
+
+export function removeBackgroundImage(index: number): void {
+  backgroundImages.update((imgs) => imgs.filter((_, i) => i !== index));
   unsavedChanges.set(true);
 }

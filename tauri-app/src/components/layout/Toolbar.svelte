@@ -9,6 +9,9 @@
   } from "../../lib/stores/uiStore";
   import { effectiveColors } from "../../lib/theme/colors";
   import { pingAllNodes, clearPingResults } from "../../lib/actions/pingActions";
+  import { addBackgroundImage } from "../../lib/stores/networkStore";
+  import { open } from "@tauri-apps/plugin-dialog";
+  import { invoke } from "@tauri-apps/api/core";
   import TooltipWrapper from "../common/TooltipWrapper.svelte";
 
   let colors = $derived($effectiveColors);
@@ -28,6 +31,46 @@
 
   function toggleGroupsMode() {
     groupsModeActive.update((g) => !g);
+  }
+
+  async function addBackgroundImageFromFile() {
+    const selected = await open({
+      filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "svg", "webp", "bmp"] }],
+      multiple: false,
+    });
+    if (!selected) return;
+
+    const path = selected as string;
+    const dataUrl: string = await invoke("read_image_as_base64", { path });
+
+    const filename = path.split(/[\\/]/).pop() ?? "image";
+
+    // Get natural dimensions
+    const img = new Image();
+    img.src = dataUrl;
+    await new Promise<void>((resolve) => { img.onload = () => resolve(); });
+
+    // Scale to reasonable canvas size
+    const maxDim = 400;
+    let w = img.naturalWidth;
+    let h = img.naturalHeight;
+    if (w > maxDim || h > maxDim) {
+      const scale = maxDim / Math.max(w, h);
+      w *= scale;
+      h *= scale;
+    }
+
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    addBackgroundImage({
+      id,
+      dataUrl,
+      x: 100,
+      y: 100,
+      width: w,
+      height: h,
+      opacity: 0.5,
+      filename,
+    });
   }
 
   let buttonClass = $derived(
@@ -137,6 +180,17 @@
         onclick={() => activeDialog.set("networkDiscovery")}
       >
         Discover
+      </button>
+    </TooltipWrapper>
+
+    <TooltipWrapper text="Add a background image to the canvas">
+      <button
+        class={buttonClass}
+        style:background-color={colors.BUTTON_BG}
+        style:color={colors.BUTTON_TEXT}
+        onclick={addBackgroundImageFromFile}
+      >
+        Add Image
       </button>
     </TooltipWrapper>
   {/if}

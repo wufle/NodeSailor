@@ -6,6 +6,7 @@ import {
   connections,
   stickyNotes,
   groups,
+  backgroundImages,
   vlanLabels,
   vlanLabelOrder,
   customCommands,
@@ -84,6 +85,7 @@ export async function loadFile(filePath?: string): Promise<void> {
   connections.set(data.connections ?? []);
   stickyNotes.set(data.stickynotes ?? []);
   groups.set(data.groups ?? []);
+  backgroundImages.set(data.background_images ?? []);
   vlanLabels.set(data.vlan_labels ?? {});
   vlanLabelOrder.set(data.vlan_label_order ?? []);
   customCommands.set(data.custom_commands ?? {});
@@ -142,6 +144,7 @@ export async function saveFile(): Promise<void> {
     groups: get(groups),
     group_color_presets: get(groupColorPresets),
     custom_commands: get(customCommands),
+    background_images: get(backgroundImages),
   };
 
   const content = JSON.stringify(data, null, 4);
@@ -155,6 +158,7 @@ export function newNetwork(): void {
   connections.set([]);
   stickyNotes.set([]);
   groups.set([]);
+  backgroundImages.set([]);
   vlanLabels.set({});
   vlanLabelOrder.set([]);
   customCommands.set({});

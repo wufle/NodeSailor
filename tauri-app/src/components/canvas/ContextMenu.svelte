@@ -12,6 +12,7 @@
     removeConnection,
     removeStickyNote,
     removeGroup,
+    removeBackgroundImage,
     customCommands,
   } from "../../lib/stores/networkStore";
   import { effectiveColors } from "../../lib/theme/colors";
@@ -73,6 +74,7 @@
     });
     (window as any).__contextStickyIndex = undefined;
     (window as any).__contextGroupIndex = undefined;
+    (window as any).__contextBgImageIndex = undefined;
   }
 
   function handleAction(action: () => void) {
@@ -285,6 +287,31 @@
           handleAction(() => removeGroup(groupIdx))}
       >
         Delete Group
+      </button>
+    {:else if (window as any).__contextBgImageIndex !== undefined}
+      {@const bgIdx = (window as any).__contextBgImageIndex}
+      <button
+        class="block w-full text-left px-4 py-2 text-sm hover:opacity-80"
+        style:color={colors.BUTTON_TEXT}
+        onclick={() =>
+          handleAction(() => {
+            (window as any).__bgImageOpacityIndex = bgIdx;
+            activeDialog.set("bgImageOpacity");
+          })}
+      >
+        Adjust Opacity
+      </button>
+      <div
+        class="border-t"
+        style:border-color={colors.BORDER_COLOR}
+      ></div>
+      <button
+        class="block w-full text-left px-4 py-2 text-sm hover:opacity-80"
+        style:color="#ef4444"
+        onclick={() =>
+          handleAction(() => removeBackgroundImage(bgIdx))}
+      >
+        Delete Image
       </button>
     {/if}
   </div>

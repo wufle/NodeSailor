@@ -13,6 +13,7 @@
   let showConnectionLabels = $state($displayOptions.show_connection_labels !== false);
   let showNotes = $state($displayOptions.show_notes !== false);
   let showGroups = $state($displayOptions.show_groups !== false);
+  let showBackgroundImages = $state($displayOptions.show_background_images !== false);
   let nodeSize = $state($displayOptions.node_size ?? 14);
   let visibleVlans = $state<string[] | null>($displayOptions.visible_vlans ?? null);
 
@@ -24,6 +25,7 @@
       show_connection_labels: showConnectionLabels,
       show_notes: showNotes,
       show_groups: showGroups,
+      show_background_images: showBackgroundImages,
       node_size: nodeSize,
       visible_vlans: visibleVlans,
     }));
@@ -139,6 +141,11 @@
       <label class="flex items-center gap-2 text-xs" style:color={colors.BUTTON_TEXT}>
         <input type="checkbox" bind:checked={showGroups} />
         Groups
+      </label>
+
+      <label class="flex items-center gap-2 text-xs" style:color={colors.BUTTON_TEXT}>
+        <input type="checkbox" bind:checked={showBackgroundImages} />
+        Background Images
       </label>
 
       <!-- Node size -->

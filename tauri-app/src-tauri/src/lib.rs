@@ -20,6 +20,7 @@ pub fn run() {
             commands::file_io::load_file,
             commands::file_io::save_file,
             commands::file_io::show_save_dialog,
+            commands::file_io::read_image_as_base64,
             commands::ping::ping_ips,
             commands::system::open_rdp,
             commands::system::open_ssh,
