@@ -28,6 +28,8 @@ pub fn run() {
             commands::network::get_local_ips,
             commands::discovery::get_subnets,
             commands::discovery::discover_network,
+            commands::discovery::generate_range_ips,
+            commands::discovery::discover_ip_range,
             commands::settings::save_settings,
             commands::settings::load_settings,
         ])

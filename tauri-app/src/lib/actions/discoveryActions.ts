@@ -17,6 +17,19 @@ export interface DiscoveredDevice {
   open_ports: number[];
 }
 
+export interface RangeResult {
+  label: string;
+  devices: DiscoveredDevice[];
+}
+
+export interface MergedDevice {
+  hostname: string;
+  mac_address: string;
+  vendor: string;
+  open_ports: number[];
+  ips: Record<string, string>; // vlanKey -> IP address
+}
+
 function computeGridLayout(count: number): { x: number; y: number }[] {
   const SPACING = 180;
   const START_X = 100;
@@ -76,10 +89,41 @@ function deriveFriendlyName(device: DiscoveredDevice): string {
   return device.ip;
 }
 
+function deriveFriendlyNameFromMerged(device: MergedDevice): string {
+  if (device.hostname) return device.hostname;
+
+  if (device.vendor && device.mac_address) {
+    const hexOnly = device.mac_address.replace(/[^0-9A-Fa-f]/g, "");
+    const suffix = hexOnly.slice(-6).toUpperCase();
+    return `${device.vendor}-${suffix}`;
+  }
+
+  const firstIp = Object.values(device.ips)[0] || "";
+  const ipSuffix = firstIp.split(".").slice(-2).join(".");
+  if (device.open_ports.includes(631) || device.open_ports.includes(9100)) {
+    return `Printer-${ipSuffix}`;
+  }
+  if (device.open_ports.includes(80) || device.open_ports.includes(443) || device.open_ports.includes(8080)) {
+    return `Web Device-${ipSuffix}`;
+  }
+
+  return firstIp;
+}
+
 function deriveWebUrl(device: DiscoveredDevice): string {
   if (device.open_ports.includes(443)) return `https://${device.ip}`;
   if (device.open_ports.includes(80)) return `http://${device.ip}`;
   return "";
+}
+
+function deriveWebUrlFromIp(ports: number[], ip: string): string {
+  if (ports.includes(443)) return `https://${ip}`;
+  if (ports.includes(80)) return `http://${ip}`;
+  return "";
+}
+
+function sanitizeVlanKey(label: string): string {
+  return label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "range";
 }
 
 export function createNodesFromDiscovery(
@@ -112,6 +156,109 @@ export function createNodesFromDiscovery(
       remote_desktop_address: d.open_ports.includes(3389) ? d.ip : "",
       file_path: "",
       web_config_url: deriveWebUrl(d),
+    };
+
+    addNode(node);
+  }
+
+  unsavedChanges.set(true);
+  activeDialog.set(null);
+  showStartMenu.set(false);
+}
+
+export function mergeDevicesByMac(
+  rangeResults: RangeResult[]
+): {
+  devices: MergedDevice[];
+  vlanLabels: Record<string, string>;
+  vlanLabelOrder: string[];
+} {
+  const macMap = new Map<string, MergedDevice>();
+  const labels: Record<string, string> = {};
+  const order: string[] = [];
+  const usedKeys = new Set<string>();
+
+  for (const range of rangeResults) {
+    let vlanKey = sanitizeVlanKey(range.label);
+    // Handle duplicate keys by adding numeric suffix
+    if (usedKeys.has(vlanKey)) {
+      let counter = 2;
+      while (usedKeys.has(`${vlanKey}_${counter}`)) counter++;
+      vlanKey = `${vlanKey}_${counter}`;
+    }
+    usedKeys.add(vlanKey);
+    labels[vlanKey] = range.label;
+    order.push(vlanKey);
+
+    for (const device of range.devices) {
+      const key = device.mac_address || `no-mac-${device.ip}`;
+
+      if (macMap.has(key)) {
+        const existing = macMap.get(key)!;
+        existing.ips[vlanKey] = device.ip;
+        // Merge open ports
+        for (const port of device.open_ports) {
+          if (!existing.open_ports.includes(port)) {
+            existing.open_ports.push(port);
+          }
+        }
+        // Prefer non-empty hostname/vendor
+        if (!existing.hostname && device.hostname) {
+          existing.hostname = device.hostname;
+        }
+        if (!existing.vendor && device.vendor) {
+          existing.vendor = device.vendor;
+        }
+      } else {
+        macMap.set(key, {
+          hostname: device.hostname,
+          mac_address: device.mac_address,
+          vendor: device.vendor,
+          open_ports: [...device.open_ports],
+          ips: { [vlanKey]: device.ip },
+        });
+      }
+    }
+  }
+
+  return {
+    devices: Array.from(macMap.values()),
+    vlanLabels: labels,
+    vlanLabelOrder: order,
+  };
+}
+
+export function createNodesFromMergedDiscovery(
+  mergedDevices: MergedDevice[],
+  vlanConfig: { labels: Record<string, string>; order: string[] },
+  layout: "grid" | "circle",
+  clearExisting: boolean
+): void {
+  if (clearExisting) {
+    newNetwork();
+  }
+
+  vlanLabels.set({ ...vlanConfig.labels });
+  vlanLabelOrder.set([...vlanConfig.order]);
+
+  const positions =
+    layout === "grid"
+      ? computeGridLayout(mergedDevices.length)
+      : computeCircleLayout(mergedDevices.length);
+
+  for (let i = 0; i < mergedDevices.length; i++) {
+    const d = mergedDevices[i];
+    const pos = positions[i];
+    const firstIp = Object.values(d.ips)[0] || "";
+
+    const node: NetworkNode = {
+      name: deriveFriendlyNameFromMerged(d),
+      x: pos.x,
+      y: pos.y,
+      vlans: { ...d.ips },
+      remote_desktop_address: d.open_ports.includes(3389) ? firstIp : "",
+      file_path: "",
+      web_config_url: deriveWebUrlFromIp(d.open_ports, firstIp),
     };
 
     addNode(node);

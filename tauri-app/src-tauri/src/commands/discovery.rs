@@ -71,6 +71,24 @@ fn generate_scan_ips(ip: &str, mask: &str) -> Vec<String> {
         .collect()
 }
 
+fn ip_to_u32(ip: &str) -> Option<u32> {
+    let parts: Vec<u32> = ip.split('.').filter_map(|p| p.parse().ok()).collect();
+    if parts.len() != 4 || parts.iter().any(|&p| p > 255) {
+        return None;
+    }
+    Some((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3])
+}
+
+fn u32_to_ip(addr: u32) -> String {
+    format!(
+        "{}.{}.{}.{}",
+        (addr >> 24) & 0xFF,
+        (addr >> 16) & 0xFF,
+        (addr >> 8) & 0xFF,
+        addr & 0xFF
+    )
+}
+
 fn ping_single(ip: &str) -> bool {
     let param = if cfg!(target_os = "windows") { "-n" } else { "-c" };
     let timeout_param = if cfg!(target_os = "windows") {
@@ -242,6 +260,268 @@ fn lookup_mac_vendor(mac: &str, oui_table: &HashMap<String, String>) -> String {
     oui_table.get(&prefix).cloned().unwrap_or_default()
 }
 
+/// Shared scan logic used by both `discover_network` and `discover_ip_range`.
+/// Runs ping sweep, ARP/vendor/hostname, and port scan phases.
+async fn run_scan(
+    app_handle: &tauri::AppHandle,
+    scan_ips: Vec<String>,
+    scan_depth: &str,
+    label: &str,
+) -> Result<Vec<DiscoveredDevice>, String> {
+    if scan_ips.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let total = scan_ips.len() as u32;
+    let mut live_ips: Vec<String> = Vec::new();
+    let prefix = if label.is_empty() {
+        String::new()
+    } else {
+        format!("[{}] ", label)
+    };
+
+    // Phase 1: Ping sweep
+    let _ = app_handle.emit(
+        "discovery-progress",
+        DiscoveryProgress {
+            phase: "ping_sweep".to_string(),
+            current: 0,
+            total,
+            found_so_far: 0,
+            message: format!("{}Scanning {} addresses...", prefix, total),
+        },
+    );
+
+    let batch_size = 30;
+    for (batch_idx, chunk) in scan_ips.chunks(batch_size).enumerate() {
+        let mut handles = Vec::new();
+        for ip in chunk {
+            let ip_clone = ip.clone();
+            handles.push(tokio::task::spawn_blocking(move || {
+                let alive = ping_single(&ip_clone);
+                (ip_clone, alive)
+            }));
+        }
+
+        for handle in handles {
+            if let Ok((ip, alive)) = handle.await {
+                if alive {
+                    live_ips.push(ip);
+                }
+            }
+        }
+
+        let scanned = ((batch_idx + 1) * batch_size).min(total as usize) as u32;
+        let _ = app_handle.emit(
+            "discovery-progress",
+            DiscoveryProgress {
+                phase: "ping_sweep".to_string(),
+                current: scanned,
+                total,
+                found_so_far: live_ips.len() as u32,
+                message: format!(
+                    "{}Pinged {}/{} — found {} devices",
+                    prefix, scanned, total, live_ips.len()
+                ),
+            },
+        );
+    }
+
+    if live_ips.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let found_count = live_ips.len() as u32;
+
+    let mut devices: Vec<DiscoveredDevice> = live_ips
+        .iter()
+        .map(|ip| DiscoveredDevice {
+            ip: ip.clone(),
+            hostname: String::new(),
+            mac_address: String::new(),
+            vendor: String::new(),
+            open_ports: vec![],
+        })
+        .collect();
+
+    // Phase 2: ARP + Vendor + Hostname (for "basic" and "ports" depth)
+    if scan_depth == "basic" || scan_depth == "ports" {
+        let _ = app_handle.emit(
+            "discovery-progress",
+            DiscoveryProgress {
+                phase: "arp_lookup".to_string(),
+                current: 0,
+                total: found_count,
+                found_so_far: found_count,
+                message: format!("{}Reading ARP table...", prefix),
+            },
+        );
+
+        let arp_table = tokio::task::spawn_blocking(read_arp_table)
+            .await
+            .unwrap_or_default();
+
+        for device in &mut devices {
+            if let Some(mac) = arp_table.get(&device.ip) {
+                device.mac_address = mac.clone();
+            }
+        }
+
+        // Load OUI table from bundled CSV and resolve vendors
+        let oui_table = load_oui_table(app_handle);
+        for device in &mut devices {
+            if !device.mac_address.is_empty() {
+                device.vendor = lookup_mac_vendor(&device.mac_address, &oui_table);
+            }
+        }
+
+        // Hostname resolution (batched)
+        let _ = app_handle.emit(
+            "discovery-progress",
+            DiscoveryProgress {
+                phase: "hostname_resolution".to_string(),
+                current: 0,
+                total: found_count,
+                found_so_far: found_count,
+                message: format!("{}Resolving hostnames...", prefix),
+            },
+        );
+
+        let hostname_batch_size = 10;
+        for (batch_idx, chunk) in devices.chunks_mut(hostname_batch_size).enumerate() {
+            let ips: Vec<String> = chunk.iter().map(|d| d.ip.clone()).collect();
+            let mut handles = Vec::new();
+
+            for ip in ips {
+                handles.push(tokio::task::spawn_blocking(move || {
+                    let hostname = resolve_hostname(&ip);
+                    (ip, hostname)
+                }));
+            }
+
+            let mut results: HashMap<String, String> = HashMap::new();
+            for handle in handles {
+                if let Ok((ip, hostname)) = handle.await {
+                    results.insert(ip, hostname);
+                }
+            }
+
+            for device in chunk.iter_mut() {
+                if let Some(hostname) = results.get(&device.ip) {
+                    device.hostname = hostname.clone();
+                }
+            }
+
+            let resolved =
+                ((batch_idx + 1) * hostname_batch_size).min(found_count as usize) as u32;
+            let _ = app_handle.emit(
+                "discovery-progress",
+                DiscoveryProgress {
+                    phase: "hostname_resolution".to_string(),
+                    current: resolved,
+                    total: found_count,
+                    found_so_far: found_count,
+                    message: format!("{}Resolved {}/{} hostnames", prefix, resolved, found_count),
+                },
+            );
+        }
+    }
+
+    // Phase 3: Port scan (for "ports" depth only)
+    if scan_depth == "ports" {
+        let ports_to_check: Vec<u16> = vec![80, 443, 3389, 22, 631, 9100, 5353, 8080];
+        let port_total = (found_count as usize * ports_to_check.len()) as u32;
+
+        let _ = app_handle.emit(
+            "discovery-progress",
+            DiscoveryProgress {
+                phase: "port_scan".to_string(),
+                current: 0,
+                total: port_total,
+                found_so_far: found_count,
+                message: format!("{}Scanning ports...", prefix),
+            },
+        );
+
+        let port_batch_size = 20;
+        let mut all_port_tasks: Vec<(usize, String, u16)> = Vec::new();
+        for (idx, device) in devices.iter().enumerate() {
+            for &port in &ports_to_check {
+                all_port_tasks.push((idx, device.ip.clone(), port));
+            }
+        }
+
+        for (batch_idx, chunk) in all_port_tasks.chunks(port_batch_size).enumerate() {
+            let mut handles = Vec::new();
+            for (idx, ip, port) in chunk {
+                let ip_clone = ip.clone();
+                let port_val = *port;
+                let device_idx = *idx;
+                handles.push(tokio::task::spawn_blocking(move || {
+                    let open = check_port(&ip_clone, port_val);
+                    (device_idx, port_val, open)
+                }));
+            }
+
+            for handle in handles {
+                if let Ok((device_idx, port, open)) = handle.await {
+                    if open {
+                        devices[device_idx].open_ports.push(port);
+                    }
+                }
+            }
+
+            let checked =
+                ((batch_idx + 1) * port_batch_size).min(all_port_tasks.len()) as u32;
+            let _ = app_handle.emit(
+                "discovery-progress",
+                DiscoveryProgress {
+                    phase: "port_scan".to_string(),
+                    current: checked,
+                    total: port_total,
+                    found_so_far: found_count,
+                    message: format!(
+                        "{}Checked {}/{} port combinations",
+                        prefix, checked, port_total
+                    ),
+                },
+            );
+        }
+
+        for device in &mut devices {
+            device.open_ports.sort();
+            device.open_ports.dedup();
+        }
+    }
+
+    // Sort by IP
+    devices.sort_by(|a, b| {
+        let parse_ip = |ip: &str| -> u32 {
+            ip.split('.')
+                .filter_map(|p| p.parse::<u32>().ok())
+                .enumerate()
+                .fold(0u32, |acc, (i, p)| acc | (p << (24 - i * 8)))
+        };
+        parse_ip(&a.ip).cmp(&parse_ip(&b.ip))
+    });
+
+    let _ = app_handle.emit(
+        "discovery-progress",
+        DiscoveryProgress {
+            phase: "complete".to_string(),
+            current: found_count,
+            total: found_count,
+            found_so_far: found_count,
+            message: format!(
+                "{}Discovery complete — found {} devices",
+                prefix, found_count
+            ),
+        },
+    );
+
+    Ok(devices)
+}
+
 #[tauri::command]
 pub fn get_subnets() -> Result<Vec<SubnetInfo>, String> {
     let mut subnets = Vec::new();
@@ -383,242 +663,47 @@ pub async fn discover_network(
     if scan_ips.is_empty() {
         return Err("Could not generate IP range from subnet. The subnet may be too large (max /20) or invalid.".to_string());
     }
+    run_scan(&app_handle, scan_ips, &scan_depth, "").await
+}
 
-    let total = scan_ips.len() as u32;
-    let mut live_ips: Vec<String> = Vec::new();
+#[tauri::command]
+pub fn generate_range_ips(start_ip: String, end_ip: String) -> Result<Vec<String>, String> {
+    let start = ip_to_u32(&start_ip)
+        .ok_or_else(|| format!("Invalid start IP: {}", start_ip))?;
+    let end = ip_to_u32(&end_ip)
+        .ok_or_else(|| format!("Invalid end IP: {}", end_ip))?;
 
-    // Phase 1: Ping sweep
-    let _ = app_handle.emit(
-        "discovery-progress",
-        DiscoveryProgress {
-            phase: "ping_sweep".to_string(),
-            current: 0,
-            total,
-            found_so_far: 0,
-            message: format!("Scanning {} addresses...", total),
-        },
-    );
-
-    let batch_size = 30;
-    for (batch_idx, chunk) in scan_ips.chunks(batch_size).enumerate() {
-        let mut handles = Vec::new();
-        for ip in chunk {
-            let ip_clone = ip.clone();
-            handles.push(tokio::task::spawn_blocking(move || {
-                let alive = ping_single(&ip_clone);
-                (ip_clone, alive)
-            }));
-        }
-
-        for handle in handles {
-            if let Ok((ip, alive)) = handle.await {
-                if alive {
-                    live_ips.push(ip);
-                }
-            }
-        }
-
-        let scanned = ((batch_idx + 1) * batch_size).min(total as usize) as u32;
-        let _ = app_handle.emit(
-            "discovery-progress",
-            DiscoveryProgress {
-                phase: "ping_sweep".to_string(),
-                current: scanned,
-                total,
-                found_so_far: live_ips.len() as u32,
-                message: format!(
-                    "Pinged {}/{} — found {} devices",
-                    scanned, total, live_ips.len()
-                ),
-            },
-        );
+    if end < start {
+        return Err("End IP must be greater than or equal to start IP.".to_string());
     }
 
-    if live_ips.is_empty() {
-        return Ok(vec![]);
+    let count = end - start + 1;
+    if count > 4094 {
+        return Err(format!(
+            "Range too large: {} addresses (max 4094). Please use a smaller range.",
+            count
+        ));
     }
 
-    let found_count = live_ips.len() as u32;
+    let ips: Vec<String> = (start..=end).map(u32_to_ip).collect();
+    Ok(ips)
+}
 
-    let mut devices: Vec<DiscoveredDevice> = live_ips
-        .iter()
-        .map(|ip| DiscoveredDevice {
-            ip: ip.clone(),
-            hostname: String::new(),
-            mac_address: String::new(),
-            vendor: String::new(),
-            open_ports: vec![],
-        })
-        .collect();
-
-    // Phase 2: ARP + Vendor + Hostname (for "basic" and "ports" depth)
-    if scan_depth == "basic" || scan_depth == "ports" {
-        let _ = app_handle.emit(
-            "discovery-progress",
-            DiscoveryProgress {
-                phase: "arp_lookup".to_string(),
-                current: 0,
-                total: found_count,
-                found_so_far: found_count,
-                message: "Reading ARP table...".to_string(),
-            },
-        );
-
-        let arp_table = tokio::task::spawn_blocking(read_arp_table)
-            .await
-            .unwrap_or_default();
-
-        for device in &mut devices {
-            if let Some(mac) = arp_table.get(&device.ip) {
-                device.mac_address = mac.clone();
-            }
-        }
-
-        // Load OUI table from bundled CSV and resolve vendors
-        let oui_table = load_oui_table(&app_handle);
-        for device in &mut devices {
-            if !device.mac_address.is_empty() {
-                device.vendor = lookup_mac_vendor(&device.mac_address, &oui_table);
-            }
-        }
-
-        // Hostname resolution (batched)
-        let _ = app_handle.emit(
-            "discovery-progress",
-            DiscoveryProgress {
-                phase: "hostname_resolution".to_string(),
-                current: 0,
-                total: found_count,
-                found_so_far: found_count,
-                message: "Resolving hostnames...".to_string(),
-            },
-        );
-
-        let hostname_batch_size = 10;
-        for (batch_idx, chunk) in devices.chunks_mut(hostname_batch_size).enumerate() {
-            let ips: Vec<String> = chunk.iter().map(|d| d.ip.clone()).collect();
-            let mut handles = Vec::new();
-
-            for ip in ips {
-                handles.push(tokio::task::spawn_blocking(move || {
-                    let hostname = resolve_hostname(&ip);
-                    (ip, hostname)
-                }));
-            }
-
-            let mut results: HashMap<String, String> = HashMap::new();
-            for handle in handles {
-                if let Ok((ip, hostname)) = handle.await {
-                    results.insert(ip, hostname);
-                }
-            }
-
-            for device in chunk.iter_mut() {
-                if let Some(hostname) = results.get(&device.ip) {
-                    device.hostname = hostname.clone();
-                }
-            }
-
-            let resolved =
-                ((batch_idx + 1) * hostname_batch_size).min(found_count as usize) as u32;
-            let _ = app_handle.emit(
-                "discovery-progress",
-                DiscoveryProgress {
-                    phase: "hostname_resolution".to_string(),
-                    current: resolved,
-                    total: found_count,
-                    found_so_far: found_count,
-                    message: format!("Resolved {}/{} hostnames", resolved, found_count),
-                },
-            );
-        }
+#[tauri::command]
+pub async fn discover_ip_range(
+    app_handle: tauri::AppHandle,
+    ip_list: Vec<String>,
+    scan_depth: String,
+    range_label: String,
+) -> Result<Vec<DiscoveredDevice>, String> {
+    if ip_list.is_empty() {
+        return Err("IP list is empty.".to_string());
     }
-
-    // Phase 3: Port scan (for "ports" depth only)
-    if scan_depth == "ports" {
-        let ports_to_check: Vec<u16> = vec![80, 443, 3389, 22, 631, 9100, 5353, 8080];
-        let port_total = (found_count as usize * ports_to_check.len()) as u32;
-
-        let _ = app_handle.emit(
-            "discovery-progress",
-            DiscoveryProgress {
-                phase: "port_scan".to_string(),
-                current: 0,
-                total: port_total,
-                found_so_far: found_count,
-                message: "Scanning ports...".to_string(),
-            },
-        );
-
-        let port_batch_size = 20;
-        let mut all_port_tasks: Vec<(usize, String, u16)> = Vec::new();
-        for (idx, device) in devices.iter().enumerate() {
-            for &port in &ports_to_check {
-                all_port_tasks.push((idx, device.ip.clone(), port));
-            }
-        }
-
-        for (batch_idx, chunk) in all_port_tasks.chunks(port_batch_size).enumerate() {
-            let mut handles = Vec::new();
-            for (idx, ip, port) in chunk {
-                let ip_clone = ip.clone();
-                let port_val = *port;
-                let device_idx = *idx;
-                handles.push(tokio::task::spawn_blocking(move || {
-                    let open = check_port(&ip_clone, port_val);
-                    (device_idx, port_val, open)
-                }));
-            }
-
-            for handle in handles {
-                if let Ok((device_idx, port, open)) = handle.await {
-                    if open {
-                        devices[device_idx].open_ports.push(port);
-                    }
-                }
-            }
-
-            let checked =
-                ((batch_idx + 1) * port_batch_size).min(all_port_tasks.len()) as u32;
-            let _ = app_handle.emit(
-                "discovery-progress",
-                DiscoveryProgress {
-                    phase: "port_scan".to_string(),
-                    current: checked,
-                    total: port_total,
-                    found_so_far: found_count,
-                    message: format!("Checked {}/{} port combinations", checked, port_total),
-                },
-            );
-        }
-
-        for device in &mut devices {
-            device.open_ports.sort();
-            device.open_ports.dedup();
-        }
+    if ip_list.len() > 4094 {
+        return Err(format!(
+            "Too many IPs: {} (max 4094). Please use a smaller range.",
+            ip_list.len()
+        ));
     }
-
-    // Sort by IP
-    devices.sort_by(|a, b| {
-        let parse_ip = |ip: &str| -> u32 {
-            ip.split('.')
-                .filter_map(|p| p.parse::<u32>().ok())
-                .enumerate()
-                .fold(0u32, |acc, (i, p)| acc | (p << (24 - i * 8)))
-        };
-        parse_ip(&a.ip).cmp(&parse_ip(&b.ip))
-    });
-
-    let _ = app_handle.emit(
-        "discovery-progress",
-        DiscoveryProgress {
-            phase: "complete".to_string(),
-            current: found_count,
-            total: found_count,
-            found_so_far: found_count,
-            message: format!("Discovery complete — found {} devices", found_count),
-        },
-    );
-
-    Ok(devices)
+    run_scan(&app_handle, ip_list, &scan_depth, &range_label).await
 }
