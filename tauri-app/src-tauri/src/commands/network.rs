@@ -21,7 +21,7 @@ pub fn get_local_ips() -> Vec<String> {
     // Only query system commands if socket method failed to get any IPs
     // This makes the function much faster for the common case
     if ips.is_empty() {
-        #[cfg(any(target_os = "macos", target_os = "linux"))]
+        #[cfg(target_os = "linux")]
         {
             if let Ok(output) = std::process::Command::new("hostname")
                 .arg("-I")
@@ -35,8 +35,10 @@ pub fn get_local_ips() -> Vec<String> {
                     }
                 }
             }
+        }
 
-            // macOS ifconfig
+        #[cfg(any(target_os = "macos", target_os = "linux"))]
+        {
             if let Ok(output) = std::process::Command::new("ifconfig").output() {
                 let stdout = String::from_utf8_lossy(&output.stdout);
                 let re = regex::Regex::new(r"inet (\d+\.\d+\.\d+\.\d+)").unwrap();

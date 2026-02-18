@@ -93,8 +93,10 @@ fn ping_single(ip: &str) -> bool {
     let param = if cfg!(target_os = "windows") { "-n" } else { "-c" };
     let timeout_param = if cfg!(target_os = "windows") {
         vec!["-w", "1000"]
+    } else if cfg!(target_os = "macos") {
+        vec!["-W", "1000"] // macOS: -W is in milliseconds
     } else {
-        vec!["-W", "1"]
+        vec!["-W", "1"] // Linux: -W is in seconds
     };
 
     let mut cmd = Command::new("ping");
@@ -134,11 +136,18 @@ fn read_arp_table() -> HashMap<String, String> {
 
     if let Ok(output) = cmd.output() {
         let stdout = String::from_utf8_lossy(&output.stdout);
-        let re = Regex::new(r"(\d+\.\d+\.\d+\.\d+)\s+([0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2})")
+        // Accept 1-2 hex digits per octet to handle macOS format (e.g. 0:1a:2b:3c:4d:5e)
+        let re = Regex::new(r"(\d+\.\d+\.\d+\.\d+)\s+([0-9a-fA-F]{1,2}[:-][0-9a-fA-F]{1,2}[:-][0-9a-fA-F]{1,2}[:-][0-9a-fA-F]{1,2}[:-][0-9a-fA-F]{1,2}[:-][0-9a-fA-F]{1,2})")
             .unwrap();
         for cap in re.captures_iter(&stdout) {
             let ip = cap[1].to_string();
-            let mac = cap[2].to_string().to_uppercase();
+            // Normalize MAC to zero-padded uppercase (e.g. "0:1a:2b:3c:4d:5e" -> "00:1A:2B:3C:4D:5E")
+            let mac: String = cap[2]
+                .split(|c| c == ':' || c == '-')
+                .map(|octet| format!("{:0>2}", octet))
+                .collect::<Vec<_>>()
+                .join(":")
+                .to_uppercase();
             map.insert(ip, mac);
         }
     }
@@ -168,6 +177,25 @@ fn resolve_hostname(ip: &str) -> String {
         }
     }
 
+    // macOS: try dscacheutil first (fast local resolver)
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(output) = Command::new("dscacheutil")
+            .args(["-q", "host", "-a", "ip_address", ip])
+            .output()
+        {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let re = Regex::new(r"(?i)name:\s+(\S+)").unwrap();
+            if let Some(cap) = re.captures(&stdout) {
+                let name = cap[1].to_string();
+                if name != ip {
+                    return name;
+                }
+            }
+        }
+    }
+
+    // Fallback: nslookup (works on all platforms)
     let mut cmd = Command::new("nslookup");
     cmd.arg(ip);
 
@@ -180,7 +208,7 @@ fn resolve_hostname(ip: &str) -> String {
 
     if let Ok(output) = cmd.output() {
         let stdout = String::from_utf8_lossy(&output.stdout);
-        let re = Regex::new(r"(?i)Name:\s+(\S+)").unwrap();
+        let re = Regex::new(r"(?i)name:\s+(\S+)").unwrap();
         let matches: Vec<_> = re.captures_iter(&stdout).collect();
         if matches.len() >= 2 {
             return matches[1][1].to_string();
@@ -598,7 +626,7 @@ pub fn get_subnets() -> Result<Vec<SubnetInfo>, String> {
         }
     }
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "linux")]
     {
         if let Ok(output) = Command::new("ip").args(["addr", "show"]).output() {
             let stdout = String::from_utf8_lossy(&output.stdout).to_string();
@@ -643,6 +671,61 @@ pub fn get_subnets() -> Result<Vec<SubnetInfo>, String> {
                         cidr: format!("{}/{}", network, prefix),
                         interface_name: current_iface.clone(),
                     });
+                }
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        // macOS: parse ifconfig output
+        // Lines look like: inet 192.168.1.100 netmask 0xffffff00 broadcast 192.168.1.255
+        // Interface headers look like: en0: flags=8863<...> mtu 1500
+        if let Ok(output) = Command::new("ifconfig").output() {
+            let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+            let iface_re = Regex::new(r"^(\w+):\s+flags=").unwrap();
+            let inet_re =
+                Regex::new(r"inet (\d+\.\d+\.\d+\.\d+) netmask (0x[0-9a-fA-F]+)").unwrap();
+
+            let mut current_iface = String::new();
+            for line in stdout.lines() {
+                if let Some(cap) = iface_re.captures(line) {
+                    current_iface = cap[1].to_string();
+                }
+                if let Some(cap) = inet_re.captures(line) {
+                    let ip = cap[1].to_string();
+                    let hex_mask = &cap[2];
+                    if ip.starts_with("127.") || ip.starts_with("169.254.") {
+                        continue;
+                    }
+                    // Parse hex netmask (e.g. 0xffffff00) to u32
+                    let mask_u32 =
+                        u32::from_str_radix(hex_mask.trim_start_matches("0x"), 16).unwrap_or(0);
+                    let prefix = mask_u32.count_ones() as u8;
+                    let mask = format!(
+                        "{}.{}.{}.{}",
+                        (mask_u32 >> 24) & 0xFF,
+                        (mask_u32 >> 16) & 0xFF,
+                        (mask_u32 >> 8) & 0xFF,
+                        mask_u32 & 0xFF
+                    );
+                    let ip_parts: Vec<u32> =
+                        ip.split('.').filter_map(|p| p.parse().ok()).collect();
+                    if ip_parts.len() == 4 {
+                        let network = format!(
+                            "{}.{}.{}.{}",
+                            ip_parts[0] & ((mask_u32 >> 24) & 0xFF),
+                            ip_parts[1] & ((mask_u32 >> 16) & 0xFF),
+                            ip_parts[2] & ((mask_u32 >> 8) & 0xFF),
+                            ip_parts[3] & (mask_u32 & 0xFF)
+                        );
+                        subnets.push(SubnetInfo {
+                            ip,
+                            subnet_mask: mask,
+                            cidr: format!("{}/{}", network, prefix),
+                            interface_name: current_iface.clone(),
+                        });
+                    }
                 }
             }
         }
