@@ -1,12 +1,13 @@
-# Release Notes v1.1.5
+# Release Notes v1.1.6
 
-**Release Date:** 2026-02-18
+**Release Date:** 2026-02-21
 
 ## Changes
 
-* Added background image support - import images onto the canvas, resize, reposition, and adjust opacity to use floor plans, rack diagrams, or other reference images as backdrops
-* Added MAC OUI vendor lookup to the network discovery tool, identifying device manufacturers from MAC addresses
-* Added IP range scanning to the discovery tool, allowing discovery across custom address ranges
-* Added OpenSSH integration for connecting to nodes via SSH
-* Fixed incorrect host node getting highlighted after using the discovery tool
-* Fixed network command compatibility issues on Mac and Linux
+* Added right-click context menu to the info panel for quick access to node actions
+* Added "Switch to Configuration Mode" banner in Operator Mode for easier mode switching
+* Removed edit connection option from Operator Mode context menu to prevent accidental changes
+* Fixed node flash/strobe visual issues on Mac and Linux
+* Fixed "Who am I?" node flash animation bug
+* Fixed network discovery mode not finding all devices in some cases
+* Updated installation instructions in README

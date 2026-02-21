@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "NodeSailor",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "identifier": "com.nodesailor.app",
   "build": {
     "frontendDist": "../dist",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "NodeSailor v1.1.5",
+        "title": "NodeSailor v1.1.6",
         "width": 1400,
         "height": 900,
         "resizable": true,
