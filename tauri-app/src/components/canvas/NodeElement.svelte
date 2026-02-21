@@ -37,18 +37,96 @@
   let hasPingSuccess = $derived(pingAnimationState === 'success' && !strobeDisabled);
   let hasPingFailure = $derived(pingAnimationState === 'failure' && !strobeDisabled);
 
-  // Auto-clear animation state after CSS animation completes
+  // JS-driven filter animation state (cross-platform: works on WebKit/WebKitGTK)
+  let filterStyle = $state('none');
+  let _animRafId = 0;
+  let _animCancel: (() => void) | null = null;
+
+  function _cancelAnim() {
+    if (_animCancel) { _animCancel(); _animCancel = null; }
+    cancelAnimationFrame(_animRafId);
+  }
+
+  function _runAnim(
+    frames: Array<{t: number, shadow: string}>,
+    duration: number,
+    keepLast = false
+  ) {
+    _cancelAnim();
+    const start = performance.now();
+    let cancelled = false;
+    function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
+    function lerpShadow(s1: string, s2: string, t: number) {
+      const re = /drop-shadow\(0 0 ([\d.]+)px rgba\(([\d, ]+),([\d.]+)\)\)/;
+      const m1 = s1.match(re), m2 = s2.match(re);
+      if (!m1 || !m2) return t < 0.5 ? s1 : s2;
+      const blur = lerp(+m1[1], +m2[1], t);
+      const alpha = lerp(+m1[3], +m2[3], t);
+      return `drop-shadow(0 0 ${blur.toFixed(2)}px rgba(${m1[2]},${alpha.toFixed(3)}))`;
+    }
+    function step(now: number) {
+      if (cancelled) return;
+      const p = Math.min((now - start) / duration, 1);
+      let fi = 0;
+      for (let i = 0; i < frames.length - 1; i++) {
+        if (p >= frames[i].t) fi = i;
+      }
+      const f0 = frames[fi], f1 = frames[Math.min(fi + 1, frames.length - 1)];
+      const segLen = f1.t - f0.t;
+      const localT = segLen > 0 ? (p - f0.t) / segLen : 1;
+      filterStyle = lerpShadow(f0.shadow, f1.shadow, localT);
+      if (p < 1) {
+        _animRafId = requestAnimationFrame(step);
+      } else {
+        filterStyle = keepLast ? frames[frames.length - 1].shadow : 'none';
+        _animCancel = null;
+      }
+    }
+    _animRafId = requestAnimationFrame(step);
+    _animCancel = () => { cancelled = true; filterStyle = 'none'; };
+  }
+
+  // Ping animation effect — drives JS animation and auto-clears state
   $effect(() => {
-    if (pingAnimationState) {
-      const duration = pingAnimationState === 'success' ? 1000 : 1200;
-      const timeoutId = setTimeout(() => {
-        pingAnimationStates.update((s) => {
-          const copy = { ...s };
-          delete copy[index];
-          return copy;
-        });
-      }, duration);
-      return () => clearTimeout(timeoutId);
+    if (hasPingSuccess) {
+      _runAnim([
+        { t: 0,    shadow: 'drop-shadow(0 0 0px rgba(39, 174, 96, 0))' },
+        { t: 0.15, shadow: 'drop-shadow(0 0 22px rgba(39, 174, 96, 0.9))' },
+        { t: 0.40, shadow: 'drop-shadow(0 0 12px rgba(39, 174, 96, 0.4))' },
+        { t: 1,    shadow: 'drop-shadow(0 0 0px rgba(39, 174, 96, 0))' },
+      ], 1000);
+      const id = setTimeout(() => {
+        pingAnimationStates.update((s) => { const c = { ...s }; delete c[index]; return c; });
+      }, 1000);
+      return () => clearTimeout(id);
+    } else if (hasPingFailure) {
+      _runAnim([
+        { t: 0,    shadow: 'drop-shadow(0 0 0px rgba(231, 76, 60, 0))' },
+        { t: 0.30, shadow: 'drop-shadow(0 0 22px rgba(231, 76, 60, 0.9))' },
+        { t: 0.55, shadow: 'drop-shadow(0 0 12px rgba(231, 76, 60, 0.4))' },
+        { t: 1,    shadow: 'drop-shadow(0 0 0px rgba(231, 76, 60, 0))' },
+      ], 1200);
+      const id = setTimeout(() => {
+        pingAnimationStates.update((s) => { const c = { ...s }; delete c[index]; return c; });
+      }, 1200);
+      return () => clearTimeout(id);
+    }
+  });
+
+  // Host node strobe — only runs when no ping animation is active
+  $effect(() => {
+    if (isHostNode && !hasPingSuccess && !hasPingFailure) {
+      _runAnim([
+        { t: 0,      shadow: 'drop-shadow(0 0 8px rgba(255, 255, 0, 0.2))' },
+        { t: 0.1667, shadow: 'drop-shadow(0 0 16px rgba(255, 255, 0, 0.8))' },
+        { t: 0.3333, shadow: 'drop-shadow(0 0 8px rgba(255, 255, 0, 0.2))' },
+        { t: 0.50,   shadow: 'drop-shadow(0 0 16px rgba(255, 255, 0, 0.8))' },
+        { t: 0.6667, shadow: 'drop-shadow(0 0 8px rgba(255, 255, 0, 0.2))' },
+        { t: 0.8333, shadow: 'drop-shadow(0 0 16px rgba(255, 255, 0, 0.8))' },
+        { t: 1,      shadow: 'drop-shadow(0 0 8px rgba(255, 255, 0, 0.5))' },
+      ], 6000, true);
+    } else if (!isHostNode && !hasPingSuccess && !hasPingFailure) {
+      _cancelAnim();
     }
   });
 
@@ -81,81 +159,11 @@
   let halfH = $derived(textHeight / 2 + pad);
 </script>
 
-<style>
-  @keyframes strobe-pulse {
-    0% {
-      filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.2)); /* Initial faint glow */
-    }
-    16.67% { /* Peak of first strobe */
-      filter: drop-shadow(0 0 16px rgba(255, 255, 0, 0.8));
-    }
-    33.33% { /* Return to faint glow */
-      filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.2));
-    }
-    50% { /* Peak of second strobe */
-      filter: drop-shadow(0 0 16px rgba(255, 255, 0, 0.8));
-    }
-    66.67% { /* Return to faint glow */
-      filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.2));
-    }
-    83.33% { /* Peak of third strobe */
-      filter: drop-shadow(0 0 16px rgba(255, 255, 0, 0.8));
-    }
-    100% { /* Final sustained light glow */
-      filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.5));
-    }
-  }
-
-  .strobe-effect {
-    animation: strobe-pulse 6s ease-out forwards;
-  }
-
-  @keyframes ping-success-strobe {
-    0% {
-      filter: drop-shadow(0 0 0px rgba(39, 174, 96, 0));
-    }
-    15% {
-      filter: drop-shadow(0 0 22px rgba(39, 174, 96, 0.9));
-    }
-    40% {
-      filter: drop-shadow(0 0 12px rgba(39, 174, 96, 0.4));
-    }
-    100% {
-      filter: drop-shadow(0 0 0px rgba(39, 174, 96, 0));
-    }
-  }
-
-  @keyframes ping-failure-strobe {
-    0% {
-      filter: drop-shadow(0 0 0px rgba(231, 76, 60, 0));
-    }
-    30% {
-      filter: drop-shadow(0 0 22px rgba(231, 76, 60, 0.9));
-    }
-    55% {
-      filter: drop-shadow(0 0 12px rgba(231, 76, 60, 0.4));
-    }
-    100% {
-      filter: drop-shadow(0 0 0px rgba(231, 76, 60, 0));
-    }
-  }
-
-  .ping-success-effect {
-    animation: ping-success-strobe 1s ease-in-out forwards;
-  }
-
-  .ping-failure-effect {
-    animation: ping-failure-strobe 1.2s ease-in-out forwards;
-  }
-</style>
-
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <g
   data-type="node"
   data-index={index}
-  class:strobe-effect={isHostNode}
-  class:ping-success-effect={hasPingSuccess}
-  class:ping-failure-effect={hasPingFailure}
+  style:filter={filterStyle}
   style:cursor="pointer"
   onmousedown={onMouseDown}
   onmouseenter={onMouseEnter}
