@@ -232,20 +232,20 @@
       {@const connIdx = $contextMenu.connectionIndex}
       {@const conn = $connections[connIdx]}
       {#if conn}
-        <button
-          class="block w-full text-left px-4 py-2 text-sm hover:opacity-80"
-          style:color={colors.BUTTON_TEXT}
-          onclick={() =>
-            handleAction(() => {
-              (window as any).__editConnectionIndex = connIdx;
-              (window as any).__connectionFromIndex = conn.from;
-              (window as any).__connectionToIndex = conn.to;
-              activeDialog.set("connectionEditor");
-            })}
-        >
-          Edit Connection
-        </button>
         {#if $mode === "Configuration"}
+          <button
+            class="block w-full text-left px-4 py-2 text-sm hover:opacity-80"
+            style:color={colors.BUTTON_TEXT}
+            onclick={() =>
+              handleAction(() => {
+                (window as any).__editConnectionIndex = connIdx;
+                (window as any).__connectionFromIndex = conn.from;
+                (window as any).__connectionToIndex = conn.to;
+                activeDialog.set("connectionEditor");
+              })}
+          >
+            Edit Connection
+          </button>
           <div
             class="border-t"
             style:border-color={colors.BORDER_COLOR}

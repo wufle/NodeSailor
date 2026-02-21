@@ -14,6 +14,7 @@
     unsavedChanges,
     activeDialog,
     activeTool,
+    operatorDragAttempted,
   } from "../../lib/stores/uiStore";
   import { matrixMode } from "../../lib/stores/matrixStore";
   import {
@@ -67,6 +68,7 @@
   // Node drag state
   let isDragging = $state(false);
   let dragNodeIndex: number | null = null;
+  let operatorDragPending = false;
 
   // Group drawing state
   let isDrawingGroup = $state(false);
@@ -216,6 +218,12 @@
   }
 
   function onMouseMove(e: MouseEvent) {
+    // Detect drag attempt in Operator mode
+    if (operatorDragPending) {
+      operatorDragPending = false;
+      operatorDragAttempted.set(true);
+    }
+
     // Pan
     if (isPanning) {
       const dx = e.clientX - panStartX;
@@ -265,6 +273,8 @@
   }
 
   function onMouseUp(e: MouseEvent) {
+    operatorDragPending = false;
+
     if (isPanning) {
       isPanning = false;
       return;
@@ -378,6 +388,8 @@
       if ($mode === "Configuration" && !$groupsModeActive) {
         isDragging = true;
         dragNodeIndex = index;
+      } else if ($mode !== "Configuration") {
+        operatorDragPending = true;
       }
 
       // Ping on click (both modes)
@@ -501,6 +513,7 @@
     connIndex: number
   ) {
     if (e.button !== 2) return;
+    if ($mode !== "Configuration") return;
     e.preventDefault();
     e.stopPropagation();
     contextMenu.set({

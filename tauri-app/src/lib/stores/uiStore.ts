@@ -29,3 +29,5 @@ export const contextMenu = writable({
   nodeIndex: null as number | null,
   connectionIndex: null as number | null,
 });
+
+export const operatorDragAttempted = writable(false);
