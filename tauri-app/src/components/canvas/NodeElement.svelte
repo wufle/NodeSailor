@@ -57,12 +57,12 @@
     let cancelled = false;
     function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
     function lerpShadow(s1: string, s2: string, t: number) {
-      const re = /drop-shadow\(0 0 ([\d.]+)px rgba\(([\d, ]+),([\d.]+)\)\)/;
+      const re = /drop-shadow\(0 0 ([\d.]+)px rgba\((\d+,\s*\d+,\s*\d+),\s*([\d.]+)\)\)/;
       const m1 = s1.match(re), m2 = s2.match(re);
       if (!m1 || !m2) return t < 0.5 ? s1 : s2;
       const blur = lerp(+m1[1], +m2[1], t);
       const alpha = lerp(+m1[3], +m2[3], t);
-      return `drop-shadow(0 0 ${blur.toFixed(2)}px rgba(${m1[2]},${alpha.toFixed(3)}))`;
+      return `drop-shadow(0 0 ${blur.toFixed(2)}px rgba(${m1[2]}, ${alpha.toFixed(3)}))`;
     }
     function step(now: number) {
       if (cancelled) return;
