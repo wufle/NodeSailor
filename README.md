@@ -39,6 +39,16 @@ Download the latest release from the [Releases](https://github.com/wufle/NodeSai
 2. Download the appropriate installer for your operating system
 3. Install and run NodeSailor
 
+> **First Launch Security Notes**
+>
+> NodeSailor is not commercially code-signed. Your OS may show a security warning on first launch:
+>
+> - **Windows**: If SmartScreen says "Windows protected your PC", click **More info** → **Run anyway**.
+> - **macOS**: If you see "unidentified developer", right-click (or Ctrl-click) the app → **Open** → **Open**. Alternatively, run this command in Terminal:
+>   ```bash
+>   xattr -rd com.apple.quarantine /Applications/NodeSailor.app
+>   ```
+
 ### Option 2: Build from Source
 
 1. **Clone the repository**

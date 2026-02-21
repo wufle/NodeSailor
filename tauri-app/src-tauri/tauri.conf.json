@@ -36,6 +36,9 @@
     ],
     "resources": [
       "oui.csv"
-    ]
+    ],
+    "macOS": {
+      "signingIdentity": "-"
+    }
   }
 }
