@@ -89,14 +89,16 @@ fn u32_to_ip(addr: u32) -> String {
     )
 }
 
-fn ping_single(ip: &str) -> bool {
+fn ping_single(ip: &str, timeout_ms: u32) -> bool {
     let param = if cfg!(target_os = "windows") { "-n" } else { "-c" };
-    let timeout_param = if cfg!(target_os = "windows") {
-        vec!["-w", "1000"]
+    let timeout_str = timeout_ms.to_string();
+    let timeout_sec = (timeout_ms / 1000).max(1).to_string();
+    let timeout_param: Vec<&str> = if cfg!(target_os = "windows") {
+        vec!["-w", &timeout_str]
     } else if cfg!(target_os = "macos") {
-        vec!["-W", "1000"] // macOS: -W is in milliseconds
+        vec!["-W", &timeout_str] // macOS: -W is in milliseconds
     } else {
-        vec!["-W", "1"] // Linux: -W is in seconds
+        vec!["-W", &timeout_sec] // Linux: -W is in seconds
     };
 
     let mut cmd = Command::new("ping");
@@ -326,7 +328,7 @@ async fn run_scan(
         for ip in chunk {
             let ip_clone = ip.clone();
             handles.push(tokio::task::spawn_blocking(move || {
-                let alive = ping_single(&ip_clone);
+                let alive = ping_single(&ip_clone, 1500);
                 (ip_clone, alive)
             }));
         }
@@ -353,6 +355,71 @@ async fn run_scan(
                 ),
             },
         );
+    }
+
+    // Phase 1b: Retry missed IPs with a longer timeout.
+    // Devices that are slow to respond (switches, printers, VoIP) often miss the
+    // first pass. A second sweep at 3000ms catches them without running a full
+    // second scan manually.
+    {
+        use std::collections::HashSet;
+        let live_set: HashSet<&String> = live_ips.iter().collect();
+        let missed_ips: Vec<String> = scan_ips
+            .iter()
+            .filter(|ip| !live_set.contains(ip))
+            .cloned()
+            .collect();
+
+        if !missed_ips.is_empty() {
+            let missed_total = missed_ips.len() as u32;
+            let _ = app_handle.emit(
+                "discovery-progress",
+                DiscoveryProgress {
+                    phase: "ping_sweep".to_string(),
+                    current: total,
+                    total: total + missed_total,
+                    found_so_far: live_ips.len() as u32,
+                    message: format!(
+                        "{}Retrying {} non-responsive addresses...",
+                        prefix, missed_total
+                    ),
+                },
+            );
+
+            for (batch_idx, chunk) in missed_ips.chunks(batch_size).enumerate() {
+                let mut handles = Vec::new();
+                for ip in chunk {
+                    let ip_clone = ip.clone();
+                    handles.push(tokio::task::spawn_blocking(move || {
+                        let alive = ping_single(&ip_clone, 3000);
+                        (ip_clone, alive)
+                    }));
+                }
+
+                for handle in handles {
+                    if let Ok((ip, alive)) = handle.await {
+                        if alive {
+                            live_ips.push(ip);
+                        }
+                    }
+                }
+
+                let retried = ((batch_idx + 1) * batch_size).min(missed_ips.len()) as u32;
+                let _ = app_handle.emit(
+                    "discovery-progress",
+                    DiscoveryProgress {
+                        phase: "ping_sweep".to_string(),
+                        current: total + retried,
+                        total: total + missed_total,
+                        found_so_far: live_ips.len() as u32,
+                        message: format!(
+                            "{}Retried {}/{} — found {} devices total",
+                            prefix, retried, missed_total, live_ips.len()
+                        ),
+                    },
+                );
+            }
+        }
     }
 
     if live_ips.is_empty() {
